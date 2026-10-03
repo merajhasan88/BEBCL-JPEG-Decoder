@@ -366,6 +366,43 @@ pixels for header errors) - 42 of 42.  Note: a truncated
 scan is completed from zero bits, while libjpeg fills the rest of the scan with uniform grey, so
 those pixels differ from libjpeg's (they are to be discarded anyway; documented).
 
+## 7d. 2026-10-03/04: the three decoders on a remote Artix-7; Pasha and its layout
+
+- **Remote board** (fpgas.online, Welland pi46: SQRL Acorn CLE-215+, XC7A200T, Raspberry Pi 5 with
+  GPIO JTAG and UART; the Chicago site's Arty A7 boards were unreachable from the site itself).
+  New `boards/acorn_cle215/`: vendor-neutral `uart_bench_core.sv` (UART in, FIFO, the decoder under
+  test, decoder clock gated by a BUFGCE so the count is the ideal-input decode time, checksum,
+  stall watchdog), `acorn_top.sv` (IBUFDS, MMCM 1200 MHz VCO, BUFG/BUFGCE), Vivado 2026.1 batch
+  build (needs the free annual "Vivado Basic" licence; libtinfo.so.5 from an unpacked libtinfo5
+  .deb on LD_LIBRARY_PATH), host script `pi_bench.py`. Same harness for core_jpeg and aq_djpeg.
+  Results (`boards/acorn_cle215/README.md`, `results_2026-10-03.json`): this decoder at 150 MHz
+  (WNS +0.418 ns, Fmax 160 MHz; 2,488 LUTs, 17 DSP, 7.5 BRAM with the harness) decoded the owner's 12
+  photos and 12 4:2:0 re-encodes identically to libjpeg 9e, 1.005-1.78 clocks/pixel, with exactly
+  the EP2C5's clock counts; aq_djpeg (153 MHz) all 24 at 1.37-1.95x our clocks; core_jpeg (95-104
+  MHz, run at 92.3) none of the 4:2:2 originals (reads the EXIF thumbnail, stalls; watchdog added
+  to the harness for this) and all 12 4:2:0 copies at 2.14-2.19 clocks/pixel. Both others matched
+  their own simulations exactly on the board.
+- **Vivado lint** found two signals used before their declaration (`jpeg_dec_small.sv` skip_idct,
+  `jpeg_raster_fast.sv` pbase_r): declarations moved up; Verilator lint with IMPLICIT warnings clean.
+- **Pasha** (owner, 2026-10-04): the library is named Pasha; `main` = the library, this tree =
+  branch `Pasha-development` (was `claude_jpeg/`). Layout: `rtl/` holds only the decoder; the
+  EP2C5 tops, Quartus projects, host scripts and board simulations moved to `boards/ep2c5/`
+  (gate-level flows to `boards/ep2c5/gate_level/`); `quartus/` keeps `core` and `fpga_fast_raster`.
+  Test files are made from `test_images/adapter.jpg` only (the 14 files made from screen photos were
+  regenerated from it, `scr_*` renamed `adp_*`; the 21 adapter files are byte-identical, so the ROM
+  images and checksums are unchanged). `scripts/decode.py` decodes `test_images/` (or given files)
+  in simulation; `bench/tools.py` downloads/builds libjpeg 9e and stb_image; the comparison decoders
+  are fetched into `bench/others/third_party`. `scripts/export_pasha.py` writes `main`.
+- **Re-verified after the restructure (2026-10-04)**: regression 1616/1616, 80/80, 416/416 (new
+  corpus); all 10 EP2C5 projects re-fitted from `boards/ep2c5/` and meet timing with unchanged LE
+  counts except `fpga_jtag`, 4,449 LEs (was 4,455), +0.424 ns setup, Fmax 98.99 MHz; board
+  simulation (`boards/ep2c5/sim/run_board_sim.sh 1 1`) and the JTAG harness simulation pass.
+  `scripts/compare_refs.py` on the 33 supported new corpus files: the model is identical to Pillow,
+  OpenCV and libjpeg-turbo in every mode. Gate-level runs of `gls`, `gls_fast`, `gls_raster` pass
+  (same checksums as on 2026-10-01). A clone of `main` builds, passes the fast-core regression,
+  decodes with `scripts/decode.py`, regenerates BENCHMARKS.md identically and downloads/builds
+  libjpeg 9e by itself (`bench/tools.py`).
+
 ## 8. Open items (in order)
 
 1. (done) Board run of `quartus/fpga_jtag`: `quartus_pgm -m jtag -o "p;quartus/fpga_jtag/output_files/jpeg_fpga_jtag.sof"`,
@@ -380,10 +417,9 @@ those pixels differ from libjpeg's (they are to be discarded anyway; documented)
 4. (done) CPU benchmarks on the owner's photos, at full clock (section 7).
 5. (done 2026-10-01) Portability: the fast raster module now synthesizes with sv2v + Yosys
    (`synth_xilinx`, `synth_ecp5`); gate-level simulation of the fast build (`quartus/gls_fast`) passes.
-6. Licence: owner decided "freely distributable, attribution required" (2026-09-30) -> permissive
-   licence with attribution (MIT / BSD-2-Clause / Apache-2.0); confirm the exact licence and the
-   copyright line with the owner, then add LICENSE and update NOTICE.md.
-7. Remote hardware (review `../Reviews/remote_rentable_fpga_resources_2026-09-30.md`, checked
+6. (done 2026-10-03) Licence: Apache-2.0, copyright Meraj Hasan (LICENSE, NOTICE.md).
+7. Remote hardware (done for the Artix-7 XC7A200T on 2026-10-03, section 7d; Chicago's Arty A7
+   boards - XC7A35T or XC7A100T - still to do when the site is reachable again; review `../Reviews/remote_rentable_fpga_resources_2026-09-30.md`, checked
    2026-09-30): first target fpgas.online Artix-7 (Arty A7-35T: FT2232 JTAG + UART; Acorn
    XC7A200T / LiteFury XC7A100T: Pi GPIO JTAG + UART; no login, SSH/SFTP to the Pi). Needs a Xilinx
    board top (MMCM, BUFGCE clock gate, UART or BSCANE2 input) and a toolchain: Vivado ML Standard
@@ -395,6 +431,14 @@ those pixels differ from libjpeg's (they are to be discarded anyway; documented)
    `vivado -version` runs; the optional `Vitis/scripts/installLibs.sh` apt step was not run).
    Source its `Vivado/settings64.sh` only inside the command that uses it; never alongside Quartus.
    Next: a Xilinx board top (MMCM, BUFGCE clock gate, UART or BSCANE2 input) for the Arty A7-35T.
+   Plan agreed 2026-10-03 (waiting for the owner's go-ahead): use the Chicago site (ps1.fpgas.online,
+   Arty A7 boards pi2 pi3 pi5 pi7 pi9 pi11 pi13 pi21 pi23; direct `ssh -p <port> pi@ps1.fpgas.online`,
+   public password in the login banner, no key needed) and test one board per distinct FPGA part (owner: different boards, or for the same board type different chip versions; read each board's IDCODE first). Welland needs a key
+   (generated: /root/.ssh/fpgas_online_ed25519) and IPv6, which this laptop lacks.
+   Scope (owner, 2026-10-03): also run the two competitors (core_jpeg, aq_djpeg; fetched by
+   bench/others/fetch.sh, not committed) on every Chicago board, each in the same clock-gated
+   UART wrapper at its own Vivado Fmax, with the owner's photos in ../test_images (originals may be
+   uploaded; delete everything from each Pi afterwards; one board at a time, be a polite user).
 
 ## 9. Commands
 

@@ -1,0 +1,66 @@
+{
+ "cmp_ours": {
+  "le": "4,243",
+  "dev_le": "4,608",
+  "mem": "55,616",
+  "mul": "26",
+  "ok": true,
+  "fmax": 104.87
+ },
+ "cmp35_ours": {
+  "le": "4,408",
+  "dev_le": "33,216",
+  "mem": "55,616",
+  "mul": "26",
+  "ok": true,
+  "fmax": 103.82
+ },
+ "cmp_core_jpeg": {
+  "le": "12,851",
+  "dev_le": "4,608",
+  "mem": "50,912",
+  "mul": "26",
+  "ok": false,
+  "fmax": null
+ },
+ "cmp35_core_jpeg": {
+  "le": "9,462",
+  "dev_le": "33,216",
+  "mem": "51,200",
+  "mul": "64",
+  "ok": true,
+  "fmax": 40.43
+ },
+ "cmp_core_jpeg_fixed": {
+  "le": "9,039",
+  "dev_le": "4,608",
+  "mem": "42,720",
+  "mul": "26",
+  "ok": false,
+  "fmax": null
+ },
+ "cmp35_core_jpeg_fixed": {
+  "le": "6,971",
+  "dev_le": "33,216",
+  "mem": "43,008",
+  "mul": "64",
+  "ok": true,
+  "fmax": 40.1
+ },
+ "cmp_aq_djpeg": {
+  "le": "8,970",
+  "dev_le": "4,608",
+  "mem": "27,544",
+  "mul": "26",
+  "ok": false,
+  "fmax": null
+ },
+ "cmp35_aq_djpeg": {
+  "le": "7,785",
+  "dev_le": "33,216",
+  "mem": "27,544",
+  "mul": "34",
+  "ok": true,
+  "fmax": 60.16
+ }
+}

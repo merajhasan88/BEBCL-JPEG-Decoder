@@ -7,7 +7,7 @@ and **H. Ishihara's aq_djpeg** (MIT, via ultraembedded/legacy_jpeg_decoder; base
 subsamplings, restart markers). Others were excluded: forks of these two, a VHDL decoder built on
 Xilinx-licensed CoreGen modules (not usable on an Intel/Altera device), incomplete student
 designs, and HLS libraries for data-centre FPGAs. Their sources are fetched by
-`bench/others/fetch.sh` into `../third_party` and are not part of this library.
+`bench/others/fetch.sh` into `bench/others/third_party` (ignored by git) and are not part of this library.
 
 Method: every decoder is wrapped in the same 4-pin harness (`bench/others/quartus/cmp_wrap.sv`:
 input word from a serial pin, every output pixel accepted at once and folded into a checksum on a

@@ -4,22 +4,15 @@ conditions as this project's RTL numbers (input offered as fast as accepted, eve
 at once).  Accuracy is measured against libjpeg 9e `djpeg -dct int -nosmooth` (which this
 project's MCU-order output reproduces exactly).
 usage: run_others.py out.json [image.jpg ...]     (run fetch.sh and build.sh first)
-Environment: BENCH_SCRATCH (default /tmp/claude_bench) holds jpeg9e/inst/bin/djpeg (built by
-../run_bench.py) and the temporary reference images."""
+libjpeg 9e and the temporary reference images live in bench/build (or $BENCH_SCRATCH); see ../tools.py."""
 import os, sys, re, json, subprocess
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-SCR = os.environ.get("BENCH_SCRATCH", "/tmp/claude_bench")
-DJPEG = os.path.join(SCR, "jpeg9e", "inst", "bin", "djpeg")
+sys.path.insert(0, os.path.join(HERE, ".."))
+import tools
+SCR = tools.SCR
 DECODERS = {"core_jpeg": os.path.join(HERE, "obj_core_jpeg", "Vcore_jpeg"),
             "aq_djpeg":  os.path.join(HERE, "obj_aq_djpeg", "Vaq_djpeg")}
-DEFAULT = ([os.path.join(HERE, "..", "..", "tb", "corpus", n + ".jpg") for n in
-            ("adp_64x64_q25_420", "board_352x32_q6_420", "scr_320x240_q90_420", "scr_160x120_q95_444",
-             "adp_240x320_q95_422_rst4", "scr_256x64_q98_gray")] +
-           [os.path.join(ROOT, "donald.jpg"), os.path.join(ROOT, "test_images", "unnamed.jpg"),
-            os.path.join(ROOT, "test_images", "adapter.jpg")] +
-           sorted(os.path.join(ROOT, "test_images", f) for f in os.listdir(os.path.join(ROOT, "test_images"))
-                  if f.startswith("IMG_2026")))
+DEFAULT = [p for _, p in tools.default_images()]   # three small corpus files + test_images/
 
 def sof_info(path):
     d = open(path, "rb").read(); i = 2; info = {"dri": 0}
@@ -39,7 +32,7 @@ def main():
     for img in images:
         name = os.path.basename(img)[:-4]; info = sof_info(img)
         ref = os.path.join(SCR, "others", name + ".ref.ppm")
-        subprocess.run([DJPEG, "-dct", "int", "-nosmooth", "-ppm", "-outfile", ref, img], check=True)
+        subprocess.run([tools.djpeg9(), "-dct", "int", "-nosmooth", "-ppm", "-outfile", ref, img], check=True)
         for dec, binp in DECODERS.items():
             samp = info.get("samp", [])
             if dec == "core_jpeg" and (info["dri"] or (len(samp) == 3 and samp[0] not in ((1, 1), (2, 2)))):

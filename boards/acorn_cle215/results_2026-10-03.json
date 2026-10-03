@@ -1,0 +1,1365 @@
+{
+ "board": "SQRL Acorn CLE-215+ (Xilinx Artix-7 XC7A200T-3) at fpgas.online, Welland site, pi46 (Raspberry Pi 5: JTAG and UART on GPIO)",
+ "date": "2026-10-03",
+ "vivado": "2026.1",
+ "timing_part": "xc7a200tfbg484-2 (conservative; the board's chip is -3)",
+ "uart": "1 Mbaud 8N1 on /dev/ttyAMA0; decoder clock gated (BUFGCE): clock counts are the decode time with an ideal input",
+ "builds": {
+  "0": {
+   "name": "this library, fast core (MCU order, RGB)",
+   "short": "this library",
+   "board_mhz": 150.0,
+   "fmax": "160 MHz",
+   "luts": 2488,
+   "ffs": 2663,
+   "bram": 7.5,
+   "dsps": 17
+  },
+  "1": {
+   "name": "ultraembedded core_jpeg (SUPPORT_WRITABLE_DHT=1)",
+   "short": "core_jpeg",
+   "board_mhz": 92.3076923076923,
+   "fmax": "95-104 MHz (3 builds)",
+   "luts": 6681,
+   "ffs": 6037,
+   "bram": 7.0,
+   "dsps": 32
+  },
+  "2": {
+   "name": "H. Ishihara aq_djpeg",
+   "short": "aq_djpeg",
+   "board_mhz": 150.0,
+   "fmax": "153 MHz",
+   "luts": 4919,
+   "ffs": 4933,
+   "bram": 4.0,
+   "dsps": 14
+  }
+ },
+ "files": {
+  "adapter.jpg": {
+   "bytes": 3533250,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0x54C7A8DF"
+  },
+  "IMG20260405182829.jpg": {
+   "bytes": 3733794,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0xA14BECCF"
+  },
+  "IMG20260405182833.jpg": {
+   "bytes": 3876791,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0xDCBC6578"
+  },
+  "IMG20260425135544.jpg": {
+   "bytes": 3307309,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0x508148C7"
+  },
+  "IMG20260425135628.jpg": {
+   "bytes": 4733886,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0xE04E07E8"
+  },
+  "IMG20260425141210.jpg": {
+   "bytes": 3463167,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0xDA194215"
+  },
+  "IMG20260523191343.jpg": {
+   "bytes": 3717923,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0xDE4879CB"
+  },
+  "IMG20260612210949.jpg": {
+   "bytes": 2689496,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0xE4B7BAD1"
+  },
+  "IMG20260716020409.jpg": {
+   "bytes": 1663427,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0x877671CD"
+  },
+  "IMG20260716020422.jpg": {
+   "bytes": 1710756,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0x55C6F692"
+  },
+  "IMG20260716020424.jpg": {
+   "bytes": 1674973,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0x94548961"
+  },
+  "IMG20260723160735.jpg": {
+   "bytes": 2617767,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:2",
+   "libjpeg9e": "0xAD6969AF"
+  },
+  "adapter_420.jpg": {
+   "bytes": 2244771,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0x72E135B7"
+  },
+  "IMG20260405182829_420.jpg": {
+   "bytes": 2409645,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0x494180C4"
+  },
+  "IMG20260405182833_420.jpg": {
+   "bytes": 2522130,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0x761D2AF5"
+  },
+  "IMG20260425135544_420.jpg": {
+   "bytes": 2140116,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0x402BD8F7"
+  },
+  "IMG20260425135628_420.jpg": {
+   "bytes": 3222852,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0xBB58ABEA"
+  },
+  "IMG20260425141210_420.jpg": {
+   "bytes": 2231466,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0x681846CB"
+  },
+  "IMG20260523191343_420.jpg": {
+   "bytes": 2406595,
+   "w": 3120,
+   "h": 4160,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0xA5816478"
+  },
+  "IMG20260612210949_420.jpg": {
+   "bytes": 1600648,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0xBFDAB786"
+  },
+  "IMG20260716020409_420.jpg": {
+   "bytes": 794471,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0x57DF74DB"
+  },
+  "IMG20260716020422_420.jpg": {
+   "bytes": 959399,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0x24EAA721"
+  },
+  "IMG20260716020424_420.jpg": {
+   "bytes": 926423,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0xA89E02C9"
+  },
+  "IMG20260723160735_420.jpg": {
+   "bytes": 1638880,
+   "w": 4160,
+   "h": 3120,
+   "sampling": "4:2:0",
+   "libjpeg9e": "0xAC789953"
+  }
+ },
+ "board_runs": {
+  "0/adapter.jpg": {
+   "bytes": "3533250",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "19234181",
+   "checksum": "0x54C7A8DF",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3533250"
+  },
+  "0/IMG20260405182829.jpg": {
+   "bytes": "3733794",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "20908689",
+   "checksum": "0xA14BECCF",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3733794"
+  },
+  "0/IMG20260405182833.jpg": {
+   "bytes": "3876791",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "21531453",
+   "checksum": "0xDCBC6578",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3876791"
+  },
+  "0/IMG20260425135544.jpg": {
+   "bytes": "3307309",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "19143517",
+   "checksum": "0x508148C7",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3307309"
+  },
+  "0/IMG20260425135628.jpg": {
+   "bytes": "4733886",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "23107669",
+   "checksum": "0xE04E07E8",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "4733886"
+  },
+  "0/IMG20260425141210.jpg": {
+   "bytes": "3463167",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "19061153",
+   "checksum": "0xDA194215",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "3463167"
+  },
+  "0/IMG20260523191343.jpg": {
+   "bytes": "3717923",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "20037777",
+   "checksum": "0xDE4879CB",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3717923"
+  },
+  "0/IMG20260612210949.jpg": {
+   "bytes": "2689496",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "17004745",
+   "checksum": "0xE4B7BAD1",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "2689496"
+  },
+  "0/IMG20260716020409.jpg": {
+   "bytes": "1663427",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "15364517",
+   "checksum": "0x877671CD",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1663427"
+  },
+  "0/IMG20260716020422.jpg": {
+   "bytes": "1710756",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "15411569",
+   "checksum": "0x55C6F692",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1710756"
+  },
+  "0/IMG20260716020424.jpg": {
+   "bytes": "1674973",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "15364489",
+   "checksum": "0x94548961",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1674973"
+  },
+  "0/IMG20260723160735.jpg": {
+   "bytes": "2617767",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "17368025",
+   "checksum": "0xAD6969AF",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "2617767"
+  },
+  "0/adapter_420.jpg": {
+   "bytes": "2244771",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "13940234",
+   "checksum": "0x72E135B7",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2244771"
+  },
+  "0/IMG20260405182829_420.jpg": {
+   "bytes": "2409645",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "15231961",
+   "checksum": "0x494180C4",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2409645"
+  },
+  "0/IMG20260405182833_420.jpg": {
+   "bytes": "2522130",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "15664865",
+   "checksum": "0x761D2AF5",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2522130"
+  },
+  "0/IMG20260425135544_420.jpg": {
+   "bytes": "2140116",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "14954646",
+   "checksum": "0x402BD8F7",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2140116"
+  },
+  "0/IMG20260425135628_420.jpg": {
+   "bytes": "3222852",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "17724709",
+   "checksum": "0xBB58ABEA",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "3222852"
+  },
+  "0/IMG20260425141210_420.jpg": {
+   "bytes": "2231466",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "14349817",
+   "checksum": "0x681846CB",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "2231466"
+  },
+  "0/IMG20260523191343_420.jpg": {
+   "bytes": "2406595",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "15008091",
+   "checksum": "0xA5816478",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2406595"
+  },
+  "0/IMG20260612210949_420.jpg": {
+   "bytes": "1600648",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "13210175",
+   "checksum": "0xBFDAB786",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1600648"
+  },
+  "0/IMG20260716020409_420.jpg": {
+   "bytes": "794471",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "13057711",
+   "checksum": "0x57DF74DB",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "794471"
+  },
+  "0/IMG20260716020422_420.jpg": {
+   "bytes": "959399",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "13039929",
+   "checksum": "0x24EAA721",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "959399"
+  },
+  "0/IMG20260716020424_420.jpg": {
+   "bytes": "926423",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "13041569",
+   "checksum": "0xA89E02C9",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "926423"
+  },
+  "0/IMG20260723160735_420.jpg": {
+   "bytes": "1638880",
+   "dut": "0",
+   "flags": "0x04",
+   "clocks": "13763058",
+   "checksum": "0xAC789953",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1638880"
+  },
+  "1/adapter.jpg": {
+   "bytes": "3533250",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "128x176",
+   "pixels": "0",
+   "rx": "3533250"
+  },
+  "1/IMG20260405182829.jpg": {
+   "bytes": "3733794",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "128x176",
+   "pixels": "0",
+   "rx": "3733794"
+  },
+  "1/IMG20260405182833.jpg": {
+   "bytes": "3876791",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "128x176",
+   "pixels": "0",
+   "rx": "3876791"
+  },
+  "1/IMG20260425135544.jpg": {
+   "bytes": "3307309",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "128x176",
+   "pixels": "0",
+   "rx": "3307309"
+  },
+  "1/IMG20260425135628.jpg": {
+   "bytes": "4733886",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "176x128",
+   "pixels": "0",
+   "rx": "4733886"
+  },
+  "1/IMG20260425141210.jpg": {
+   "bytes": "3463167",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "176x128",
+   "pixels": "0",
+   "rx": "3463167"
+  },
+  "1/IMG20260523191343.jpg": {
+   "bytes": "3717923",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "128x176",
+   "pixels": "0",
+   "rx": "3717923"
+  },
+  "1/IMG20260612210949.jpg": {
+   "bytes": "2689496",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "176x128",
+   "pixels": "0",
+   "rx": "2689496"
+  },
+  "1/IMG20260716020409.jpg": {
+   "bytes": "1663427",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "176x128",
+   "pixels": "0",
+   "rx": "1663427"
+  },
+  "1/IMG20260716020422.jpg": {
+   "bytes": "1710756",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "176x128",
+   "pixels": "0",
+   "rx": "1710756"
+  },
+  "1/IMG20260716020424.jpg": {
+   "bytes": "1674973",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "176x128",
+   "pixels": "0",
+   "rx": "1674973"
+  },
+  "1/IMG20260723160735.jpg": {
+   "bytes": "2617767",
+   "dut": "1",
+   "flags": "0x07",
+   "clocks": "67108864",
+   "checksum": "0x00000000",
+   "err": "0x0000",
+   "WxH": "176x128",
+   "pixels": "0",
+   "rx": "2617767"
+  },
+  "1/adapter_420.jpg": {
+   "bytes": "2244771",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27790390",
+   "checksum": "0x4D04E0CB",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2244771"
+  },
+  "1/IMG20260405182829_420.jpg": {
+   "bytes": "2409645",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27786762",
+   "checksum": "0x60EF5E09",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2409645"
+  },
+  "1/IMG20260405182833_420.jpg": {
+   "bytes": "2522130",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27786529",
+   "checksum": "0xF5571443",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2522130"
+  },
+  "1/IMG20260425135544_420.jpg": {
+   "bytes": "2140116",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27879854",
+   "checksum": "0xB7142AA2",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2140116"
+  },
+  "1/IMG20260425135628_420.jpg": {
+   "bytes": "3222852",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "28399336",
+   "checksum": "0xF95ED2EE",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "3222852"
+  },
+  "1/IMG20260425141210_420.jpg": {
+   "bytes": "2231466",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27814841",
+   "checksum": "0x7E2C172F",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "2231466"
+  },
+  "1/IMG20260523191343_420.jpg": {
+   "bytes": "2406595",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27935055",
+   "checksum": "0x23040310",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2406595"
+  },
+  "1/IMG20260612210949_420.jpg": {
+   "bytes": "1600648",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27785339",
+   "checksum": "0x34441DE6",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1600648"
+  },
+  "1/IMG20260716020409_420.jpg": {
+   "bytes": "794471",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27784485",
+   "checksum": "0x7B2087AA",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "794471"
+  },
+  "1/IMG20260716020422_420.jpg": {
+   "bytes": "959399",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27784493",
+   "checksum": "0x9750C0E3",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "959399"
+  },
+  "1/IMG20260716020424_420.jpg": {
+   "bytes": "926423",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27784473",
+   "checksum": "0x9AA95301",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "926423"
+  },
+  "1/IMG20260723160735_420.jpg": {
+   "bytes": "1638880",
+   "dut": "1",
+   "flags": "0x04",
+   "clocks": "27810010",
+   "checksum": "0xCE9E9132",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1638880"
+  },
+  "2/adapter.jpg": {
+   "bytes": "3533250",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "37252855",
+   "checksum": "0x1E09B8CE",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3533250"
+  },
+  "2/IMG20260405182829.jpg": {
+   "bytes": "3733794",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "40661547",
+   "checksum": "0x939E9CB6",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3733794"
+  },
+  "2/IMG20260405182833.jpg": {
+   "bytes": "3876791",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "42075320",
+   "checksum": "0xF3AD2677",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3876791"
+  },
+  "2/IMG20260425135544.jpg": {
+   "bytes": "3307309",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "34073868",
+   "checksum": "0x95FF091C",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3307309"
+  },
+  "2/IMG20260425135628.jpg": {
+   "bytes": "4733886",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "44190983",
+   "checksum": "0x27AE0A23",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "4733886"
+  },
+  "2/IMG20260425141210.jpg": {
+   "bytes": "3463167",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "34879395",
+   "checksum": "0xCCF5C49E",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "3463167"
+  },
+  "2/IMG20260523191343.jpg": {
+   "bytes": "3717923",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "38023543",
+   "checksum": "0xC2D42C2A",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "3717923"
+  },
+  "2/IMG20260612210949.jpg": {
+   "bytes": "2689496",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "28601030",
+   "checksum": "0xB4CEDD5A",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "2689496"
+  },
+  "2/IMG20260716020409.jpg": {
+   "bytes": "1663427",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "24781329",
+   "checksum": "0x9F9FF209",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1663427"
+  },
+  "2/IMG20260716020422.jpg": {
+   "bytes": "1710756",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "24865207",
+   "checksum": "0xD21DB5A0",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1710756"
+  },
+  "2/IMG20260716020424.jpg": {
+   "bytes": "1674973",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "24735411",
+   "checksum": "0x993CBBC1",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1674973"
+  },
+  "2/IMG20260723160735.jpg": {
+   "bytes": "2617767",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "29088315",
+   "checksum": "0x112583ED",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "2617767"
+  },
+  "2/adapter_420.jpg": {
+   "bytes": "2244771",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "25752392",
+   "checksum": "0x22E296EB",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2244771"
+  },
+  "2/IMG20260405182829_420.jpg": {
+   "bytes": "2409645",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "28477607",
+   "checksum": "0x5CE9900C",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2409645"
+  },
+  "2/IMG20260405182833_420.jpg": {
+   "bytes": "2522130",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "29474507",
+   "checksum": "0xF1A33D3E",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2522130"
+  },
+  "2/IMG20260425135544_420.jpg": {
+   "bytes": "2140116",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "25529320",
+   "checksum": "0xA03001BF",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2140116"
+  },
+  "2/IMG20260425135628_420.jpg": {
+   "bytes": "3222852",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "33929826",
+   "checksum": "0xEA3CD0F9",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "3222852"
+  },
+  "2/IMG20260425141210_420.jpg": {
+   "bytes": "2231466",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "25271960",
+   "checksum": "0x6643FD3D",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "2231466"
+  },
+  "2/IMG20260523191343_420.jpg": {
+   "bytes": "2406595",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "26892133",
+   "checksum": "0x0135D913",
+   "err": "0x0000",
+   "WxH": "3120x4160",
+   "pixels": "12979200",
+   "rx": "2406595"
+  },
+  "2/IMG20260612210949_420.jpg": {
+   "bytes": "1600648",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "19362750",
+   "checksum": "0x1F0DD3ED",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1600648"
+  },
+  "2/IMG20260716020409_420.jpg": {
+   "bytes": "794471",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "17904048",
+   "checksum": "0xAB424AB3",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "794471"
+  },
+  "2/IMG20260716020422_420.jpg": {
+   "bytes": "959399",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "18130604",
+   "checksum": "0x37213305",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "959399"
+  },
+  "2/IMG20260716020424_420.jpg": {
+   "bytes": "926423",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "18009873",
+   "checksum": "0x458B032F",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "926423"
+  },
+  "2/IMG20260723160735_420.jpg": {
+   "bytes": "1638880",
+   "dut": "2",
+   "flags": "0x04",
+   "clocks": "21321750",
+   "checksum": "0xC0E14834",
+   "err": "0x0000",
+   "WxH": "4160x3120",
+   "pixels": "12979200",
+   "rx": "1638880"
+  }
+ },
+ "sim": {
+  "2/IMG20260716020409_420.jpg": {
+   "clocks": 17904048,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0xAB424AB3",
+   "identical_pct": 26.31,
+   "max_diff": 4,
+   "psnr_db": "44.214218"
+  },
+  "2/adapter.jpg": {
+   "clocks": 37252855,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x1E09B8CE",
+   "identical_pct": 21.65,
+   "max_diff": 6,
+   "psnr_db": "42.955482"
+  },
+  "2/IMG20260405182829.jpg": {
+   "clocks": 40661547,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x939E9CB6",
+   "identical_pct": 23.42,
+   "max_diff": 5,
+   "psnr_db": "43.123693"
+  },
+  "2/IMG20260405182833.jpg": {
+   "clocks": 42075320,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0xF3AD2677",
+   "identical_pct": 23.55,
+   "max_diff": 5,
+   "psnr_db": "43.154773"
+  },
+  "2/IMG20260425135544.jpg": {
+   "clocks": 34073868,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x95FF091C",
+   "identical_pct": 19.43,
+   "max_diff": 6,
+   "psnr_db": "41.739824"
+  },
+  "2/IMG20260425135628.jpg": {
+   "clocks": 44190983,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x27AE0A23",
+   "identical_pct": 20.23,
+   "max_diff": 6,
+   "psnr_db": "42.222708"
+  },
+  "2/IMG20260425141210.jpg": {
+   "clocks": 34879395,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0xCCF5C49E",
+   "identical_pct": 20.84,
+   "max_diff": 7,
+   "psnr_db": "42.289267"
+  },
+  "2/IMG20260523191343.jpg": {
+   "clocks": 38023543,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0xC2D42C2A",
+   "identical_pct": 21.89,
+   "max_diff": 5,
+   "psnr_db": "42.943374"
+  },
+  "2/IMG20260612210949.jpg": {
+   "clocks": 28601030,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0xB4CEDD5A",
+   "identical_pct": 22.96,
+   "max_diff": 5,
+   "psnr_db": "43.130009"
+  },
+  "2/IMG20260716020409.jpg": {
+   "clocks": 24781329,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x9F9FF209",
+   "identical_pct": 27.04,
+   "max_diff": 5,
+   "psnr_db": "44.042099"
+  },
+  "2/IMG20260716020422.jpg": {
+   "clocks": 24865207,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0xD21DB5A0",
+   "identical_pct": 31.66,
+   "max_diff": 5,
+   "psnr_db": "45.963916"
+  },
+  "2/IMG20260716020424.jpg": {
+   "clocks": 24735411,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x993CBBC1",
+   "identical_pct": 32.2,
+   "max_diff": 5,
+   "psnr_db": "46.157002"
+  },
+  "2/IMG20260723160735.jpg": {
+   "clocks": 29088315,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x112583ED",
+   "identical_pct": 18.33,
+   "max_diff": 5,
+   "psnr_db": "41.614023"
+  },
+  "2/adapter_420.jpg": {
+   "clocks": 25752392,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x22E296EB",
+   "identical_pct": 21.38,
+   "max_diff": 5,
+   "psnr_db": "42.704373"
+  },
+  "2/IMG20260405182829_420.jpg": {
+   "clocks": 28477607,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x5CE9900C",
+   "identical_pct": 22.45,
+   "max_diff": 5,
+   "psnr_db": "42.924060"
+  },
+  "2/IMG20260405182833_420.jpg": {
+   "clocks": 29474507,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0xF1A33D3E",
+   "identical_pct": 22.86,
+   "max_diff": 5,
+   "psnr_db": "42.991238"
+  },
+  "2/IMG20260425135544_420.jpg": {
+   "clocks": 25529320,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0xA03001BF",
+   "identical_pct": 21.17,
+   "max_diff": 12,
+   "psnr_db": "42.369953"
+  },
+  "2/IMG20260425135628_420.jpg": {
+   "clocks": 33929826,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0xEA3CD0F9",
+   "identical_pct": 21.0,
+   "max_diff": 12,
+   "psnr_db": "42.668599"
+  },
+  "2/IMG20260425141210_420.jpg": {
+   "clocks": 25271960,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x6643FD3D",
+   "identical_pct": 22.47,
+   "max_diff": 8,
+   "psnr_db": "42.903092"
+  },
+  "2/IMG20260523191343_420.jpg": {
+   "clocks": 26892133,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x0135D913",
+   "identical_pct": 21.32,
+   "max_diff": 5,
+   "psnr_db": "42.702913"
+  },
+  "2/IMG20260612210949_420.jpg": {
+   "clocks": 19362750,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x1F0DD3ED",
+   "identical_pct": 23.6,
+   "max_diff": 8,
+   "psnr_db": "42.975862"
+  },
+  "2/IMG20260716020422_420.jpg": {
+   "clocks": 18130604,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x37213305",
+   "identical_pct": 34.68,
+   "max_diff": 5,
+   "psnr_db": "46.510235"
+  },
+  "2/IMG20260716020424_420.jpg": {
+   "clocks": 18009873,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x458B032F",
+   "identical_pct": 34.0,
+   "max_diff": 4,
+   "psnr_db": "46.820600"
+  },
+  "2/IMG20260723160735_420.jpg": {
+   "clocks": 21321750,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0xC0E14834",
+   "identical_pct": 21.16,
+   "max_diff": 6,
+   "psnr_db": "42.560108"
+  },
+  "1/adapter_420.jpg": {
+   "clocks": 27790390,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x4D04E0CB",
+   "identical_pct": 14.6,
+   "max_diff": 5,
+   "psnr_db": "42.283952"
+  },
+  "1/IMG20260405182829_420.jpg": {
+   "clocks": 27786762,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x60EF5E09",
+   "identical_pct": 17.62,
+   "max_diff": 5,
+   "psnr_db": "42.574118"
+  },
+  "1/IMG20260405182833_420.jpg": {
+   "clocks": 27786529,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0xF5571443",
+   "identical_pct": 17.57,
+   "max_diff": 5,
+   "psnr_db": "42.612085"
+  },
+  "1/IMG20260425135544_420.jpg": {
+   "clocks": 27879854,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0xB7142AA2",
+   "identical_pct": 14.53,
+   "max_diff": 12,
+   "psnr_db": "41.971426"
+  },
+  "1/IMG20260425135628_420.jpg": {
+   "clocks": 28399336,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0xF95ED2EE",
+   "identical_pct": 15.99,
+   "max_diff": 12,
+   "psnr_db": "42.338940"
+  },
+  "1/IMG20260425141210_420.jpg": {
+   "clocks": 27814841,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x7E2C172F",
+   "identical_pct": 16.89,
+   "max_diff": 8,
+   "psnr_db": "42.547748"
+  },
+  "1/IMG20260523191343_420.jpg": {
+   "clocks": 27935055,
+   "pixels": 12979200,
+   "w": 3120,
+   "h": 4160,
+   "checksum": "0x23040310",
+   "identical_pct": 14.18,
+   "max_diff": 5,
+   "psnr_db": "42.265229"
+  },
+  "1/IMG20260612210949_420.jpg": {
+   "clocks": 27785339,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x34441DE6",
+   "identical_pct": 18.48,
+   "max_diff": 8,
+   "psnr_db": "42.643047"
+  },
+  "1/IMG20260716020409_420.jpg": {
+   "clocks": 27784485,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x7B2087AA",
+   "identical_pct": 23.85,
+   "max_diff": 4,
+   "psnr_db": "43.984471"
+  },
+  "1/IMG20260716020422_420.jpg": {
+   "clocks": 27784493,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x9750C0E3",
+   "identical_pct": 34.27,
+   "max_diff": 5,
+   "psnr_db": "46.411414"
+  },
+  "1/IMG20260716020424_420.jpg": {
+   "clocks": 27784473,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0x9AA95301",
+   "identical_pct": 32.98,
+   "max_diff": 4,
+   "psnr_db": "46.658288"
+  },
+  "1/IMG20260723160735_420.jpg": {
+   "clocks": 27810010,
+   "pixels": 12979200,
+   "w": 4160,
+   "h": 3120,
+   "checksum": "0xCE9E9132",
+   "identical_pct": 15.49,
+   "max_diff": 6,
+   "psnr_db": "42.183247"
+  }
+ }
+}

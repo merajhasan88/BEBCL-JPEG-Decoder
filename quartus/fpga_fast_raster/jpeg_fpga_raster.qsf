@@ -22,9 +22,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_mcuout.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_raster_fast.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_dec_fast.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_decoder.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/uart_tx.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_rom.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/fpga_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../boards/ep2c5/rtl/uart_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../boards/ep2c5/rtl/jpeg_rom.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../boards/ep2c5/rtl/fpga_top.sv
 set_global_assignment -name SDC_FILE jpeg_fpga_raster.sdc
 set_parameter -name ROM_HEX "jpeg_rom.hex"
 set_parameter -name ROM_LENGTH 1016

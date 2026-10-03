@@ -14,9 +14,9 @@ CORPUS = os.path.join(HERE, "corpus")
 SCENARIOS = [
     ("restart interval does not leak into the next image", ["adp_45x37_q30_420_rst2", "adp_32x32_q25_420"]),
     ("an unsupported SOF1 file does not block the next image", ["adp_40x40_q20_sof1_UNSUPPORTED", "adp_32x32_q25_420"]),
-    ("an unsupported progressive file does not block the next image", ["adp_45x37_q30_progressive_UNSUPPORTED", "scr_17x33_q40_420"]),
+    ("an unsupported progressive file does not block the next image", ["adp_45x37_q30_progressive_UNSUPPORTED", "adp_17x33_q40_420"]),
     ("grey, 4:4:4, 4:2:0 with restarts, 4:2:2 with EXIF, back to back",
-     ["scr_13x11_q40_gray", "adp_32x32_q25_444", "adp_40x50_q30_420_rst3", "adp_45x37_q30_422_exifthumb"]),
+     ["adp_13x11_q40_gray", "adp_32x32_q25_444", "adp_40x50_q30_420_rst3", "adp_45x37_q30_422_exifthumb"]),
     ("the same image twice", ["adp_64x64_q25_420", "adp_64x64_q25_420"]),
 ]
 

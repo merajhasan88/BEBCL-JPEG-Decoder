@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Export the Pasha library (the `main` branch) from this development tree.
+
+Pasha is a subset of the development branch: the decoder, its tests, the board examples and the
+benchmarks, without the development history (FAST_STATUS.md), the gate-level flows, the
+experimental Quartus projects and the owner's photos other than test_images/adapter.jpg.  Only
+files tracked by git here are exported, filtered by INCLUDE / EXCLUDE below; files in the target
+that git tracks in the target but are no longer exported are removed (untracked build outputs and
+its .git are left alone).
+
+usage: export_pasha.py <target folder>      (e.g. ../Pasha, a worktree of the main branch)
+       export_pasha.py --list               (print what would be exported)"""
+import os, sys, shutil, fnmatch, subprocess
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DEV = os.path.abspath(os.path.join(HERE, ".."))
+
+INCLUDE = [
+    "README.md", "LICENSE", "NOTICE.md", "BENCHMARKS.md", ".gitignore",
+    "rtl/*", "model/*",
+    "scripts/decode.py", "scripts/make_corpus.py", "scripts/compare_refs.py", "scripts/jpeg_to_hex.py",
+    "scripts/pnm_checksum.py",
+    "tb/Makefile", "tb/*.cpp", "tb/run_tests.py", "tb/run_stream_tests.py", "tb/run_malformed_tests.py",
+    "tb/make_malformed.py", "tb/corpus/*", "tb/malformed/*",
+    "test_images/adapter.jpg", "test_images/README.md",
+    "boards/ep2c5/README.md", "boards/ep2c5/rtl/*", "boards/ep2c5/scripts/*", "boards/ep2c5/sim/*",
+    "boards/ep2c5/compile_all.sh", "boards/ep2c5/sta_paths.tcl", "boards/ep2c5/sta_detail.tcl",
+    "boards/ep2c5/fpga/*", "boards/ep2c5/fpga_raster/*", "boards/ep2c5/fpga_raster_box/*",
+    "boards/ep2c5/fpga_raster_ycc/*", "boards/ep2c5/fpga_fast/*", "boards/ep2c5/fpga_fast_bench/*",
+    "boards/ep2c5/fpga_jtag/*",
+    "boards/acorn_cle215/*",
+    "bench/*",
+]
+EXCLUDE = [
+    "*/build_status.txt", "*/final_build.txt",          # notes of earlier builds (development history)
+    "tb/regression_*", "tb/*.txt",
+]
+
+def tracked():
+    r = subprocess.run(["git", "-C", DEV, "ls-files", "-z"], capture_output=True, check=True)
+    return [p for p in r.stdout.decode().split("\0") if p]
+
+def exported():
+    out = []
+    for p in tracked():
+        if any(fnmatch.fnmatch(p, g) for g in EXCLUDE): continue
+        if any(fnmatch.fnmatch(p, g) for g in INCLUDE): out.append(p)
+    return sorted(out)
+
+def main():
+    if len(sys.argv) != 2: sys.exit(__doc__)
+    files = exported()
+    if sys.argv[1] == "--list":
+        print("\n".join(files)); return
+    dst = os.path.abspath(sys.argv[1])
+    os.makedirs(dst, exist_ok=True)
+    keep = set(files)
+    if os.path.exists(os.path.join(dst, ".git")):         # a worktree: drop tracked files no longer exported
+        r = subprocess.run(["git", "-C", dst, "ls-files", "-z"], capture_output=True, check=True)
+        for rel in r.stdout.decode().split("\0"):
+            if rel and rel not in keep and os.path.exists(os.path.join(dst, rel)):
+                os.remove(os.path.join(dst, rel))
+    for p in files:
+        os.makedirs(os.path.dirname(os.path.join(dst, p)) or dst, exist_ok=True)
+        shutil.copy2(os.path.join(DEV, p), os.path.join(dst, p))
+    for dp, dns, fns in sorted(os.walk(dst), reverse=True):     # drop empty folders
+        if ".git" not in dp.split(os.sep) and dp != dst and not os.listdir(dp): os.rmdir(dp)
+    print(f"exported {len(files)} files to {dst}")
+
+if __name__ == "__main__":
+    main()

@@ -35,11 +35,22 @@ def cmp(a, b):
     d = np.abs(a - b)
     return "ok" if d.max() == 0 else "DIFF %d px, max %d" % ((d.reshape(d.shape[0], d.shape[1], -1).max(axis=2) > 0).sum(), d.max())
 
+def sof_type(data):
+    """n of the first SOFn marker (0 = baseline), skipping segments by their length"""
+    i = 2
+    while i + 4 <= len(data) and data[i] == 0xFF:
+        m = data[i + 1]
+        if 0xC0 <= m <= 0xCF and m not in (0xC4, 0xC8, 0xCC): return m - 0xC0
+        i += 2 + int.from_bytes(data[i + 2:i + 4], "big")
+    return None
+
 cols = ["rgb~Pillow", "rgb~OpenCV", "rgb~djpeg", "ycc~Pillow", "y~Pillow", "y~djpeg", "box~djpeg-nosmooth"]
 print("%-34s " % "image" + " ".join("%-18s" % c for c in cols))
 bad = 0
 for path in sys.argv[1:]:
     data = open(path, 'rb').read()
+    if sof_type(data) != 0:
+        print("%-34s skipped (SOF%s, not a baseline file: the decoder rejects it)" % (os.path.basename(path), sof_type(data))); continue
     try:
         m_rgb = rgb3(model(data, upsample='fancy', cc='turbo', out='rgb'))
         m_ycc = model(data, upsample='fancy', cc='turbo', out='ycbcr')

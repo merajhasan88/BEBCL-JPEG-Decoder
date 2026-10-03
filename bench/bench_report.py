@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Per-image Markdown tables from bench.json (run_bench.py: CPU decoders; bench_fpga.py: this
 project's clock counts).  Board-measured clock counts (board_jtag_95mhz.txt, from
-scripts/jtag_decode.py on the EP2C5) are marked where they exist.  With a second results file
+boards/ep2c5/scripts/jtag_decode.py on the EP2C5) are marked where they exist.  With a second results file
 from the laptop in another power profile (bench_powersaver.json), a table compares the two.
 usage: bench_report.py bench.json [bench_powersaver.json] > tables.md"""
 import os, re, sys, json
@@ -9,8 +9,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 res = json.load(open(sys.argv[1]))
 # this project's EP2C5 builds: (where, clock MHz, PowerPlay estimate in mW - vectorless, low confidence)
 FPGA = {
-    "MCU order, replication, RGB":       ("EP2C5, compact core (`quartus/fpga`)", 50.0, 70.4),
-    "FAST, MCU order, replication, RGB": ("EP2C5, fast core (`quartus/fpga_jtag`)", 95.0, 146.8),
+    "MCU order, replication, RGB":       ("EP2C5, compact core (`boards/ep2c5/fpga`)", 50.0, 70.4),
+    "FAST, MCU order, replication, RGB": ("EP2C5, fast core (`boards/ep2c5/fpga_jtag`)", 95.0, 146.8),
 }
 board = {}
 bf = os.path.join(HERE, "board_jtag_95mhz.txt")

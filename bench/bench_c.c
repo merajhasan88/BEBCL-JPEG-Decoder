@@ -15,7 +15,7 @@
 #ifdef BACKEND_STB
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
-#include "../../stb_image.h"
+#include "stb_image.h"          /* -I<folder of stb_image.h> (bench/tools.py downloads it) */
 #endif
 
 static double now(void) { struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return t.tv_sec + t.tv_nsec * 1e-9; }

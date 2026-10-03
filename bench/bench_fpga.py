@@ -8,8 +8,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); TB = os.path.join(HERE, "..",
 sys.path.insert(0, HERE)
 from run_bench import IMAGES
 CONFIGS = [   # (label, obj dir, fmt, raster) - the configurations that run on the EP2C5
-    ("MCU order, replication, RGB",       "obj_mcu",  "rgb", False),   # compact core, quartus/fpga, 50 MHz
-    ("FAST, MCU order, replication, RGB", "obj_fmcu", "rgb", False),   # fast core, quartus/fpga_jtag, 95 MHz
+    ("MCU order, replication, RGB",       "obj_mcu",  "rgb", False),   # compact core, boards/ep2c5/fpga, 50 MHz
+    ("FAST, MCU order, replication, RGB", "obj_fmcu", "rgb", False),   # fast core, boards/ep2c5/fpga_jtag, 95 MHz
 ]
 def main():
     res = json.load(open(sys.argv[1]))

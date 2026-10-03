@@ -1,7 +1,7 @@
 #!/bin/sh
 # Verilator builds of tb_other.cpp against each third-party decoder (run fetch.sh first).
 set -e
-HERE=$(cd "$(dirname "$0")" && pwd); TP=$HERE/../../../third_party; cd "$HERE"
+HERE=$(cd "$(dirname "$0")" && pwd); TP=$HERE/third_party; cd "$HERE"
 V="verilator -Wno-fatal -Wno-lint -Wno-style -O2 --x-assign fast --x-initial fast"
 $V --top-module jpeg_core -GSUPPORT_WRITABLE_DHT=1 -cc $TP/core_jpeg/src_v/*.v --exe tb_other.cpp \
    -CFLAGS -DCORE_JPEG -Mdir obj_core_jpeg -o Vcore_jpeg > obj_core_jpeg.log 2>&1

@@ -3,8 +3,8 @@
 
 CPU side (single thread, pinned to one core, JPEG already in memory, median of ~0.1 s batches):
   libjpeg-turbo 2.1.2 (C API)   default = ISLOW + fancy upsampling (what Pillow/OpenCV use); also -nosmooth
-  libjpeg 9e (C API)            built from ../jpeg-9e; default and -nosmooth
-  stb_image                     ../../stb_image.h
+  libjpeg 9e (C API)            built by tools.py (downloaded from ijg.org); default and -nosmooth
+  stb_image                     stb_image.h, downloaded by tools.py
   Pillow 9.0.1                  Image.open(BytesIO).load()           (libjpeg-turbo underneath)
   OpenCV 4.7                    cv2.imdecode, cv2.setNumThreads(1)   (libjpeg-turbo underneath)
   FFmpeg                        its own mjpeg decoder, -threads 1, many loops of one image
@@ -17,22 +17,17 @@ CPU clock: a laptop's power profile changes the results several-fold (this one i
 runs at ~0.8-0.9 GHz instead of up to 4 GHz).  With BENCH_POWER_PROFILE=performance the script sets
 that power profile (powerprofilesctl) for the run and restores the previous one at the end; the
 profile in effect and the measured clock are stored in the results.
-usage: [BENCH_POWER_PROFILE=performance] run_bench.py out.json   (tables: bench_report.py out.json)"""
+usage: [BENCH_POWER_PROFILE=performance] run_bench.py out.json [image.jpg ...]   (tables: bench_report.py out.json)"""
 import os, sys, re, json, subprocess, shutil, time
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-SCR = os.environ.get("BENCH_SCRATCH", "/tmp/claude_bench")
+sys.path.insert(0, HERE)
+import tools
+SCR = tools.SCR
 CORE = os.environ.get("BENCH_CORE", "3")
-IMAGES = [   # the owner's photos (tb/corpus is generated from them) + donald.jpg as the historical reference
-    ("adp_64x64_q25_420",      f"{HERE}/../tb/corpus/adp_64x64_q25_420.jpg"),
-    ("board_352x32_q6_420",    f"{HERE}/../tb/corpus/board_352x32_q6_420.jpg"),
-    ("scr_320x240_q90_420",    f"{HERE}/../tb/corpus/scr_320x240_q90_420.jpg"),
-    ("donald_2048x1365",       f"{ROOT}/donald.jpg"),
-    ("portrait_1944x2592_444", f"{ROOT}/test_images/unnamed.jpg"),
-    ("adapter_3120x4160_422",  f"{ROOT}/test_images/adapter.jpg"),
-    ("phone_4000x3000_light",  f"{ROOT}/test_images/IMG_20260912_012049.jpg"),
-    ("phone_4000x3000_dense",  f"{ROOT}/test_images/IMG_20260912_005827.jpg"),
-]
+# images: run_bench.py out.json [image.jpg ...]; default: three small corpus files and every JPEG in
+# test_images/ (the published BENCHMARKS.md was measured on the owner's photos listed there)
+IMAGES = [(os.path.splitext(os.path.basename(p))[0], p) for p in sys.argv[2:]
+          if p.lower().endswith((".jpg", ".jpeg"))] or tools.default_images()   # (bench_fpga.py imports it)
 
 def run(cmd, **kw):
     return subprocess.run(cmd, capture_output=True, text=True, **kw)
@@ -74,22 +69,9 @@ def build():
     os.makedirs(SCR, exist_ok=True)
     cc = ["gcc", "-O2", "-march=native", "-o"]
     r = run(cc + [f"{SCR}/bench_turbo", f"{HERE}/bench_c.c", "-DBACKEND_LIBJPEG", "-ljpeg"]); assert r.returncode == 0, r.stderr
-    r = run(cc + [f"{SCR}/bench_stb", f"{HERE}/bench_c.c", "-DBACKEND_STB", "-lm"]); assert r.returncode == 0, r.stderr
-    j9 = f"{SCR}/jpeg9e"
-    if not os.path.exists(f"{j9}/inst/lib/libjpeg.a"):
-        shutil.rmtree(j9, ignore_errors=True); shutil.copytree(f"{ROOT}/jpeg-9e", f"{j9}/src")
-        for dp, _, fs in os.walk(f"{j9}/src"):
-            for fn in fs:
-                p = os.path.join(dp, fn)
-                if fn in ("configure", "config.sub", "config.guess", "install-sh", "depcomp", "compile", "missing", "ltmain.sh", "ar-lib") or fn.endswith((".in", ".am")):
-                    with open(p, "rb") as f: s = f.read()
-                    with open(p, "wb") as f: f.write(s.replace(b"\r\n", b"\n"))
-                    os.chmod(p, 0o755)
-        os.makedirs(f"{j9}/build", exist_ok=True)
-        r = run(["nice", "-n", "10", f"{j9}/src/configure", f"--prefix={j9}/inst", "--disable-shared", "CFLAGS=-O2 -march=native"], cwd=f"{j9}/build"); assert r.returncode == 0, r.stdout[-500:]
-        r = run(["nice", "-n", "10", "make", "-j2"], cwd=f"{j9}/build"); assert r.returncode == 0, r.stdout[-500:]
-        r = run(["make", "install"], cwd=f"{j9}/build"); assert r.returncode == 0
-    r = run(cc + [f"{SCR}/bench_jpeg9", f"{HERE}/bench_c.c", "-DBACKEND_LIBJPEG", f"-I{j9}/inst/include", f"{j9}/inst/lib/libjpeg.a"]); assert r.returncode == 0, r.stderr
+    r = run(cc + [f"{SCR}/bench_stb", f"{HERE}/bench_c.c", "-DBACKEND_STB", f"-I{tools.stb_image_dir()}", "-lm"]); assert r.returncode == 0, r.stderr
+    j9 = tools.libjpeg9()
+    r = run(cc + [f"{SCR}/bench_jpeg9", f"{HERE}/bench_c.c", "-DBACKEND_LIBJPEG", f"-I{j9}/include", f"{j9}/lib/libjpeg.a"]); assert r.returncode == 0, r.stderr
 
 def ffmpeg_bench(path, w, h):
     """FFmpeg's own mjpeg decoder: decode an MJPEG stream of N copies of the image (one process),

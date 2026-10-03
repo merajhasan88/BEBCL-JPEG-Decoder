@@ -1,0 +1,16 @@
+# SQRL Acorn CLE-215+ at fpgas.online (pins from LiteX-Boards sqrl_acorn.py and the fpgas.online
+# wiring page: the Pi's UART on P2, K2 = FPGA TX -> GPIO15, J2 = FPGA RX <- GPIO14)
+set_property -dict {PACKAGE_PIN J19 IOSTANDARD DIFF_SSTL15} [get_ports clk200_p]
+set_property -dict {PACKAGE_PIN H19 IOSTANDARD DIFF_SSTL15} [get_ports clk200_n]
+create_clock -period 5.000 -name clk200 [get_ports clk200_p]
+set_property -dict {PACKAGE_PIN J2 IOSTANDARD LVCMOS33} [get_ports uart_rx]
+set_property -dict {PACKAGE_PIN K2 IOSTANDARD LVCMOS33} [get_ports uart_tx]
+set_property -dict {PACKAGE_PIN G3 IOSTANDARD LVCMOS33} [get_ports {led[0]}]
+set_property -dict {PACKAGE_PIN H3 IOSTANDARD LVCMOS33} [get_ports {led[1]}]
+set_property -dict {PACKAGE_PIN G4 IOSTANDARD LVCMOS33} [get_ports {led[2]}]
+set_property -dict {PACKAGE_PIN H4 IOSTANDARD LVCMOS33} [get_ports {led[3]}]
+set_false_path -from [get_ports uart_rx]
+set_false_path -to [get_ports {uart_tx led[*]}]
+set_property CFGBVS VCCO [current_design]
+set_property CONFIG_VOLTAGE 3.3 [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]

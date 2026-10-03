@@ -173,6 +173,7 @@ module jpeg_raster_fast #(
 
   assign idle = (state == R_IDLE) & ~p_valid & ~v_valid & ~px_valid;
 
+  logic [3*AW-1:0] pbase_r;
   // next line: near row of component c advances after lower rows of vertical pairs
   logic [AW-1:0] far_n [0:2];
   logic          lnext_odd;
@@ -189,7 +190,6 @@ module jpeg_raster_fast #(
       end
     end
   end
-  logic [3*AW-1:0] pbase_r;
 
   logic [1:0] lane_c [0:2];
   logic [7:0] smp    [0:2];

@@ -7,7 +7,7 @@
 #   family and speed grade: gives the Fmax of designs that do not fit the EP2C5), named cmp35_*
 set -e
 DEV=${1:-EP2C5T144C8}; SUF=${2:-}
-HERE=$(cd "$(dirname "$0")" && pwd); TP=$HERE/../../../../third_party; RTL=$HERE/../../../rtl
+HERE=$(cd "$(dirname "$0")" && pwd); TP=$HERE/../third_party; RTL=$HERE/../../../rtl
 mk() {  # name DUT DHT file...
   n=$1; dut=$2; dht=$3; shift 3; d=$HERE/cmp${SUF}_$n; mkdir -p $d
   { echo 'set_global_assignment -name FAMILY "Cyclone II"'

@@ -57,6 +57,13 @@
   it does not support 4:2:2 or restart markers.
 - **aq_djpeg decodes every file**, at 1.4-5.0 clocks/pixel. That makes it 3.0-3.3x slower than this
   decoder on the phone photos.
+- **On the same Artix-7 board** (XC7A200T, the table above) this decoder runs at 150 MHz (Fmax
+  160 MHz), aq_djpeg at 150 MHz (153 MHz) and core_jpeg at 92.3 MHz (95-104 MHz). On every one of
+  the 24 files this decoder needs the fewest clocks: aq_djpeg needs 1.37-1.95x as many, and
+  core_jpeg 1.6-2.1x on the 4:2:0 copies, which at its lower clock makes it 2.6-3.5x slower per
+  photo. core_jpeg decoded none of the 4:2:2 originals (it reads the EXIF thumbnail's header and
+  stalls). This decoder is also the smallest in logic (2,488 LUTs against 4,919 and 6,681, harness
+  included); aq_djpeg uses fewer block RAMs (4 tiles against 7.5) and DSP blocks (14 against 17).
 - Commercial cores were not available for testing. CAST's JPEG-DX-F data sheet quotes 2-32
   samples per clock (e.g. 300 Msamples/s) with 6,700 ALMs on Cyclone V or 18,250 LUT4 on ECP5 at
   70 MHz. These are vendor figures for larger devices, not measured on the same files.
@@ -82,15 +89,16 @@
 ## Reproduce
 
 ```sh
-cd claude_jpeg/tb && make obj_mcu/Vjpeg_decoder obj_fmcu/Vjpeg_decoder
-cd ../bench
-BENCH_POWER_PROFILE=performance python3 run_bench.py bench.json   # CPU decoders, full clock
+cd tb && make obj_mcu/Vjpeg_decoder obj_fmcu/Vjpeg_decoder
+cd ../bench                              # libjpeg 9e and stb_image are fetched by tools.py
+BENCH_POWER_PROFILE=performance python3 run_bench.py bench.json [image.jpg ...]   # CPU decoders, full clock
 python3 bench_fpga.py bench.json         # this decoder's clock counts (cycle-exact simulation)
-python3 ../scripts/jtag_decode.py <files> > board_jtag_95mhz.txt   # on the board, fpga_jtag loaded
+python3 ../boards/ep2c5/scripts/jtag_decode.py <files> > board_jtag_95mhz.txt   # EP2C5, fpga_jtag loaded
 cd others && ./fetch.sh && ./build.sh && python3 run_others.py others.json
 ./quartus/make_projects.sh && ./quartus/compile_all.sh
 ./quartus/make_projects.sh EP2C35F672C8 35 && SUF=35 ./quartus/compile_all.sh
 cd .. && python3 make_benchmarks_md.py   # -> ../BENCHMARKS.md
+# Artix-7 board: boards/acorn_cle215/README.md (build.tcl, pi_bench.py, make_expected.py, report.py)
 ```
 
 `bench_powersaver.json` holds the CPU runs in the laptop's power-saver profile. Its libjpeg-turbo

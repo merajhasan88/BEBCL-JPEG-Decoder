@@ -119,6 +119,7 @@ module jpeg_dec_small #(
     .hc_raddr(hc_raddr), .hc_rdata(hc_rdata), .hv_raddr(hv_raddr), .hv_rdata(hv_rdata),
     .dqt_raddr(dqt_raddr), .dqt_rdata(dqt_rdata),
     .blk_we(blk_we), .blk_waddr(blk_waddr), .blk_wdata(blk_wdata));
+  logic skip_idct;                       // block not transformed (assigned with the control below)
   jpeg_blockram u_blk (
     .clk(clk), .rst(rst), .zero_start(id_pass2), .we(blk_we & ~skip_idct), .waddr(blk_waddr), .wdata(blk_wdata),
     .raddr(blk_raddr), .rdata(blk_rdata));    // skipped blocks never dirty the buffer
@@ -245,7 +246,7 @@ module jpeg_dec_small #(
   assign cd_tq    = comp_tq[2*cur_ci +: 2];
   assign slot     = cur_base + (vv ? (cur_h2 ? 4'd2 : 4'd1) : 4'd0) + {3'd0, hh};
 
-  logic last_blk_of_comp, last_comp, skip_idct, more_x, more_y;
+  logic last_blk_of_comp, last_comp, more_x, more_y;
   logic [15:0] wm1_c, hm1_c;
   localparam logic [12:0] hdr_err_mask = (13'd1 << ERR_SOF_TYPE) | (13'd1 << ERR_PRECISION) | (13'd1 << ERR_DQT)
                                        | (13'd1 << ERR_DHT) | (13'd1 << ERR_NCOMP) | (13'd1 << ERR_SAMPLING)

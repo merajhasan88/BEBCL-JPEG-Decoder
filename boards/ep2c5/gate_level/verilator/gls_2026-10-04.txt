@@ -1,0 +1,16 @@
+=== gls
+cycles=1268051 uart bytes=28685 por+decode done
+frame 64x64, 4096 pixels
+pixel checksum of received frame = 0x10137ECE
+PASS: UART frame matches golden and the checksum LED is on
+=== gls_fast
+cycles=1242915 uart bytes=28685 por+decode done
+frame 64x64, 4096 pixels
+pixel checksum of received frame = 0x10137ECE
+PASS: UART frame matches golden and the checksum LED is on
+=== gls_raster
+cycles=3386104 uart bytes=78861 por+decode done
+frame 352x32, 11264 pixels
+pixel checksum of received frame = 0x3C7A89E2
+PASS: UART frame matches golden and the checksum LED is on
+done

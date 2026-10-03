@@ -3,7 +3,7 @@
 #   make test         -> regression: every configuration x output format x corpus image, with and
 #                        without random stalls, against model/jpeg_golden.py (run_tests.py), then
 #                        several images streamed back to back without reset (run_stream_tests.py)
-#   The corpus is tb/corpus (generated from the owner's photos by ../scripts/make_corpus.py).
+#   The corpus is tb/corpus (generated from test_images/adapter.jpg by ../scripts/make_corpus.py).
 #   make lint
 #   make TRACE=1      -> VCD tracing (run the binary with --trace out.vcd)
 # Configurations (jpeg_decoder parameters):
@@ -50,6 +50,15 @@ obj_%/Vjpeg_decoder: $(RTL) tb_jpeg.cpp
 	verilator $(VFLAGS) $(CFG_$*) -Mdir obj_$* -cc $(RTL) --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_$*.log 2>&1 || (cat obj_$*.log; false)
 	$(MAKE) -s -j2 -C obj_$* -f Vjpeg_decoder.mk Vjpeg_decoder
 
+# raster + fancy upsampling with a row buffer of N bytes (scripts/decode.py --profile pillow sizes N
+# for the widest image): obj_frfancy_rbN (FAST=1), obj_rfancy_rbN (compact core)
+obj_frfancy_rb%/Vjpeg_decoder: $(RTL) tb_jpeg.cpp
+	verilator $(VFLAGS) $(CFG_frfancy) -GROWBUF_BYTES=$* -Mdir obj_frfancy_rb$* -cc $(RTL) --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_frfancy_rb$*.log 2>&1 || (cat obj_frfancy_rb$*.log; false)
+	$(MAKE) -s -j2 -C obj_frfancy_rb$* -f Vjpeg_decoder.mk Vjpeg_decoder
+obj_rfancy_rb%/Vjpeg_decoder: $(RTL) tb_jpeg.cpp
+	verilator $(VFLAGS) $(CFG_rfancy) -GROWBUF_BYTES=$* -Mdir obj_rfancy_rb$* -cc $(RTL) --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_rfancy_rb$*.log 2>&1 || (cat obj_rfancy_rb$*.log; false)
+	$(MAKE) -s -j2 -C obj_rfancy_rb$* -f Vjpeg_decoder.mk Vjpeg_decoder
+
 # multi-image harness, linked against the model compiled for Vjpeg_decoder
 obj_%/Vmulti: obj_%/Vjpeg_decoder tb_multi.cpp
 	$(CXX) -O1 -std=c++17 -Iobj_$* -I$(VROOT)/include -I$(VROOT)/include/vltstd tb_multi.cpp \
@@ -57,15 +66,7 @@ obj_%/Vmulti: obj_%/Vjpeg_decoder tb_multi.cpp
 
 multi: $(MULTI)
 
-# JTAG streaming harness (rtl/jtag_stream_core.sv) with the clock gate modelled: obj_jtag/Vjtag
-obj_jtag/Vjtag: $(RTL) $(RTL_DIR)/jtag_stream_core.sv jtag_sim_top.sv tb_jtag.cpp
-	verilator -Wno-fatal -Wno-lint -Wno-style --top-module jtag_sim_top -O2 --x-assign fast --x-initial fast \
-	  -Mdir obj_jtag -cc $(RTL) $(RTL_DIR)/jtag_stream_core.sv jtag_sim_top.sv --exe tb_jtag.cpp -o Vjtag > obj_jtag.log 2>&1 || (cat obj_jtag.log; false)
-	$(MAKE) -s -j2 -C obj_jtag -f Vjtag_sim_top.mk Vjtag
-
-jtag: obj_jtag/Vjtag
-
-.PHONY: all multi jtag lint test clean
+.PHONY: all multi lint test clean
 lint:
 	$(foreach c,$(CONFIGS),echo "== $(c)"; verilator --lint-only -Wall -Wno-DECLFILENAME $(CFG_$(c)) --top-module jpeg_decoder $(RTL);)
 

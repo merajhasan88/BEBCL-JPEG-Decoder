@@ -1,5 +1,5 @@
 // tb_other.cpp - cycle-exact harness for other FPGA JPEG decoders (not part of this project;
-// fetched by fetch.sh into ../../../third_party), same conditions as this project's benchmarks:
+// fetched by fetch.sh into bench/others/third_party), same conditions as this project's benchmarks:
 // the JPEG offered as fast as the core accepts it (32-bit words, first byte in bits 7:0), every
 // pixel accepted at once.  Build with -DCORE_JPEG (ultraembedded core_jpeg, top jpeg_core) or
 // -DAQ_DJPEG (H. Ishihara's / AQUAXIS decoder as in ultraembedded/legacy_jpeg_decoder, top aq_djpeg).

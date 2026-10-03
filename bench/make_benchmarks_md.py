@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Assemble ../BENCHMARKS.md from doc/head.md, the per-image tables (bench_report.py bench.json
 [bench_powersaver.json]),
-doc/middle.md, the FPGA-decoder comparison (others/report.py) and doc/tail.md.
+doc/middle.md, the FPGA-decoder comparison (others/report.py), the Artix-7 board run
+(doc/artix7.md + boards/acorn_cle215/report.py) and doc/tail.md.
 usage: make_benchmarks_md.py [bench.json]"""
 import os, sys, subprocess
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -10,7 +11,11 @@ ps = os.path.join(HERE, "bench_powersaver.json")     # the same CPU runs in the 
 tables = subprocess.run(["python3", os.path.join(HERE, "bench_report.py"), bj] + ([ps] if os.path.exists(ps) else []),
                         capture_output=True, text=True, check=True).stdout
 others = subprocess.run(["python3", os.path.join(HERE, "others", "report.py")], capture_output=True, text=True, check=True).stdout
+# the same decoders on a remote Artix-7 board (boards/acorn_cle215, results file of the run)
+acorn = os.path.join(HERE, "..", "boards", "acorn_cle215")
+artix = subprocess.run(["python3", os.path.join(acorn, "report.py"), os.path.join(acorn, "results_2026-10-03.json")],
+                       capture_output=True, text=True, check=True).stdout
 parts = [open(os.path.join(HERE, "doc", "head.md")).read(), tables, open(os.path.join(HERE, "doc", "middle.md")).read(),
-         others, open(os.path.join(HERE, "doc", "tail.md")).read()]
+         others, open(os.path.join(HERE, "doc", "artix7.md")).read() + "\n" + artix, open(os.path.join(HERE, "doc", "tail.md")).read()]
 open(os.path.join(HERE, "..", "BENCHMARKS.md"), "w").write("\n".join(p.rstrip("\n") + "\n" for p in parts))
 print("wrote BENCHMARKS.md")

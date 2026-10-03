@@ -1,0 +1,127 @@
+# Acorn CLE-215+ (Xilinx Artix-7 XC7A200T): decoders measured over a UART
+
+A board build that runs one JPEG decoder at a time on real hardware and reports its clock count,
+a checksum of its pixels and its error bits for each file sent over a UART. It was written for
+the remote boards of [fpgas.online](https://fpgas.online) (Welland site: SQRL Acorn CLE-215+ with
+an Artix-7 XC7A200T, wired to a Raspberry Pi 5 that loads the FPGA over GPIO JTAG and talks to it
+over its UART), and it measures this library's decoder and, for comparison, two other open-source
+FPGA JPEG decoders under identical conditions.
+
+| `DUT` | decoder | source |
+|---:|---|---|
+| 0 | this library, fast core (`jpeg_decoder #(.FAST(1))`, MCU order, RGB) | `../../rtl` |
+| 1 | ultraembedded core_jpeg (`jpeg_core`, `SUPPORT_WRITABLE_DHT=1`) | not part of this library: `../../bench/others/fetch.sh` |
+| 2 | H. Ishihara's aq_djpeg (via ultraembedded/legacy_jpeg_decoder) | not part of this library: `../../bench/others/fetch.sh` |
+
+## Files
+
+| file | contents |
+|---|---|
+| `uart_bench_core.sv` | vendor-neutral: UART receiver and transmitter, 4 KB input FIFO, protocol, the decoder under test, counters |
+| `acorn_top.sv` | the Xilinx-specific part: 200 MHz differential input buffer, MMCM (1200 MHz VCO / `CLKOUT_DIV`), `BUFG`, and the `BUFGCE` that gates the decoder's clock |
+| `acorn.xdc` | pins: clock J19/H19 (DIFF_SSTL15), UART J2 (FPGA RX) / K2 (FPGA TX), LEDs G3 H3 G4 H4 |
+| `build.tcl` | Vivado non-project batch build |
+| `pi_bench.py` | host side (any Linux host with the UART; needs pyserial): sends files, prints one result line per file |
+| `sim/` | Verilator simulation of the whole harness (`uart_sim_top.sv` models the gated clock buffer, `tb_uart.cpp` sends files over the simulated UART) |
+| `make_expected.py` | expected results: libjpeg 9e checksums and RTL clock counts for this library, the other decoders' own simulations (and their accuracy against libjpeg 9e) |
+| `report.py` | markdown tables from a results file |
+| `results_2026-10-03.json` | the run on fpgas.online, Welland pi46 |
+
+## How the measurement works
+
+The decoder's clock is the core clock gated by a glitch-free clock buffer (`BUFGCE`). The gate is
+open only while the decoder's next input is waiting in the FIFO, during its reset, and after the
+whole file has arrived until the frame is done. So at every decoder clock the input is available,
+and `clocks` is the decode time with an ideal input, independent of the UART speed; it equals
+the cycle-exact simulation (`tb/` for this library, `bench/others/tb_other.cpp` for the others).
+The checksum is the sum over all pixels of `{(x ^ y)[7:0], R, G, B}` mod 2^32, as on the EP2C5
+boards, so it does not depend on the pixel order. A decoder that stalls is ended after 2^26 of its
+clocks without a pixel (flag `watchdog`), so the next file still runs.
+
+Protocol (8N1): host to FPGA `55 AA 'J' 'P' len[31:0]` (big-endian) and the file; FPGA to host,
+32 bytes when the frame is done: `'R' 'E' 'S' DUT, flags, 0 0 0, clocks[31:0], checksum[31:0],
+err[15:0], width[15:0], height[15:0], pixels[31:0], bytes[31:0], 0 0` (flags: 1 FIFO overflow,
+2 watchdog, 4 done).
+
+## Build and run
+
+```sh
+# Vivado (tested with 2026.1; it needs a licence file, the free "Vivado Basic" licence covers the
+# 7-series; on Ubuntu 22.04 it also needs libtinfo.so.5 from the libtinfo5 package)
+vivado -mode batch -source build.tcl -tclargs <DUT> <CLKOUT_DIV> <out_dir>
+#   CLKOUT_DIV 8 = 150 MHz (this library, aq_djpeg), 13 = 92.3 MHz (core_jpeg); VIVADO_THREADS limits threads
+# load the bitstream into the FPGA's configuration RAM (not its flash), e.g. on the Pi:
+openFPGALoader --cable libgpiod --pins 10:9:11:8 acorn_dut0_div8.bit
+python3 pi_bench.py /dev/ttyAMA0 1000000 photo1.jpg photo2.jpg
+# expected results (libjpeg 9e djpeg built by ../../bench/run_bench.py; tb/obj_fmcu built by `make`)
+python3 make_expected.py --djpeg <libjpeg 9e djpeg> --out expected.json photo1.jpg photo2.jpg
+# the harness in simulation (8 clocks per UART bit)
+cd sim && verilator --top-module uart_sim_top -GDUT=0 -cc <rtl files> ../uart_bench_core.sv uart_sim_top.sv --exe tb_uart.cpp ...
+```
+
+Timing is checked against the -2 speed grade (`xc7a200tfbg484-2`); the board's chip is a -3.
+To port the harness to another board, keep `uart_bench_core.sv` and replace the top: a clock
+source, a glitch-free gated clock buffer for the decoder (Intel `ALTCLKCTRL` with its enable,
+Lattice `DCC`, ...) and the pins. Without a gated clock the count would include the time spent
+waiting for the UART.
+
+## Results: fpgas.online Welland pi46, 2026-10-03
+
+The owner's 12 phone photos (`test_images/`: 3120x4160 and 4160x3120, 4:2:2 with an EXIF
+thumbnail) and 4:2:0 re-encodes of the same photos (libjpeg-turbo `cjpeg -baseline -quality 90
+-sample 2x2`, no metadata), sent at 1 Mbaud. Tables: `python3 report.py results_2026-10-03.json`.
+
+Board: SQRL Acorn CLE-215+ (Xilinx Artix-7 XC7A200T-3) at fpgas.online, Welland site, pi46 (Raspberry Pi 5: JTAG and UART on GPIO). Date: 2026-10-03. Timing: Vivado 2026.1, part xc7a200tfbg484-2 (conservative; the board's chip is -3).
+
+| decoder | board clock | Fmax (Vivado) | LUTs | flip-flops | block RAM (36 kb tiles) | DSP48E1 |
+|---|---:|---:|---:|---:|---:|---:|
+| this library, fast core (MCU order, RGB) | 150.0 MHz | 160 MHz | 2,488 | 2,663 | 7.5 | 17 |
+| ultraembedded core_jpeg (SUPPORT_WRITABLE_DHT=1) | 92.3 MHz | 95-104 MHz (3 builds) | 6,681 | 6,037 | 7 | 32 |
+| H. Ishihara aq_djpeg | 150.0 MHz | 153 MHz | 4,919 | 4,933 | 4 | 14 |
+
+Areas include the same UART harness (`uart_bench_core.sv`) around each decoder. The harness itself is ~284 LUTs, ~530 flip-flops and one 36 kb block RAM (the input FIFO):
+this library's decoder alone is 2,204 LUTs, 2,124 flip-flops, 13 BRAM18 and 17 DSPs (`report_utilization -hierarchical`, 2026-10-04 build).
+
+| file | size | this library | core_jpeg | aq_djpeg |
+|---|---|---|---|---|
+| adapter.jpg | 3120x4160 4:2:2 | 1.482 clk/px, 128.2 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.870 clk/px, 248.4 ms; = its simulation; vs libjpeg max diff 6, PSNR 43.0 dB |
+| IMG20260405182829.jpg | 3120x4160 4:2:2 | 1.611 clk/px, 139.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.133 clk/px, 271.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB |
+| IMG20260405182833.jpg | 3120x4160 4:2:2 | 1.659 clk/px, 143.5 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.242 clk/px, 280.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.2 dB |
+| IMG20260425135544.jpg | 3120x4160 4:2:2 | 1.475 clk/px, 127.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.625 clk/px, 227.2 ms; = its simulation; vs libjpeg max diff 6, PSNR 41.7 dB |
+| IMG20260425135628.jpg | 4160x3120 4:2:2 | 1.780 clk/px, 154.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 3.405 clk/px, 294.6 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB |
+| IMG20260425141210.jpg | 4160x3120 4:2:2 | 1.469 clk/px, 127.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.687 clk/px, 232.5 ms; = its simulation; vs libjpeg max diff 7, PSNR 42.3 dB |
+| IMG20260523191343.jpg | 3120x4160 4:2:2 | 1.544 clk/px, 133.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.930 clk/px, 253.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB |
+| IMG20260612210949.jpg | 4160x3120 4:2:2 | 1.310 clk/px, 113.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.204 clk/px, 190.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB |
+| IMG20260716020409.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.909 clk/px, 165.2 ms; = its simulation; vs libjpeg max diff 5, PSNR 44.0 dB |
+| IMG20260716020422.jpg | 4160x3120 4:2:2 | 1.187 clk/px, 102.7 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.916 clk/px, 165.8 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.0 dB |
+| IMG20260716020424.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.906 clk/px, 164.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.2 dB |
+| IMG20260723160735.jpg | 4160x3120 4:2:2 | 1.338 clk/px, 115.8 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.241 clk/px, 193.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 41.6 dB |
+| adapter_420.jpg | 3120x4160 4:2:0 | 1.074 clk/px, 92.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 1.984 clk/px, 171.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB |
+| IMG20260405182829_420.jpg | 3120x4160 4:2:0 | 1.174 clk/px, 101.5 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.194 clk/px, 189.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB |
+| IMG20260405182833_420.jpg | 3120x4160 4:2:0 | 1.207 clk/px, 104.4 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.271 clk/px, 196.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.0 dB |
+| IMG20260425135544_420.jpg | 3120x4160 4:2:0 | 1.152 clk/px, 99.7 ms; identical to libjpeg 9e | 2.148 clk/px, 302.0 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.0 dB | 1.967 clk/px, 170.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.4 dB |
+| IMG20260425135628_420.jpg | 4160x3120 4:2:0 | 1.366 clk/px, 118.2 ms; identical to libjpeg 9e | 2.188 clk/px, 307.7 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.3 dB | 2.614 clk/px, 226.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.7 dB |
+| IMG20260425141210_420.jpg | 4160x3120 4:2:0 | 1.106 clk/px, 95.7 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.5 dB | 1.947 clk/px, 168.5 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.9 dB |
+| IMG20260523191343_420.jpg | 3120x4160 4:2:0 | 1.156 clk/px, 100.1 ms; identical to libjpeg 9e | 2.152 clk/px, 302.6 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 2.072 clk/px, 179.3 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB |
+| IMG20260612210949_420.jpg | 4160x3120 4:2:0 | 1.018 clk/px, 88.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.6 dB | 1.492 clk/px, 129.1 ms; = its simulation; vs libjpeg max diff 8, PSNR 43.0 dB |
+| IMG20260716020409_420.jpg | 4160x3120 4:2:0 | 1.006 clk/px, 87.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.0 dB | 1.379 clk/px, 119.4 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.2 dB |
+| IMG20260716020422_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.4 dB | 1.397 clk/px, 120.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.5 dB |
+| IMG20260716020424_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.7 dB | 1.388 clk/px, 120.1 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.8 dB |
+| IMG20260723160735_420.jpg | 4160x3120 4:2:0 | 1.060 clk/px, 91.8 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB | 1.643 clk/px, 142.1 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.6 dB |
+
+What the run shows:
+
+- **This library decoded all 24 files with pixels identical to libjpeg 9e**, at 1.18-1.78
+  clocks/pixel on the 4:2:2 originals and 1.005-1.37 on the 4:2:0 copies, 87-154 ms per
+  12-megapixel photo at 150 MHz. Each clock count equals the cycle-exact simulation and the counts
+  measured on the Cyclone II EP2C5 board (`adapter.jpg`: 19,234,181 clocks on both).
+- **aq_djpeg decoded all 24**, with 1.37-1.95x as many clocks per file as this library, at a similar
+  Fmax (153 MHz). Its pixels differ from libjpeg's by up to 4-12 levels (PSNR 41.6-46.8 dB).
+- **core_jpeg decoded none of the originals**: it does not support 4:2:2, and on these files it
+  reads the header of the EXIF thumbnail (128x176) and then stalls. It decoded all 12 4:2:0 copies
+  at a nearly constant 2.14-2.19 clocks/pixel, with the lowest Fmax (95-104 MHz on this part):
+  about 301 ms per photo at 92.3 MHz. Its pixels differ by up to 4-12 levels (PSNR 42.0-46.7 dB).
+- **Every board result of the other two decoders equals their own simulation** (clock count and
+  checksum), so the harness measures each decoder exactly as simulated.
+- This library is also the smallest of the three in logic (2,488 LUTs against 4,919 and 6,681,
+  harness included); aq_djpeg uses the fewest block RAMs (4 tiles against 7.5) and DSPs (14 against 17).
