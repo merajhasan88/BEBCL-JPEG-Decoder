@@ -1,0 +1,92 @@
+verilator -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast  -Mdir obj_mcu -cc ../rtl/jpeg_pkg.sv ../rtl/jpeg_sdp_ram.sv ../rtl/jpeg_blockram.sv ../rtl/jpeg_parser.sv ../rtl/jpeg_bitreader.sv ../rtl/jpeg_coefdec.sv ../rtl/jpeg_idct.sv ../rtl/jpeg_ycc2rgb.sv ../rtl/jpeg_pixgen.sv ../rtl/jpeg_raster.sv ../rtl/jpeg_dec_small.sv ../rtl/jpeg_bitwin.sv ../rtl/jpeg_huffdec.sv ../rtl/jpeg_idct_fast.sv ../rtl/jpeg_mcuout.sv ../rtl/jpeg_raster_fast.sv ../rtl/jpeg_dec_fast.sv ../rtl/jpeg_decoder.sv --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_mcu.log 2>&1 || (cat obj_mcu.log; false)
+make -s -j2 -C obj_mcu -f Vjpeg_decoder.mk Vjpeg_decoder
+Archive ar -rcs Vjpeg_decoder__ALL.a Vjpeg_decoder__ALL.o
+verilator -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast -GRASTER_OUT=1 -Mdir obj_rbox -cc ../rtl/jpeg_pkg.sv ../rtl/jpeg_sdp_ram.sv ../rtl/jpeg_blockram.sv ../rtl/jpeg_parser.sv ../rtl/jpeg_bitreader.sv ../rtl/jpeg_coefdec.sv ../rtl/jpeg_idct.sv ../rtl/jpeg_ycc2rgb.sv ../rtl/jpeg_pixgen.sv ../rtl/jpeg_raster.sv ../rtl/jpeg_dec_small.sv ../rtl/jpeg_bitwin.sv ../rtl/jpeg_huffdec.sv ../rtl/jpeg_idct_fast.sv ../rtl/jpeg_mcuout.sv ../rtl/jpeg_raster_fast.sv ../rtl/jpeg_dec_fast.sv ../rtl/jpeg_decoder.sv --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_rbox.log 2>&1 || (cat obj_rbox.log; false)
+make -s -j2 -C obj_rbox -f Vjpeg_decoder.mk Vjpeg_decoder
+Archive ar -rcs Vjpeg_decoder__ALL.a Vjpeg_decoder__ALL.o
+verilator -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast -GRASTER_OUT=1 -GFANCY_UPSAMPLE=1 -GCC_TURBO=1 -Mdir obj_rfancy -cc ../rtl/jpeg_pkg.sv ../rtl/jpeg_sdp_ram.sv ../rtl/jpeg_blockram.sv ../rtl/jpeg_parser.sv ../rtl/jpeg_bitreader.sv ../rtl/jpeg_coefdec.sv ../rtl/jpeg_idct.sv ../rtl/jpeg_ycc2rgb.sv ../rtl/jpeg_pixgen.sv ../rtl/jpeg_raster.sv ../rtl/jpeg_dec_small.sv ../rtl/jpeg_bitwin.sv ../rtl/jpeg_huffdec.sv ../rtl/jpeg_idct_fast.sv ../rtl/jpeg_mcuout.sv ../rtl/jpeg_raster_fast.sv ../rtl/jpeg_dec_fast.sv ../rtl/jpeg_decoder.sv --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_rfancy.log 2>&1 || (cat obj_rfancy.log; false)
+make -s -j2 -C obj_rfancy -f Vjpeg_decoder.mk Vjpeg_decoder
+Archive ar -rcs Vjpeg_decoder__ALL.a Vjpeg_decoder__ALL.o
+verilator -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast -GRASTER_OUT=1 -GFANCY_UPSAMPLE=1 -GCC_TURBO=1 -GROWBUF_BYTES=9216 -Mdir obj_ep2c5 -cc ../rtl/jpeg_pkg.sv ../rtl/jpeg_sdp_ram.sv ../rtl/jpeg_blockram.sv ../rtl/jpeg_parser.sv ../rtl/jpeg_bitreader.sv ../rtl/jpeg_coefdec.sv ../rtl/jpeg_idct.sv ../rtl/jpeg_ycc2rgb.sv ../rtl/jpeg_pixgen.sv ../rtl/jpeg_raster.sv ../rtl/jpeg_dec_small.sv ../rtl/jpeg_bitwin.sv ../rtl/jpeg_huffdec.sv ../rtl/jpeg_idct_fast.sv ../rtl/jpeg_mcuout.sv ../rtl/jpeg_raster_fast.sv ../rtl/jpeg_dec_fast.sv ../rtl/jpeg_decoder.sv --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_ep2c5.log 2>&1 || (cat obj_ep2c5.log; false)
+make -s -j2 -C obj_ep2c5 -f Vjpeg_decoder.mk Vjpeg_decoder
+Archive ar -rcs Vjpeg_decoder__ALL.a Vjpeg_decoder__ALL.o
+verilator -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast -GRASTER_OUT=1 -GFANCY_UPSAMPLE=1 -GCC_TURBO=1 -GROWBUF_BYTES=9216 -GRGB_OUT=0 -Mdir obj_noyrgb -cc ../rtl/jpeg_pkg.sv ../rtl/jpeg_sdp_ram.sv ../rtl/jpeg_blockram.sv ../rtl/jpeg_parser.sv ../rtl/jpeg_bitreader.sv ../rtl/jpeg_coefdec.sv ../rtl/jpeg_idct.sv ../rtl/jpeg_ycc2rgb.sv ../rtl/jpeg_pixgen.sv ../rtl/jpeg_raster.sv ../rtl/jpeg_dec_small.sv ../rtl/jpeg_bitwin.sv ../rtl/jpeg_huffdec.sv ../rtl/jpeg_idct_fast.sv ../rtl/jpeg_mcuout.sv ../rtl/jpeg_raster_fast.sv ../rtl/jpeg_dec_fast.sv ../rtl/jpeg_decoder.sv --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_noyrgb.log 2>&1 || (cat obj_noyrgb.log; false)
+make -s -j2 -C obj_noyrgb -f Vjpeg_decoder.mk Vjpeg_decoder
+Archive ar -rcs Vjpeg_decoder__ALL.a Vjpeg_decoder__ALL.o
+verilator -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast -GFAST=1 -Mdir obj_fmcu -cc ../rtl/jpeg_pkg.sv ../rtl/jpeg_sdp_ram.sv ../rtl/jpeg_blockram.sv ../rtl/jpeg_parser.sv ../rtl/jpeg_bitreader.sv ../rtl/jpeg_coefdec.sv ../rtl/jpeg_idct.sv ../rtl/jpeg_ycc2rgb.sv ../rtl/jpeg_pixgen.sv ../rtl/jpeg_raster.sv ../rtl/jpeg_dec_small.sv ../rtl/jpeg_bitwin.sv ../rtl/jpeg_huffdec.sv ../rtl/jpeg_idct_fast.sv ../rtl/jpeg_mcuout.sv ../rtl/jpeg_raster_fast.sv ../rtl/jpeg_dec_fast.sv ../rtl/jpeg_decoder.sv --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_fmcu.log 2>&1 || (cat obj_fmcu.log; false)
+make -s -j2 -C obj_fmcu -f Vjpeg_decoder.mk Vjpeg_decoder
+Archive ar -rcs Vjpeg_decoder__ALL.a Vjpeg_decoder__ALL.o
+verilator -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast -GFAST=1 -GRASTER_OUT=1 -Mdir obj_frbox -cc ../rtl/jpeg_pkg.sv ../rtl/jpeg_sdp_ram.sv ../rtl/jpeg_blockram.sv ../rtl/jpeg_parser.sv ../rtl/jpeg_bitreader.sv ../rtl/jpeg_coefdec.sv ../rtl/jpeg_idct.sv ../rtl/jpeg_ycc2rgb.sv ../rtl/jpeg_pixgen.sv ../rtl/jpeg_raster.sv ../rtl/jpeg_dec_small.sv ../rtl/jpeg_bitwin.sv ../rtl/jpeg_huffdec.sv ../rtl/jpeg_idct_fast.sv ../rtl/jpeg_mcuout.sv ../rtl/jpeg_raster_fast.sv ../rtl/jpeg_dec_fast.sv ../rtl/jpeg_decoder.sv --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_frbox.log 2>&1 || (cat obj_frbox.log; false)
+make -s -j2 -C obj_frbox -f Vjpeg_decoder.mk Vjpeg_decoder
+Archive ar -rcs Vjpeg_decoder__ALL.a Vjpeg_decoder__ALL.o
+verilator -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast -GFAST=1 -GRASTER_OUT=1 -GFANCY_UPSAMPLE=1 -GCC_TURBO=1 -Mdir obj_frfancy -cc ../rtl/jpeg_pkg.sv ../rtl/jpeg_sdp_ram.sv ../rtl/jpeg_blockram.sv ../rtl/jpeg_parser.sv ../rtl/jpeg_bitreader.sv ../rtl/jpeg_coefdec.sv ../rtl/jpeg_idct.sv ../rtl/jpeg_ycc2rgb.sv ../rtl/jpeg_pixgen.sv ../rtl/jpeg_raster.sv ../rtl/jpeg_dec_small.sv ../rtl/jpeg_bitwin.sv ../rtl/jpeg_huffdec.sv ../rtl/jpeg_idct_fast.sv ../rtl/jpeg_mcuout.sv ../rtl/jpeg_raster_fast.sv ../rtl/jpeg_dec_fast.sv ../rtl/jpeg_decoder.sv --exe tb_jpeg.cpp -o Vjpeg_decoder > obj_frfancy.log 2>&1 || (cat obj_frfancy.log; false)
+make -s -j2 -C obj_frfancy -f Vjpeg_decoder.mk Vjpeg_decoder
+Archive ar -rcs Vjpeg_decoder__ALL.a Vjpeg_decoder__ALL.o
+g++ -O1 -std=c++17 -Iobj_mcu -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd tb_multi.cpp \
+  obj_mcu/Vjpeg_decoder__ALL.a obj_mcu/verilated.o -o obj_mcu/Vmulti -lpthread
+g++ -O1 -std=c++17 -Iobj_rbox -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd tb_multi.cpp \
+  obj_rbox/Vjpeg_decoder__ALL.a obj_rbox/verilated.o -o obj_rbox/Vmulti -lpthread
+g++ -O1 -std=c++17 -Iobj_rfancy -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd tb_multi.cpp \
+  obj_rfancy/Vjpeg_decoder__ALL.a obj_rfancy/verilated.o -o obj_rfancy/Vmulti -lpthread
+g++ -O1 -std=c++17 -Iobj_ep2c5 -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd tb_multi.cpp \
+  obj_ep2c5/Vjpeg_decoder__ALL.a obj_ep2c5/verilated.o -o obj_ep2c5/Vmulti -lpthread
+g++ -O1 -std=c++17 -Iobj_noyrgb -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd tb_multi.cpp \
+  obj_noyrgb/Vjpeg_decoder__ALL.a obj_noyrgb/verilated.o -o obj_noyrgb/Vmulti -lpthread
+g++ -O1 -std=c++17 -Iobj_fmcu -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd tb_multi.cpp \
+  obj_fmcu/Vjpeg_decoder__ALL.a obj_fmcu/verilated.o -o obj_fmcu/Vmulti -lpthread
+g++ -O1 -std=c++17 -Iobj_frbox -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd tb_multi.cpp \
+  obj_frbox/Vjpeg_decoder__ALL.a obj_frbox/verilated.o -o obj_frbox/Vmulti -lpthread
+g++ -O1 -std=c++17 -Iobj_frfancy -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd tb_multi.cpp \
+  obj_frfancy/Vjpeg_decoder__ALL.a obj_frfancy/verilated.o -o obj_frfancy/Vmulti -lpthread
+python3 run_tests.py
+done adp_16x16_q25_420
+done adp_16x16_q25_gray
+done adp_1x1_q50_420
+done adp_240x320_q95_422_rst4
+done adp_32x32_q25_420
+done adp_32x32_q25_444
+done adp_33x18_q40_440
+done adp_3x5_q50_420
+done adp_40x40_q20_sof1_UNSUPPORTED
+done adp_40x40_q40_lumasub
+done adp_40x50_q30_420_rst3
+done adp_45x37_q30_420_rst2
+done adp_45x37_q30_422
+done adp_45x37_q30_422_exifthumb
+done adp_45x37_q30_440_rst1row
+done adp_45x37_q30_gray_rst3
+done adp_45x37_q30_progressive_UNSUPPORTED
+done adp_4x6_q50_422
+done adp_5x3_q50_420
+done adp_64x64_q25_420
+done board_352x32_q6_420
+done scr_13x11_q40_gray
+done scr_160x120_q95_444
+done scr_17x33_q40_420
+done scr_256x64_q98_gray
+done scr_320x240_q90_420
+done scr_48x40_q40_mixed
+done scr_8x8_q10_gray
+done wide_1152x6_q20_gray
+done wide_1160x6_q20_gray
+done wide_352x20_q20_420
+done wide_368x20_q20_420
+done wide_384x12_q20_444
+done wide_576x10_q20_422
+done wide_592x10_q20_422
+
+mcu: 202/202  fmcu: 202/202  frbox: 202/202  frfancy: 202/202  rbox: 202/202  rfancy: 202/202  ep2c5: 202/202  noyrgb: 202/202
+TOTAL 1616/1616 passed
+python3 run_stream_tests.py
+done mcu
+done fmcu
+done frbox
+done frfancy
+done rbox
+done rfancy
+done ep2c5
+done noyrgb
+STREAM TESTS 80/80 passed
+python3 run_malformed_tests.py
+416/416 passed
+rc=0

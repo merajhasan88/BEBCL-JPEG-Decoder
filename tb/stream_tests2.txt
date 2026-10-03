@@ -1,0 +1,10 @@
+done mcu
+done fmcu
+done frbox
+done frfancy
+done rbox
+done rfancy
+done ep2c5
+done noyrgb
+STREAM TESTS 80/80 passed
+stream_rc=0

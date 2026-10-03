@@ -1,0 +1,30 @@
+# Synthesis/fit check of the bare decoder core on the Cyclone II EP2C5T144C8
+set_global_assignment -name FAMILY "Cyclone II"
+set_global_assignment -name DEVICE EP2C5T144C8
+set_global_assignment -name TOP_LEVEL_ENTITY jpeg_decoder
+set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_sdp_ram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_blockram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_parser.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_bitreader.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_coefdec.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_idct.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_ycc2rgb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_pixgen.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_raster.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_dec_small.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_bitwin.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_huffdec.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_idct_fast.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_mcuout.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_raster_fast.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_dec_fast.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/jpeg_decoder.sv
+set_global_assignment -name SDC_FILE jpeg_core.sdc
+# keep the fitter from using the (non-existent) pins as real I/O constraints: virtual pins
+set_instance_assignment -name VIRTUAL_PIN ON -to *
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 2
+
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"

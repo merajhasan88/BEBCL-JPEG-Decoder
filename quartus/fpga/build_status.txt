@@ -1,0 +1,2 @@
+fpga flow exit=0
+fpga eda exit=0

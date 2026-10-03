@@ -1,0 +1,11 @@
+donald cycles=2847577 bytes_consumed=246974/246974 pixels=2795520 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (8386577 bytes) 
+IMG_20260912_000207 cycles=25879513 bytes_consumed=5794456/5799875 pixels=12000000 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (36000017 bytes) 
+IMG_20260912_003139 cycles=21215381 bytes_consumed=4115499/4120918 pixels=12000000 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (36000017 bytes) 
+IMG_20260912_004330 cycles=21688261 bytes_consumed=4361552/4366971 pixels=12000000 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (36000017 bytes) 
+IMG_20260912_004759 cycles=23151501 bytes_consumed=4702683/4708102 pixels=12000000 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (36000017 bytes) 
+IMG_20260912_005827 cycles=26948769 bytes_consumed=5927808/5933227 pixels=12000000 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (36000017 bytes) 
+IMG_20260912_012049 cycles=19301225 bytes_consumed=3758406/3763825 pixels=12000000 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (36000017 bytes) 
+IMG_20260912_012545 cycles=21801209 bytes_consumed=4482119/4487538 pixels=12000000 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (36000017 bytes) 
+adapter cycles=19234181 bytes_consumed=3533250/3533250 pixels=12979200 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (38937617 bytes) 
+unnamed cycles=8392001 bytes_consumed=532330/532330 pixels=5038848 dup=0 oob=0 order_err=0 flag_err=0 err=0x000 PASS: output matches golden (15116561 bytes) 
+done

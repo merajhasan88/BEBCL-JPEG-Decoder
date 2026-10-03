@@ -1,0 +1,16 @@
+flow exit=0
+; Total logic elements               ; 3,445 / 4,608 ( 75 % )                          ;
+; Total registers                    ; 1347                                            ;
+; Total memory bits                  ; 30,272 / 119,808 ( 25 % )                       ;
+; Embedded Multiplier 9-bit elements ; 26 / 26 ( 100 % )                               ;
+; Total logic elements                        ; 3,445 / 4,608 ( 75 % )    ;
+; Total registers*                            ; 1,347 / 4,851 ( 28 % )    ;
+; Embedded Multiplier 9-bit elements          ; 26 / 26 ( 100 % )         ;
+; Total logic elements                        ; 3445 / 4608 ( 75 % ) ; 0 / 4608 ( 0 % )               ;
+; Total registers                             ; 1347                 ; 0                              ;
+; Embedded Multiplier 9-bit elements          ; 26 / 26 ( 100 % )    ; 0 / 26 ( 0 % )                 ;
+; Total memory bits                           ; 30272                ; 0                              ;
+; Embedded Multiplier 9-bit elements    ; 26          ; 2                   ; 26                ;
+; 59.15 MHz ; 59.15 MHz       ; clk        ;      ;
+; clk   ; 3.093 ; 0.000         ;
+-rw-r--r-- 1 root root 151390 Sep 21 18:24 output_files/jpeg_fpga.sof

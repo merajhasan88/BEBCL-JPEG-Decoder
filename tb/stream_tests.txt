@@ -1,0 +1,74 @@
+FAIL mcu     stall= 0 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+FAIL mcu     stall=30 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+done mcu
+FAIL fmcu    stall= 0 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+FAIL fmcu    stall=30 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+done fmcu
+FAIL frbox   stall= 0 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+FAIL frbox   stall=30 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+done frbox
+FAIL frfancy stall= 0 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+FAIL frfancy stall=30 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+done frfancy
+FAIL rbox    stall= 0 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+FAIL rbox    stall=30 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+done rbox
+FAIL rfancy  stall= 0 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+FAIL rfancy  stall=30 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+done rfancy
+FAIL ep2c5   stall= 0 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+FAIL ep2c5   stall=30 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+done ep2c5
+FAIL noyrgb  stall= 0 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+FAIL noyrgb  stall=30 an unsupported progressive file does not block the next image
+   frame 1: 0x0, 0 pixels, err=0x041, no golden
+   frame 2: 0x0, 0 pixels, err=0x041, DIFFERS (8 bytes)
+   frames: 2
+done noyrgb
+STREAM TESTS 64/80 passed  (16 FAILED)
+stream_rc=1

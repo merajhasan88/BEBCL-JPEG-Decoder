@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""Decode-speed benchmark: CPU decoders on this machine vs the RTL decoder's cycle counts.
+
+CPU side (single thread, pinned to one core, JPEG already in memory, median of ~0.1 s batches):
+  libjpeg-turbo 2.1.2 (C API)   default = ISLOW + fancy upsampling (what Pillow/OpenCV use); also -nosmooth
+  libjpeg 9e (C API)            built from ../jpeg-9e; default and -nosmooth
+  stb_image                     ../../stb_image.h
+  Pillow 9.0.1                  Image.open(BytesIO).load()           (libjpeg-turbo underneath)
+  OpenCV 4.7                    cv2.imdecode, cv2.setNumThreads(1)   (libjpeg-turbo underneath)
+  FFmpeg                        its own mjpeg decoder, -threads 1, many loops of one image
+  model/jpeg_golden.py          pure-Python reference (small images only, for scale)
+Each CPU run is wrapped in `perf stat` (when available) to record the average CPU clock during the
+run, so the results can also be given in CPU clocks per pixel.
+RTL side (bench_fpga.py): exact clock counts from Verilator simulation of the decoder.
+
+CPU clock: a laptop's power profile changes the results several-fold (this one in "power-saver"
+runs at ~0.8-0.9 GHz instead of up to 4 GHz).  With BENCH_POWER_PROFILE=performance the script sets
+that power profile (powerprofilesctl) for the run and restores the previous one at the end; the
+profile in effect and the measured clock are stored in the results.
+usage: [BENCH_POWER_PROFILE=performance] run_bench.py out.json   (tables: bench_report.py out.json)"""
+import os, sys, re, json, subprocess, shutil, time
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+SCR = os.environ.get("BENCH_SCRATCH", "/tmp/claude_bench")
+CORE = os.environ.get("BENCH_CORE", "3")
+IMAGES = [   # the owner's photos (tb/corpus is generated from them) + donald.jpg as the historical reference
+    ("adp_64x64_q25_420",      f"{HERE}/../tb/corpus/adp_64x64_q25_420.jpg"),
+    ("board_352x32_q6_420",    f"{HERE}/../tb/corpus/board_352x32_q6_420.jpg"),
+    ("scr_320x240_q90_420",    f"{HERE}/../tb/corpus/scr_320x240_q90_420.jpg"),
+    ("donald_2048x1365",       f"{ROOT}/donald.jpg"),
+    ("portrait_1944x2592_444", f"{ROOT}/test_images/unnamed.jpg"),
+    ("adapter_3120x4160_422",  f"{ROOT}/test_images/adapter.jpg"),
+    ("phone_4000x3000_light",  f"{ROOT}/test_images/IMG_20260912_012049.jpg"),
+    ("phone_4000x3000_dense",  f"{ROOT}/test_images/IMG_20260912_005827.jpg"),
+]
+
+def run(cmd, **kw):
+    return subprocess.run(cmd, capture_output=True, text=True, **kw)
+
+def parse(out):
+    m = re.search(r"(\d+)x(\d+) ms=([\d.]+) mpx_s=([\d.]+) decodes=(\d+) elapsed=([\d.]+) uJ_per_decode=([-\d.]+)", out)
+    if not m: return None
+    return dict(w=int(m[1]), h=int(m[2]), ms=float(m[3]), mpx_s=float(m[4]), n=int(m[5]), uj=float(m[7]))
+
+PERF_OUT = f"{SCR}/perf_stat.txt"
+def pinned(cmd):
+    """run on one core; with perf available, count CPU cycles and task time as well"""
+    base = ["taskset", "-c", CORE] + cmd
+    if not shutil.which("perf"): return base
+    return ["perf", "stat", "-x,", "-e", "cycles,task-clock", "-o", PERF_OUT, "--"] + base
+
+def ghz():
+    """average CPU clock of the last pinned() run (cycles / task time), None if unknown"""
+    try:
+        s = open(PERF_OUT).read(); os.remove(PERF_OUT)
+        cyc = float(re.search(r"^([\d.]+),[^,]*,cycles", s, re.M)[1])
+        ms = float(re.search(r"^([\d.]+),msec,task-clock", s, re.M)[1])
+        return round(cyc / (ms * 1e6), 3)
+    except Exception:
+        return None
+
+def timed(cmd):
+    """parse() of a pinned run, with its average CPU clock"""
+    v = parse(run(pinned(cmd)).stdout)
+    if v: v["ghz"] = ghz()
+    return v
+
+def power_profile(set_to=None):
+    if not shutil.which("powerprofilesctl"): return None
+    if set_to: run(["powerprofilesctl", "set", set_to])
+    return run(["powerprofilesctl", "get"]).stdout.strip() or None
+
+def build():
+    os.makedirs(SCR, exist_ok=True)
+    cc = ["gcc", "-O2", "-march=native", "-o"]
+    r = run(cc + [f"{SCR}/bench_turbo", f"{HERE}/bench_c.c", "-DBACKEND_LIBJPEG", "-ljpeg"]); assert r.returncode == 0, r.stderr
+    r = run(cc + [f"{SCR}/bench_stb", f"{HERE}/bench_c.c", "-DBACKEND_STB", "-lm"]); assert r.returncode == 0, r.stderr
+    j9 = f"{SCR}/jpeg9e"
+    if not os.path.exists(f"{j9}/inst/lib/libjpeg.a"):
+        shutil.rmtree(j9, ignore_errors=True); shutil.copytree(f"{ROOT}/jpeg-9e", f"{j9}/src")
+        for dp, _, fs in os.walk(f"{j9}/src"):
+            for fn in fs:
+                p = os.path.join(dp, fn)
+                if fn in ("configure", "config.sub", "config.guess", "install-sh", "depcomp", "compile", "missing", "ltmain.sh", "ar-lib") or fn.endswith((".in", ".am")):
+                    with open(p, "rb") as f: s = f.read()
+                    with open(p, "wb") as f: f.write(s.replace(b"\r\n", b"\n"))
+                    os.chmod(p, 0o755)
+        os.makedirs(f"{j9}/build", exist_ok=True)
+        r = run(["nice", "-n", "10", f"{j9}/src/configure", f"--prefix={j9}/inst", "--disable-shared", "CFLAGS=-O2 -march=native"], cwd=f"{j9}/build"); assert r.returncode == 0, r.stdout[-500:]
+        r = run(["nice", "-n", "10", "make", "-j2"], cwd=f"{j9}/build"); assert r.returncode == 0, r.stdout[-500:]
+        r = run(["make", "install"], cwd=f"{j9}/build"); assert r.returncode == 0
+    r = run(cc + [f"{SCR}/bench_jpeg9", f"{HERE}/bench_c.c", "-DBACKEND_LIBJPEG", f"-I{j9}/inst/include", f"{j9}/inst/lib/libjpeg.a"]); assert r.returncode == 0, r.stderr
+
+def ffmpeg_bench(path, w, h):
+    """FFmpeg's own mjpeg decoder: decode an MJPEG stream of N copies of the image (one process),
+    converted to RGB24 like the other decoders' output, subtract a run with N/4 copies to cancel
+    process start-up, single thread."""
+    data = open(path, "rb").read()
+    n_big = max(20, min(400, int(3e8 // (w * h))))     # ~0.3 Gpixel of work
+    n_small = n_big // 4
+    times = {}
+    for n in (n_small, n_big):
+        fn = f"{SCR}/ffmpeg_{n}.mjpg"
+        with open(fn, "wb") as f:
+            for _ in range(n): f.write(data)
+        best = 1e9
+        for _ in range(3):
+            t0 = time.perf_counter()
+            r = run(pinned(["ffmpeg", "-hide_banner", "-loglevel", "error", "-threads", "1", "-f", "mjpeg",
+                            "-i", fn, "-pix_fmt", "rgb24", "-f", "null", "-"]))   # RGB out, like the others
+            best = min(best, time.perf_counter() - t0)
+            clk = ghz()
+            if r.returncode: return None
+        times[n] = best
+        os.remove(fn)
+    per = (times[n_big] - times[n_small]) / (n_big - n_small)
+    return dict(w=w, h=h, ms=per * 1e3, mpx_s=w * h / per / 1e6, n=n_big, uj=-1, ghz=clk)
+
+def main():
+    want = os.environ.get("BENCH_POWER_PROFILE")
+    before = power_profile()
+    try:
+        prof = power_profile(want) if want else before
+        if prof != "performance":
+            print(f"note: power profile is {prof!r}; CPU results depend on it (BENCH_POWER_PROFILE=performance)", flush=True)
+        bench(prof)
+    finally:
+        if want and before and before != want: power_profile(before)
+
+DECODERS = {   # name -> run(path, w, h); the names are the keys in the results
+    "libjpeg-turbo (fancy)":    lambda p, w, h: timed([f"{SCR}/bench_turbo", p, "fancy", "1.5"]),
+    "libjpeg-turbo (nosmooth)": lambda p, w, h: timed([f"{SCR}/bench_turbo", p, "nosmooth", "1.5"]),
+    "libjpeg 9e (fancy)":       lambda p, w, h: timed([f"{SCR}/bench_jpeg9", p, "fancy", "1.5"]),
+    "libjpeg 9e (nosmooth)":    lambda p, w, h: timed([f"{SCR}/bench_jpeg9", p, "nosmooth", "1.5"]),
+    "stb_image":                lambda p, w, h: timed([f"{SCR}/bench_stb", p, "x", "1.5"]),
+    "Pillow":                   lambda p, w, h: timed(["python3", f"{HERE}/bench_py.py", "pillow", p, "1.5"]),
+    "OpenCV":                   lambda p, w, h: timed(["python3", f"{HERE}/bench_py.py", "opencv", p, "1.5"]),
+    "FFmpeg mjpeg":             lambda p, w, h: ffmpeg_bench(p, w, h),
+    "Python reference model":   lambda p, w, h: timed(["python3", f"{HERE}/bench_py.py", "model", p, "1.0"]) if w * h <= 64 * 64 * 4 else None,
+}
+
+def bench(prof):
+    """all decoders on all images; BENCH_ONLY=name,name re-runs only those and updates `out`"""
+    from PIL import Image
+    out = sys.argv[1] if len(sys.argv) > 1 else "bench.json"
+    only = [x for x in os.environ.get("BENCH_ONLY", "").split(",") if x]
+    build()
+    old = json.load(open(out)) if os.path.exists(out) else {}
+    res = old if (only and old) else {"cpu": run(["lscpu"]).stdout, "core": CORE, "results": {}}
+    if "rtl" in old: res["rtl"] = old["rtl"]      # keep bench_fpga.py's clock counts
+    res["power_profile"] = prof
+    res["date"] = time.strftime("%Y-%m-%d")
+    for name, path in IMAGES:
+        w, h = Image.open(path).size
+        r = res["results"].get(name, {}) if only else {}
+        for k, f in DECODERS.items():
+            if not only or k in only: r[k] = f(path, w, h)
+        res["results"][name] = r
+        print(name, {k: (v["ms"], v.get("ghz")) for k, v in r.items() if v and (not only or k in only)}, flush=True)
+    json.dump(res, open(out, "w"), indent=1)
+
+if __name__ == "__main__":
+    main()

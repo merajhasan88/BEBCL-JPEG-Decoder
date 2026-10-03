@@ -1,0 +1,35 @@
+done board_352x32_q10_420
+done dog_13x11_q40_gray
+done dog_16x16_q25_420
+done dog_16x16_q25_gray
+done dog_17x33_q40_420
+done dog_1x1_q50_420
+done dog_32x32_q25_420
+done dog_32x32_q25_444
+done dog_33x18_q40_440
+done dog_3x5_q50_420
+done dog_40x40_q20_sof1_UNSUPPORTED
+done dog_40x40_q40_lumasub
+done dog_40x50_q30_420_rst3
+done dog_45x37_q30_420_exifthumb
+done dog_45x37_q30_420_rst2
+done dog_45x37_q30_422
+done dog_45x37_q30_440_rst1row
+done dog_45x37_q30_gray_rst3
+done dog_45x37_q30_progressive_UNSUPPORTED
+done dog_48x40_q40_mixed
+done dog_4x6_q50_422
+done dog_5x3_q50_420
+done dog_64x64_q25_420
+done dog_8x8_q10_gray
+done wide_1152x6_q20_gray
+done wide_1160x6_q20_gray
+done wide_352x20_q20_420
+done wide_368x20_q20_420
+done wide_384x12_q20_444
+done wide_576x10_q20_422
+done wide_592x10_q20_422
+
+mcu: 178/178  fmcu: 178/178  rbox: 178/178  rfancy: 178/178  ep2c5: 178/178  noyrgb: 178/178
+TOTAL 1068/1068 passed
+exit=0

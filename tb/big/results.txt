@@ -1,0 +1,17 @@
+== donald.jpg
+cycles=36235889 bytes_consumed=246974/246974 pixels=2795520 dup=0 oob=0 err=0x000
+PASS: output matches golden (8386577 bytes)
+wall=22.51s rss=35716KB
+== 962873_025720_updates.jpg
+cycles=4001088 bytes_consumed=70730/70730 pixels=280000 dup=0 oob=0 err=0x000
+PASS: output matches golden (840015 bytes)
+wall=2.41s rss=6800KB
+== 1084px-Jef_Rens,_Pao_and_N_M_Joshi_at_the_ILO_conference.jpg
+cycles=9802203 bytes_consumed=113166/113166 pixels=1110016 dup=0 oob=0 err=0x000
+PASS: output matches golden (1110033 bytes)
+wall=5.62s rss=11280KB
+== 1684856835-A-STRONG-INDEPENDENT-DOG-WHO-DONT-NEED-NO-MAN.jpg
+cycles=4981143 bytes_consumed=28670/28670 pixels=388800 dup=0 oob=0 err=0x000
+PASS: output matches golden (1166415 bytes)
+wall=2.94s rss=9332KB
+done

@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+"""Assemble ../BENCHMARKS.md from doc/head.md, the per-image tables (bench_report.py bench.json
+[bench_powersaver.json]),
+doc/middle.md, the FPGA-decoder comparison (others/report.py) and doc/tail.md.
+usage: make_benchmarks_md.py [bench.json]"""
+import os, sys, subprocess
+HERE = os.path.dirname(os.path.abspath(__file__))
+bj = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "bench.json")
+ps = os.path.join(HERE, "bench_powersaver.json")     # the same CPU runs in the laptop's power-saver profile
+tables = subprocess.run(["python3", os.path.join(HERE, "bench_report.py"), bj] + ([ps] if os.path.exists(ps) else []),
+                        capture_output=True, text=True, check=True).stdout
+others = subprocess.run(["python3", os.path.join(HERE, "others", "report.py")], capture_output=True, text=True, check=True).stdout
+parts = [open(os.path.join(HERE, "doc", "head.md")).read(), tables, open(os.path.join(HERE, "doc", "middle.md")).read(),
+         others, open(os.path.join(HERE, "doc", "tail.md")).read()]
+open(os.path.join(HERE, "..", "BENCHMARKS.md"), "w").write("\n".join(p.rstrip("\n") + "\n" for p in parts))
+print("wrote BENCHMARKS.md")
