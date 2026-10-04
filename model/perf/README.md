@@ -41,19 +41,26 @@ coefficients per clock and pauses for every coefficient the Huffman decoder writ
 
 ## Variants (2026-10-04, the owner's 12 photos and their 4:2:0 copies, MCU order, 150 MHz)
 
-| configuration | clocks/pixel, 4:2:2 photos | 4:2:0 copies | ms per 12 MP photo | x libjpeg-turbo's time (one core, ~3.8 GHz) |
-|---|---:|---:|---:|---:|
-| today's fast core | 1.18-1.76 | 1.00-1.36 | 87-152 | 1.88-2.72 |
-| today + slot valid-bit masks (no zeroer) | 1.08-1.70 | 1.00-1.35 | 87-147 | 1.84-2.72 |
-| today + masks + 3 MCU buffers | 1.05-1.70 | 1.00-1.34 | 87-147 | 1.83-2.72 |
-| 1 symbol/clock, IDCT 32 clocks/block, 1 pixel/clock | 1.03 | 1.00 | 87-89 | 1.36-2.72 |
-| W2: 1 symbol/clock, IDCT 16, 2 pixels/clock | 0.54-0.61 | 0.50-0.52 | 44-52 | 0.77-1.36 |
-| **W4: 1 symbol/clock, IDCT 8, 4 pixels/clock** | **0.31-0.52** | **0.25-0.40** | **22-45** | **0.55-0.71** |
-| W4 with a 1-byte/clock input | 0.33-0.54 | 0.25-0.40 | 22-46 | 0.56-0.73 |
-| W4 with 2 symbols/clock (upper bound) | 0.30-0.34 | 0.25-0.27 | 22-29 | 0.40-0.69 |
+| configuration | clocks/pixel, 4:2:2 photos | 4:2:0 copies | ms per 12 MP photo at 150 MHz | x libjpeg-turbo -nosmooth (3.9 GHz) | x fastest CPU decoder (3.9 GHz) |
+|---|---:|---:|---:|---:|---:|
+| today's fast core | 1.18-1.76 | 1.00-1.36 | 87-152 | 2.22-3.17 | 2.23-3.46 |
+| today + slot valid-bit masks (no zeroer) | 1.08-1.70 | 1.00-1.35 | 87-147 | 2.14-3.16 | 2.14-3.45 |
+| today + masks + 3 MCU buffers | 1.05-1.70 | 1.00-1.34 | 87-147 | 2.12-3.16 | 2.12-3.45 |
+| 1 symbol/clock, IDCT 32 clocks/block, 1 pixel/clock | 1.03 | 1.00 | 87-89 | 1.45-3.16 | 1.45-3.45 |
+| W2: 1 symbol/clock, IDCT 16, 2 pixels/clock | 0.54-0.61 | 0.50-0.52 | 44-52 | 0.78-1.59 | 0.78-1.73 |
+| **W4: 1 symbol/clock, IDCT 8, 4 pixels/clock** | **0.31-0.52** | **0.25-0.40** | **22-45** | **0.63-0.80** | **0.63-0.90** |
+| W4 with a 1-byte/clock input | 0.33-0.54 | 0.25-0.40 | 22-46 | 0.63-0.83 | 0.63-0.95 |
+| W4 with 2 symbols/clock (upper bound) | 0.30-0.34 | 0.25-0.27 | 22-29 | 0.44-0.80 | 0.44-0.88 |
 
-W4 matches libjpeg-turbo on every photo from 106 MHz up; W2 would need 205 MHz. Its symbols average
-about 5 bits, so a 1-symbol/clock decoder needs only ~5 bits per clock: an 8-bit input port is enough.
+CPU times are those of `bench/bench_photos_2026-10-04.json` rescaled to a steady 3.9 GHz from each
+run's cycle count (the laptop throttled to 2.3-3.9 GHz during the runs; 3.9 GHz is its best case), and
+the like-for-like reference is libjpeg-turbo -nosmooth (the same pixels as this decoder); the fastest
+CPU decoder on a photo is libjpeg-turbo or FFmpeg. W4 matches libjpeg-turbo on every photo from
+120 MHz and the fastest CPU decoder from 135 MHz; W2 would need 238 / 259 MHz. (A first version of
+this table divided by the throttled raw times of libjpeg-turbo's default mode, which flattered the
+FPGA: "W4 matches libjpeg-turbo from 106 MHz" - corrected 2026-10-04 after the owner questioned it.)
+W4's symbols average about 5 bits, so a 1-symbol/clock decoder needs only ~5 bits per clock: an 8-bit
+input port is enough.
 
 Sizing of W4 (1-byte/clock input, worst case = busiest photo, clocks/pixel):
 

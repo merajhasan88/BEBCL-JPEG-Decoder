@@ -419,10 +419,12 @@ those pixels differ from libjpeg's (they are to be discarded anyway; documented)
   (`bench/board_jtag_95mhz_2026-10-04.txt`). `jtag_decode.py` now expects non-baseline files to be
   rejected (ERR_SOF_TYPE, no pixels).
 - **CPU comparison** (`bench/bench_photos_2026-10-04.json`, performance profile, the laptop
-  throttles to 2.3-3.9 GHz under sustained load): libjpeg-turbo 32-66 ms per 12-megapixel photo,
-  BEBCL-JPEG on the Artix-7 87-154 ms (1.9-2.7x longer), 8.5-12x fewer clocks per pixel. No FPGA decoder
-  beats libjpeg-turbo, FFmpeg or Pillow on single-image time; BEBCL-JPEG beats stb_image on every
-  original and is close to libjpeg 9e.
+  throttles to 2.3-3.9 GHz under sustained load): with every CPU time rescaled to a steady 3.9 GHz
+  from its cycle count (corrected 2026-10-04; the first report used the raw throttled times),
+  libjpeg-turbo -nosmooth 28-62 ms per 12-megapixel photo, BEBCL-JPEG on the Artix-7 87-154 ms
+  (2.2-3.2x longer), 8.2-11.7x fewer clocks per pixel. No FPGA decoder beats libjpeg-turbo, FFmpeg or
+  Pillow on single-image time; BEBCL-JPEG beats Go on every photo, stb_image on 20 of 24 and libjpeg 9e
+  (default upsampling) on 16 of 24.
 - **Vivado's xsim found two RTL portability bugs** that Verilator, Quartus and the hardware never
   showed: module-level loop counters written by several `always` blocks (`i` in jpeg_idct_fast,
   `gi` in jpeg_dec_small, `k` in jpeg_raster, `c`/`k` in jpeg_raster_fast - illegal SystemVerilog,

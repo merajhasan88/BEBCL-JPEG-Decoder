@@ -71,8 +71,9 @@ tested here), which BEBCL-JPEG rejects; core_jpeg has a smaller build with fixed
 "Least clocks per pixel" holds among open-source decoders: commercial cores claim more, e.g. CAST's
 JPEG-DX-F decodes 2 to 32 colour samples per clock depending on its configuration, where
 BEBCL-JPEG's fast core decodes 1.1-1.7 on the photos (a 4:2:2 pixel is 2 samples, a 4:2:0 pixel
-1.5). And one laptop CPU core with libjpeg-turbo still decodes a single photo 1.9-2.7x faster than
-BEBCL-JPEG at 150 MHz ([BENCHMARKS.md](BENCHMARKS.md)).
+1.5). And one laptop CPU core with libjpeg-turbo -nosmooth (the same pixels) at 3.9 GHz still decodes
+a single photo 2.2-3.2x faster than the `FAST=1` core at 150 MHz ([BENCHMARKS.md](BENCHMARKS.md); CPU
+times rescaled to a steady 3.9 GHz, the laptop's best case).
 
 ## Quick start: decode your own images
 
@@ -128,7 +129,9 @@ bytes in ─► jpeg_parser ─► table RAMs (DQT, Huffman MAXCODE/VALPTR, HUFF
                      pixels out: (x, y, c0, c1, c2, sof, eol) with a valid/ready handshake
 ```
 (the compact core; the `FAST=1` core has the same structure with a 32-bit bit window, lookahead
-Huffman tables, a 2-lane pipelined IDCT and 1-pixel-per-clock output stages.)
+Huffman tables, a 2-lane pipelined IDCT and 1-pixel-per-clock output stages; the `FAST=2` core
+decodes one Huffman symbol per clock, transforms a block in 8 clocks with two pipelined 1-D IDCTs
+and emits four pixels per clock, in MCU order.)
 
 ### Interface (`rtl/jpeg_decoder.sv`)
 
@@ -138,10 +141,11 @@ Huffman tables, a 2-lane pipelined IDCT and 1-pixel-per-clock output stages.)
 | `in_valid`, `in_data[7:0]`, `in_ready` | in | the JPEG file, one byte per accepted clock (files may follow back to back) |
 | `in_last` | in | 1 on the last byte of a file (0 if unknown): a file cut short before its EOI still ends with `frame_done` and `ERR_TRUNC` |
 | `out_fmt[1:0]` | in | `FMT_RGB` (0), `FMT_YCBCR` (1), `FMT_Y` (2); sampled when a frame starts |
-| `px_valid`, `px_ready` | out/in | pixel handshake (AXI4-Stream style: a pixel moves when both are high) |
-| `px_x`, `px_y` | out | pixel coordinates |
-| `px_c0`, `px_c1`, `px_c2` | out | R,G,B / Y,Cb,Cr / Y,128,128 (grey images in RGB: Y,Y,Y) |
-| `px_sof`, `px_eol` | out | first pixel of the frame (0,0) / last pixel of an image row (x = W-1) |
+| `px_valid`, `px_ready` | out/in | pixel handshake (AXI4-Stream style: a beat moves when both are high) |
+| `px_x`, `px_y` | out | coordinates of the beat's first pixel |
+| `px_n[2:0]` | out | pixels in the beat: always 1 for `FAST=0/1`; for `FAST=2` 4, fewer only where the beat reaches the right edge of the image |
+| `px_c0`, `px_c1`, `px_c2` `[8*NPIX-1:0]` | out | R,G,B / Y,Cb,Cr / Y,128,128 (grey images in RGB: Y,Y,Y); pixel i of the beat (at `px_x + i`) in bits 8i+7..8i, `NPIX` = 1 (`FAST=0/1`) or 4 (`FAST=2`) |
+| `px_sof`, `px_eol` | out | the beat starts the frame (0,0) / holds the last pixel of an image row (x = W-1) |
 | `img_w`, `img_h`, `frame_start`, `frame_done` | out | frame size (valid from `frame_start`), end of frame |
 | `err[12:0]` | out | errors of the current image (`rtl/jpeg_pkg.sv`): unsupported frame type, invalid/missing/incomplete tables or headers, corrupt data, truncated file, row buffer too small ... |
 
@@ -170,7 +174,8 @@ only, or no SOI) produces no frame.
 
 | parameter | default | effect |
 |---|---|---|
-| `FAST` | 0 | 0: compact core (~13.6 clocks/pixel, smallest). 1: pipelined core, **~1-2.4 clocks/pixel** (Huffman lookahead tables, 2-lane pipelined IDCT, 1 pixel/clock output); same pixels, same interface |
+| `FAST` | 0 | 0: compact core (~13.6 clocks/pixel, smallest). 1: pipelined core, **~1-2.4 clocks/pixel** (Huffman lookahead tables, 2-lane pipelined IDCT, 1 pixel/clock output); same pixels, same interface. 2: wide core for larger FPGAs (Artix-7 class), **0.25-0.55 clocks/pixel** on phone photos (one Huffman symbol per clock, IDCT in 8 clocks per block, 4 pixels per beat), MCU order only (`RASTER_OUT=0`), same pixels |
+| `NPIX` | derived | pixels per beat, 4 for `FAST=2` and 1 otherwise; set by `FAST` (other values stop the elaboration) |
 | `RASTER_OUT` | 0 | 0: pixels in MCU order, 1 KB buffer, any width. 1: raster order via an MCU-row buffer |
 | `ROWBUF_BYTES` | 16384 | row-buffer size for `RASTER_OUT=1`; images whose MCU row does not fit set `err[ERR_WIDTH]` and produce no pixels (the file is still consumed) |
 | `FANCY_UPSAMPLE` | 0 | libjpeg-turbo's triangle-filter chroma upsampling (Pillow/OpenCV default) instead of replication; needs `RASTER_OUT=1` |

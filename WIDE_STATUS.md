@@ -2,8 +2,8 @@
 
 Owner's decision (2026-10-04): "Model first then wide RTL. Afterwards, some other time we take up
 multi-decoder." The question behind it: today's fast core needs 1.0-1.8 clocks per pixel, so one
-laptop core with libjpeg-turbo (~3.8 GHz) decodes a 12 MP photo 1.9-2.7x faster than the core at
-150 MHz on the Artix-7; can a wider core doing several pixels per clock beat it?
+laptop core with libjpeg-turbo -nosmooth at 3.9 GHz decodes a 12 MP photo 2.2-3.2x faster than the
+core at 150 MHz on the Artix-7; can a wider core doing several pixels per clock beat it?
 
 This file is the hand-over note for that work, in the style of FAST_STATUS.md.
 
@@ -14,13 +14,17 @@ per-block Huffman statistics of real files; it reproduces the 24 photos measured
 within 1.14 % (mean 0.28 %) and cycle-exact simulations within 0.61 % (details and tables:
 `model/perf/README.md`). Variants on the owner's 12 photos and their 4:2:0 copies, MCU order:
 
-| configuration | clocks/pixel, 4:2:2 photos | 4:2:0 copies | ms at 150 MHz | x libjpeg-turbo's time |
-|---|---:|---:|---:|---:|
-| today's fast core | 1.18-1.76 | 1.00-1.36 | 87-152 | 1.88-2.72 |
-| W2: 1 symbol/clock, IDCT 16 clocks/block, 2 pixels/clock | 0.54-0.61 | 0.50-0.52 | 44-52 | 0.77-1.36 |
-| **W4: 1 symbol/clock, IDCT 8 clocks/block, 4 pixels/clock** | **0.31-0.52** | **0.25-0.40** | **22-45** | **0.55-0.71** |
+| configuration | clocks/pixel, 4:2:2 photos | 4:2:0 copies | ms at 150 MHz | x libjpeg-turbo -nosmooth (3.9 GHz) | x fastest CPU decoder (3.9 GHz) |
+|---|---:|---:|---:|---:|---:|
+| today's fast core | 1.18-1.76 | 1.00-1.36 | 87-152 | 2.22-3.17 | 2.23-3.46 |
+| W2: 1 symbol/clock, IDCT 16 clocks/block, 2 pixels/clock | 0.54-0.61 | 0.50-0.52 | 44-52 | 0.78-1.59 | 0.78-1.73 |
+| **W4: 1 symbol/clock, IDCT 8 clocks/block, 4 pixels/clock** | **0.31-0.52** | **0.25-0.40** | **22-45** | **0.63-0.80** | **0.63-0.90** |
 
-W4 matches libjpeg-turbo on every photo from 106 MHz up; W2 would need 205 MHz. W4 is the target.
+CPU times at a steady 3.9 GHz (each run's cycles / 3.9 GHz; the laptop throttled to 2.3-3.9 GHz), the
+like-for-like reference being libjpeg-turbo -nosmooth. W4 matches libjpeg-turbo on every photo from
+120 MHz and the fastest CPU decoder (libjpeg-turbo or FFmpeg) from 135 MHz; W2 would need 238 / 259 MHz.
+W4 is the target. (First version: raw throttled times of turbo's default mode, "106 MHz" - corrected
+2026-10-04 after the owner questioned the comparison.)
 
 Sizing of W4 (model, 1-byte/clock input, all 24 files; worst case = busiest photo):
 
@@ -130,9 +134,10 @@ config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_
   -nosmooth`), 0.29-0.55 clocks/pixel on the owner's 12 photos (4:2:2; the fast core 1.18-1.78) and 0.25-0.41
   on the 4:2:0 copies (1.005-1.37); the model is 0.01-1.59 % low. Against libjpeg-turbo on one laptop core
   (`bench/bench_photos_2026-10-04.json`: 38-66 ms on the photos at a measured 3.5-3.9 GHz, 32-56 ms on the
-  copies at 3.0-3.7 GHz): at 150 MHz the wide core would take 25-48 ms / 22-35 ms = 0.55-0.75x turbo's time;
-  0.61-0.78x if turbo had run at a steady 3.9 GHz throughout. Parity on every photo from 113 MHz (117 MHz
-  against the 3.9 GHz-scaled times).
+  copies at 3.0-3.7 GHz). Like for like - every CPU time at a steady 3.9 GHz, libjpeg-turbo -nosmooth -
+  the wide core at 150 MHz takes 0.64-0.77x libjpeg-turbo's time on the photos and 0.64-0.80x on the
+  copies, and 0.64-0.88x the time of the fastest CPU decoder on each file (FFmpeg on three of them);
+  it matches libjpeg-turbo on every file from 120 MHz and the fastest CPU decoder from 131 MHz.
   Board harness: DUT 3 = `jpeg_decoder #(.FAST(2))` in `boards/acorn_cle215/uart_bench_core.sv` (checksum
   of up to 4 pixels per beat in a 3-stage pipeline; the clock count stops at frame_done as for DUT 0);
   `build.tcl` reads `rtl/files.f`; `make_expected.py --duts 3` (clocks from tb/obj_wmcu). Harness simulation

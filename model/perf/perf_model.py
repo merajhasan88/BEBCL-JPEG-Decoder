@@ -247,10 +247,22 @@ VARIANTS = [
 ]
 
 
-def cpu_ms():
-    """libjpeg-turbo's time per photo at full clock (bench/bench_photos_2026-10-04.json)."""
+REF_GHZ = 3.9
+
+
+def cpu_ms(best=False):
+    """CPU time per photo (bench/bench_photos_2026-10-04.json) at a steady REF_GHZ, the laptop's
+    highest measured clock: each run's cycle count (measured time x measured clock) / REF_GHZ, the
+    CPU's best case (the laptop throttled to 2.3-3.9 GHz during the runs).  Default: libjpeg-turbo
+    -nosmooth, whose pixels are those of the decoder's MCU-order output; best=True: the fastest CPU
+    decoder on each photo."""
     j = json.load(open(os.path.join(REPO, "bench", "bench_photos_2026-10-04.json")))
-    return {k + ".jpg": v["libjpeg-turbo (fancy)"]["ms"] for k, v in j["results"].items() if v.get("libjpeg-turbo (fancy)")}
+    out = {}
+    for k, r in j["results"].items():
+        runs = {d: v["ms"] * v["ghz"] / REF_GHZ for d, v in r.items() if v and v.get("ghz")}
+        if best: out[k + ".jpg"] = min(runs.values())
+        elif "libjpeg-turbo (nosmooth)" in runs: out[k + ".jpg"] = runs["libjpeg-turbo (nosmooth)"]
+    return out
 
 
 def _run(args):
@@ -270,15 +282,19 @@ def sweep(variants=VARIANTS, mhz=150.0, out=None):
     for (f, c), (name, px, clk) in zip(jobs, res):
         table.setdefault(c.name, {})[name] = (clk, px)
     lines = []
-    lines.append(f"| configuration | clocks/pixel, 4:2:2 originals | 4:2:0 copies | ms per photo at {mhz:.0f} MHz | x libjpeg-turbo's time |")
-    lines.append("|---|---:|---:|---:|---:|")
+    lines.append(f"| configuration | clocks/pixel, 4:2:2 originals | 4:2:0 copies | ms per photo at {mhz:.0f} MHz | "
+                 f"x libjpeg-turbo -nosmooth at {REF_GHZ} GHz | x fastest CPU decoder |")
+    lines.append("|---|---:|---:|---:|---:|---:|")
+    best = cpu_ms(best=True)
     for c in variants:
         t = table[c.name]
         o = [clk / px for n, (clk, px) in t.items() if not n.endswith("_420.jpg")]
         q = [clk / px for n, (clk, px) in t.items() if n.endswith("_420.jpg")]
         ms = [clk / (mhz * 1e3) for n, (clk, px) in t.items()]
         ratio = [clk / (mhz * 1e3) / turbo[n] for n, (clk, px) in t.items() if n in turbo]
-        lines.append(f"| {c.name} | {min(o):.2f}-{max(o):.2f} | {min(q):.2f}-{max(q):.2f} | {min(ms):.0f}-{max(ms):.0f} | {min(ratio):.2f}-{max(ratio):.2f} |")
+        rb = [clk / (mhz * 1e3) / best[n] for n, (clk, px) in t.items() if n in best]
+        lines.append(f"| {c.name} | {min(o):.2f}-{max(o):.2f} | {min(q):.2f}-{max(q):.2f} | {min(ms):.0f}-{max(ms):.0f} | "
+                     f"{min(ratio):.2f}-{max(ratio):.2f} | {min(rb):.2f}-{max(rb):.2f} |")
     txt = "\n".join(lines)
     print(txt)
     if out:

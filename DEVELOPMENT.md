@@ -9,6 +9,7 @@ developed and verified here first.
 | path | contents |
 |---|---|
 | `FAST_STATUS.md` | design of the fast core (`FAST=1`), timing-closure history on the EP2C5, verification log, open items |
+| `WIDE_STATUS.md` | the wide core (`FAST=2`, 4 pixels per clock): the model that chose it, timing probes, steps, results |
 | `test_images/` | all of the owner's test photos (12 phone photos; `main` has `adapter.jpg` only) for runs on other boards |
 | `boards/ep2c5/gate_level/` | gate-level simulation of the post-fit netlists (Verilator with this project's own Cyclone II cell models, Icarus + SDF, ModelSim-ASE) |
 | `boards/ep2c5/gls*/` | fast-UART twins of the EP2C5 builds, for the gate-level runs |
@@ -20,15 +21,18 @@ developed and verified here first.
 ## Updating `main`
 
 ```sh
-cd tb && make && make test                      # 1,616 + 80 + 416 runs must pass (check for PASS lines)
+cd tb && make && make test                      # 1,818 + 90 + 468 runs must pass (9 configurations)
 python3 export_expectations.py                  # refresh expected.txt etc. for run_tests.sh when the
-./run_tests.sh                                  #   corpus or the configurations change; same 2,112 runs
+./run_tests.sh                                  #   corpus or the configurations change; same 2,376 runs
 git add -A && git commit                        # on BEBCL-JPEG-development
 python3 scripts/export_library.py ../BEBCL-JPEG        # ../BEBCL-JPEG is the worktree of main
 cd ../BEBCL-JPEG && git add -A && git commit
 ```
 After RTL changes also re-fit the EP2C5 builds (`boards/ep2c5/compile_all.sh`): `fpga_raster` uses
-99 % of the device, so any growth on the raster path can break it.
+99 % of the device, so any growth on the raster path can break it. After changes to a core's timing,
+compare its clock counts with the performance model (`model/perf/`, e.g. `model/perf/check_wide.py`
+for `FAST=2`): the model reproduces the fast and the wide core's counts within 1-2 % (it does not
+model the compact core), so a larger difference points at an unintended stall.
 
 ## RTL conventions
 
