@@ -24,6 +24,15 @@ REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 sys.path.insert(0, os.path.join(REPO, "bench"))
 from tools import ref_checksum, djpeg9      # libjpeg 9e reference (built on demand)
 
+def sof_type(path):
+    """n of the first SOFn marker (0 = baseline, the only type the decoder supports)"""
+    d = open(path, "rb").read(); i = 2
+    while i + 4 <= len(d) and d[i] == 0xFF:
+        m = d[i + 1]
+        if 0xC0 <= m <= 0xCF and m not in (0xC4, 0xC8, 0xCC): return m - 0xC0
+        i += 2 + int.from_bytes(d[i + 2:i + 4], "big")
+    return None
+
 def main():
     args = sys.argv[1:]
     def opt(name, default):
@@ -53,6 +62,12 @@ def main():
             print(f"{os.path.basename(jpg)}: {nbytes} bytes | frames {frames}, decoder {cyc} clocks, err 0x{err} "
                   f"(expected bits 0x{exp['err']:04X}{'' if exp['pixels'] else ', no pixels'}), checksum 0x{bchk}{same}"
                   f" -> {'PASS' if ok else 'FAIL'}", flush=True)
+            continue
+        if sof_type(jpg) != 0:                                # not baseline (progressive, SOF1, ...)
+            ok = frames == "1" and ovf == "0" and int(err, 16) & 1 and int(bchk, 16) == 0
+            print(f"{os.path.basename(jpg)}: {nbytes} bytes, SOF{sof_type(jpg)} (not supported) | frames {frames}, "
+                  f"decoder {cyc} clocks, err 0x{err} (expected ERR_SOF_TYPE, no pixels), checksum 0x{bchk} "
+                  f"-> {'PASS' if ok else 'FAIL'}", flush=True)
             continue
         if chk is None:
             print(f"{os.path.basename(jpg)}: libjpeg cannot decode it; board: frames {frames}, err 0x{err}"); continue

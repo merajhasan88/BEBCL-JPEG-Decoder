@@ -1,27 +1,29 @@
 #!/usr/bin/env python3
-"""Export the Pasha library (the `main` branch) from this development tree.
+"""Export the BEBCL-JPEG library (the `main` branch) from this development tree.
 
-Pasha is a subset of the development branch: the decoder, its tests, the board examples and the
+BEBCL-JPEG is a subset of the development branch: the decoder, its tests, the board examples and the
 benchmarks, without the development history (FAST_STATUS.md), the gate-level flows, the
 experimental Quartus projects and the owner's photos other than test_images/adapter.jpg.  Only
 files tracked by git here are exported, filtered by INCLUDE / EXCLUDE below; files in the target
 that git tracks in the target but are no longer exported are removed (untracked build outputs and
 its .git are left alone).
 
-usage: export_pasha.py <target folder>      (e.g. ../Pasha, a worktree of the main branch)
-       export_pasha.py --list               (print what would be exported)"""
+usage: export_library.py <target folder>      (e.g. ../BEBCL-JPEG, a worktree of the main branch)
+       export_library.py --list               (print what would be exported)"""
 import os, sys, shutil, fnmatch, subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEV = os.path.abspath(os.path.join(HERE, ".."))
 
 INCLUDE = [
-    "README.md", "LICENSE", "NOTICE.md", "BENCHMARKS.md", ".gitignore",
+    "README.md", "LICENSE", "NOTICE.md", "BENCHMARKS.md", ".gitignore", "decode.sh",
     "rtl/*", "model/*",
     "scripts/decode.py", "scripts/make_corpus.py", "scripts/compare_refs.py", "scripts/jpeg_to_hex.py",
     "scripts/pnm_checksum.py",
     "tb/Makefile", "tb/*.cpp", "tb/run_tests.py", "tb/run_stream_tests.py", "tb/run_malformed_tests.py",
-    "tb/make_malformed.py", "tb/corpus/*", "tb/malformed/*",
+    "tb/make_malformed.py", "tb/corpus/*", "tb/malformed/*", "tb/golden/*",
+    "tb/tb_jpeg.sv", "tb/sim.sh", "tb/run_tests.sh", "tb/expected.txt", "tb/stream_scenarios.txt",
+    "tb/export_expectations.py",
     "test_images/adapter.jpg", "test_images/README.md",
     "boards/ep2c5/README.md", "boards/ep2c5/rtl/*", "boards/ep2c5/scripts/*", "boards/ep2c5/sim/*",
     "boards/ep2c5/compile_all.sh", "boards/ep2c5/sta_paths.tcl", "boards/ep2c5/sta_detail.tcl",
@@ -33,7 +35,7 @@ INCLUDE = [
 ]
 EXCLUDE = [
     "*/build_status.txt", "*/final_build.txt",          # notes of earlier builds (development history)
-    "tb/regression_*", "tb/*.txt",
+    "tb/regression_*", "tb/stream_tests*.txt", "tb/final_regression.txt", "tb/big*",   # run logs
 ]
 
 def tracked():

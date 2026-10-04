@@ -1,0 +1,12 @@
+=== gls
+frame 64x64, 4096 pixels
+pixel checksum of received frame = 0x10137ECE
+PASS: UART frame matches golden and the checksum LED is on
+=== gls_fast
+frame 64x64, 4096 pixels
+pixel checksum of received frame = 0x10137ECE
+PASS: UART frame matches golden and the checksum LED is on
+=== gls_raster
+frame 352x32, 11264 pixels
+pixel checksum of received frame = 0x3C7A89E2
+PASS: UART frame matches golden and the checksum LED is on

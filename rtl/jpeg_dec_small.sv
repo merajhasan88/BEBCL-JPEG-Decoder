@@ -154,6 +154,8 @@ module jpeg_dec_small #(
   logic [RB_AW-1:0] pw_a [0:2];              // plane row pitch mcux*8*Hc (combinational)
   logic [RB_AW-1:0] rb_row, blk_rb;          // IDCT write pointer into the row buffer
 
+  logic more_y;                         // another MCU row follows (declared before its use in the raster
+                                       // stage's port list: a forward reference there is an implicit net)
   generate
     if (!RASTER_OUT) begin : g_mcu
       // ---- MCU sample buffer (up to 10 blocks) + pixel generator
@@ -214,7 +216,6 @@ module jpeg_dec_small #(
   logic        suppress;             // raster mode: image too wide, decode without output
   logic        defer, defer_pending; // raster mode: last line of each MCU row waits for the next row
   logic        w_err;
-  integer      gi;                 // loop index over the three components
   logic [13:0] mcux;                   // MCUs per row (up to 8192 for 8-pixel MCUs)
   logic [12:0] mcux_m1, mcuy_m1;       // index of the last MCU column / row: (W-1) >> log2(MCU width)
   logic [GW-1:0] mcux_g;
@@ -246,7 +247,7 @@ module jpeg_dec_small #(
   assign cd_tq    = comp_tq[2*cur_ci +: 2];
   assign slot     = cur_base + (vv ? (cur_h2 ? 4'd2 : 4'd1) : 4'd0) + {3'd0, hh};
 
-  logic last_blk_of_comp, last_comp, more_x, more_y;
+  logic last_blk_of_comp, last_comp, more_x;
   logic [15:0] wm1_c, hm1_c;
   localparam logic [12:0] hdr_err_mask = (13'd1 << ERR_SOF_TYPE) | (13'd1 << ERR_PRECISION) | (13'd1 << ERR_DQT)
                                        | (13'd1 << ERR_DHT) | (13'd1 << ERR_NCOMP) | (13'd1 << ERR_SAMPLING)
@@ -269,7 +270,8 @@ module jpeg_dec_small #(
   //   layout [plane 0 | plane 1 | plane 2 | line buffer: one row of each component]
   logic [GW-1:0] ps_a [0:2];
   logic [31:0]   pwt, pst;
-  always_comb begin
+  always_comb begin : g_plane
+    integer gi;                         // loop index over the three components
     for (gi = 0; gi < 3; gi = gi + 1) begin
       pwt = {18'd0, mcux} << (3 + h2[gi]);
       pst = {18'd0, mcux} << (6 + h2[gi] + v2[gi]);
@@ -287,7 +289,8 @@ module jpeg_dec_small #(
              + ((cur_h2 ? {18'd0, mx, hh} : {19'd0, mx}) << 3);
   end
 
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk) begin : g_seq
+    integer gi;
     cd_start <= 1'b0; id_start <= 1'b0; pg_start <= 1'b0; pred_clear <= 1'b0; rs_start <= 1'b0;
     frame_start <= 1'b0; frame_done <= 1'b0; br_clear <= 1'b0; w_err <= 1'b0;
     if (rst) begin

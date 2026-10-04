@@ -1,10 +1,18 @@
-# Pasha — a synthesizable baseline JPEG decoder in SystemVerilog
+# BEBCL-JPEG Decoder
 
-Pasha is a streaming JPEG decoder for FPGAs: JPEG bytes in, pixels out, with no processor and no
-frame buffer. It decodes baseline JPEG (ITU-T T.81 sequential DCT, Huffman coding, 8-bit samples),
-which is what cameras, phones and almost all software write. It is plain SystemVerilog with no
-vendor primitives (RAMs and multipliers are inferred), and it has run on an Intel/Altera
-Cyclone II and a Xilinx Artix-7 board; Yosys also synthesizes it for Lattice ECP5.
+**B**it-**E**xact, **B**ackwards-**C**ompatible, **L**east clocks-per-pixel **JPEG** decoder: a streaming
+baseline JPEG decoder for FPGAs, in SystemVerilog. JPEG bytes in, pixels out, with no processor and
+no frame buffer. It decodes baseline JPEG (ITU-T T.81 sequential DCT, Huffman coding, 8-bit
+samples), which is what cameras, phones and almost all software write.
+
+- **Bit-exact**: its pixels are identical to libjpeg 9e, or (one build option) to Pillow, OpenCV
+  and libjpeg-turbo, on every test file and photo.
+- **Backwards-compatible**: plain SystemVerilog in the subset that Quartus II 13.0sp1 accepts, with
+  no vendor primitives (RAMs and multipliers are inferred). The same RTL runs on a 2004 Intel/Altera
+  Cyclone II (EP2C5, 4,608 logic elements) and a current Xilinx Artix-7, and builds with Quartus,
+  Vivado and Yosys (Lattice ECP5).
+- **Least clocks per pixel** among the open-source FPGA JPEG decoders measured (below): 1.0-2.4
+  clocks per pixel for the fast core.
 
 Every build option is verified **bit for bit** against a reference decoder:
 
@@ -18,42 +26,82 @@ and a pipelined core (`FAST=1`, **1.0-2.4 clocks per pixel**).
 
 | measured on a board | core | clock | resources | 12-megapixel photo |
 |---|---|---:|---|---:|
-| Intel/Altera Cyclone II EP2C5T144C8 (2004, 4,608 LEs) | `FAST=1` | 95 MHz | 4,449 LEs (97 %), 26/26 multipliers | 202-284 ms |
+| Intel/Altera Cyclone II EP2C5T144C8 (2004, 4,608 LEs) | `FAST=1` | 95 MHz | 4,450 LEs (97 %), 26/26 multipliers | 202-284 ms |
 | Xilinx Artix-7 XC7A200T (Acorn CLE-215+, remote board at fpgas.online) | `FAST=1` | 150 MHz | 2,488 LUTs, 17 DSP48E1, 7.5 BRAM | 87-154 ms |
 
-Against the two other open-source FPGA JPEG decoders that could be measured (ultraembedded
-core_jpeg, H. Ishihara's aq_djpeg), Pasha is the only one that is bit-exact, the only one that fits
-the EP2C5, and on the same Artix-7 board it needs 1.4-1.95x fewer clocks per photo than aq_djpeg
-and decodes 4:2:2 photos that core_jpeg cannot. All numbers: **[BENCHMARKS.md](BENCHMARKS.md)**,
-`boards/acorn_cle215/README.md`.
+How it compares with the two other open-source FPGA JPEG decoders and with CPU decoders: below and
+in **[BENCHMARKS.md](BENCHMARKS.md)** (Artix-7 details: `boards/acorn_cle215/README.md`).
+
+## What sets it apart
+
+Compared with the two other open-source FPGA JPEG decoders that could be measured, ultraembedded
+core_jpeg and H. Ishihara's aq_djpeg (same harness, same board, same files):
+
+- **Bit-exact.** core_jpeg and aq_djpeg differ from libjpeg by up to 4-32 levels per pixel
+  (PSNR 41.6-51 dB); BEBCL-JPEG is identical to libjpeg 9e, or with `RASTER_OUT=1
+  FANCY_UPSAMPLE=1 CC_TURBO=1` to Pillow, OpenCV and libjpeg-turbo.
+- **Fewest clocks per pixel.** 1.0-2.4 for the fast core, against 1.4-5.0 (aq_djpeg) and 2.1-3.3
+  (core_jpeg, on the files it can decode). On the same Artix-7 board the others needed 1.4-2.1x
+  more clocks per photo, and BEBCL-JPEG also ran at the highest clock (150 MHz; Fmax ~160 MHz
+  against 153 and 95-104 MHz), so it decoded every photo fastest.
+- **Small enough for a 2004 FPGA.** The fast decoder fits the 4,608-LE Cyclone II EP2C5 with its 26
+  multipliers and runs at 95 MHz; on the larger EP2C35 the others need 7.8k-9.5k LEs and 34-64
+  multiplier elements. On the Artix-7 it is 2,204 LUTs alone and 2,488 with the measurement
+  harness, against 4,919 (aq_djpeg) and 6,681 (core_jpeg) with the same harness.
+- **Handles real camera files.** Every baseline chroma layout (4:4:4, 4:2:2, 4:2:0, 4:4:0, mixed),
+  restart markers, EXIF thumbnails skipped correctly. core_jpeg supports neither 4:2:2 nor restart
+  markers, and on phone photos decodes the embedded thumbnail instead of the photo.
+- **Defined behaviour on bad input.** Headers and tables are validated; every image ends with
+  exactly one "frame done" and an error code, also when the file is truncated or corrupt (26
+  malformed files, tested in simulation and on the board).
+- **Output for real pipelines.** MCU order, or strict raster order with start-of-frame /
+  end-of-line flags for an AXI4-Stream video path; RGB, YCbCr or luma-only output (luma-only skips
+  the chroma blocks and is ~30 % faster); the colour converter can be removed.
+- **Two cores, one interface.** A compact core (3.4k LEs, ~13.6 clocks/pixel) and a fast core
+  (~1-2.4 clocks/pixel), chosen with one parameter.
+- **Verified in depth.** Two independent testbenches (C++ and SystemVerilog) run the same 2,112
+  bit-exact checks; gate-level simulation of the placed design; Verilator and Vivado's simulator;
+  hardware from two vendors.
+
+Where the others are ahead: aq_djpeg uses fewer block RAMs (4 against 7.5 tiles) and DSP blocks
+(14 against 17) and can extract the first layer of a progressive JPEG, which BEBCL-JPEG rejects;
+core_jpeg has a smaller build with fixed Huffman tables. Commercial cores quote more pixels per
+clock on large FPGAs (e.g. CAST JPEG-DX: 2-32 samples per clock), and one laptop CPU core with
+libjpeg-turbo still decodes a single photo 1.9-2.7x faster than BEBCL-JPEG at 150 MHz
+([BENCHMARKS.md](BENCHMARKS.md)).
 
 ## Quick start: decode your own images
 
-Needs Verilator (5.x), make, a C++ compiler and Python 3; Pillow is optional (PNG output, `--check`).
+Put your JPEGs in `test_images/` (`adapter.jpg` is already there) and pick one of three ways to
+run the decoder. All three simulate the same RTL cycle by cycle, write the decoded images to
+`out/` and print the decode time in clocks:
+
+| way | needs | decode `test_images/` | compare with a reference decoder |
+|---|---|---|---|
+| **SystemVerilog testbench + shell** (`tb/tb_jpeg.sv`) | Verilator 5.002+ or Vivado's xsim (both tested); Questa and Icarus 12 untested (Icarus 11 is too old) | `./decode.sh` | `./decode.sh --profile pillow --check` (needs `djpeg`) |
+| **C++ harness** (`tb/tb_jpeg.cpp`, Verilator) | Verilator 5, make, a C++ compiler | `make -C tb decode` | `tb/obj_fmcu/Vjpeg_decoder in.jpg out.ppm --golden ref.ppm` |
+| **Python** (`scripts/decode.py`, drives the C++ harness) | the above + Python 3 (Pillow optional) | `python3 scripts/decode.py` | `python3 scripts/decode.py --profile pillow --check` |
 
 ```sh
-git clone <this repository> pasha && cd pasha
-cp ~/photos/*.jpg test_images/          # any baseline JPEGs (adapter.jpg is already there)
-python3 scripts/decode.py               # decodes every file in test_images/ -> out/*.ppm (+ .png)
-python3 scripts/decode.py --profile pillow --check test_images/adapter.jpg   # compare with Pillow
+git clone https://github.com/merajhasan88/jpegdecoder-systemverilog.git bebcl-jpeg && cd bebcl-jpeg
+cp ~/photos/*.jpg test_images/
+./decode.sh                                   # or: ./decode.sh --sim xsim   (Vivado's simulator)
+```
+```
+file                                    size     type       clocks  clk/px  ms@100MHz  result
+adapter.jpg                        3120x4160    4:2:2     19234181   1.482     192.34  ok
 ```
 
-`decode.py` builds the cycle-exact simulation of the decoder on first use (in `tb/`), decodes each
-file, writes the image and prints the decode time in clocks:
+Options of `decode.sh` and `decode.py`: `--profile libjpeg|pillow` (which reference the pixels
+match: libjpeg 9e with replicated chroma, any image size; or Pillow / OpenCV / libjpeg-turbo with
+smoothed chroma, raster order), `--core fast|small`, `--fmt rgb|ycbcr|y`, `--mhz F` (report times
+at your clock), `--out DIR`. A file the decoder does not support (progressive, 12-bit, arithmetic
+coding ...) is reported with its error bits.
 
-```
-file                                    size    type       clocks  clk/px  ms@100MHz  result
-adapter.jpg                        3120x4160   4:2:2   19,234,181   1.482     192.34  ok
-```
+## Using BEBCL-JPEG in your FPGA design
 
-Options: `--profile libjpeg|pillow` (which reference the pixels match), `--core fast|small`,
-`--fmt rgb|ycbcr|y`, `--mhz F` (report times at your clock), `--out DIR`. A file the decoder
-does not support (progressive, 12-bit, arithmetic coding ...) is reported with its error bits.
-
-## Using Pasha in your FPGA design
-
-Add the files of `rtl/` to your project (Quartus, Vivado, Yosys, ...), instantiate
-`jpeg_decoder` and set the parameters below. `boards/` has complete examples:
+Add the files of `rtl/` to your project (Quartus, Vivado, Yosys, ...; `rtl/files.f` lists them in
+compile order), instantiate `jpeg_decoder` and set the parameters below. `boards/` has complete examples:
 `boards/ep2c5/` (Quartus II 13.0sp1, Cyclone II: ROM demo with UART output, a 95 MHz build that
 streams JPEGs over the USB-Blaster) and `boards/acorn_cle215/` (Vivado, Artix-7: files over a
 UART, with the decoder's clock counted on the chip).
@@ -148,7 +196,7 @@ that other tools ignore.
 |---|---|---:|---:|---:|---:|
 | Cyclone II EP2C5, Quartus 13.0sp1 | compact, MCU order (`boards/ep2c5/fpga`) | 3,374 LEs | 9 M4K | 26 9-bit | 61 MHz |
 | Cyclone II EP2C5, Quartus 13.0sp1 | compact, raster + Pillow smoothing + RGB (`fpga_raster`) | 4,547 LEs | 25 M4K | 26 9-bit | 60 MHz |
-| Cyclone II EP2C5, Quartus 13.0sp1 | fast, MCU order (`fpga_jtag`, board harness included) | 4,449 LEs | 59,712 bits | 26 9-bit | 99.0 MHz |
+| Cyclone II EP2C5, Quartus 13.0sp1 | fast, MCU order (`fpga_jtag`, board harness included) | 4,450 LEs | 59,712 bits | 26 9-bit | 98.1 MHz |
 | Artix-7 XC7A200T-2, Vivado 2026.1 | fast, MCU order, decoder alone (from the build below) | 2,204 LUTs, 2,124 FFs | 13 BRAM18 | 17 DSP48E1 | - |
 | Artix-7 XC7A200T-2, Vivado 2026.1 | fast, MCU order (`boards/acorn_cle215`, UART harness included) | 2,488 LUTs, 2,671 FFs | 7.5 BRAM36 | 17 DSP48E1 | 157-160 MHz |
 
@@ -171,9 +219,13 @@ from 8-bit sources stay far inside that, so all test files match exactly.
 ## Verification
 
 ```sh
-cd tb && make && make test            # 8 configurations: 1,616 runs + 80 multi-image + 416 malformed runs
+tb/run_tests.sh                       # SystemVerilog testbench: 1,616 + 80 + 416 runs (-s xsim for Vivado's simulator)
+cd tb && make && make test            # the same runs with the C++ harness, driven by Python
 python3 ../scripts/compare_refs.py corpus/*.jpg   # the model against Pillow / OpenCV / libjpeg-turbo
 ```
+Both regressions compare against the reference images in `tb/golden/` (made by the Python model,
+`model/jpeg_golden.py`); `tb/run_tests.sh` takes its expectations from `tb/expected.txt`,
+`tb/stream_scenarios.txt` and `tb/malformed/cases.txt` (written by `tb/export_expectations.py`).
 
 - **Test files** (`tb/corpus/`, 35 files): generated by `scripts/make_corpus.py` from one photo,
   `test_images/adapter.jpg` (settings of every file in `tb/corpus/SOURCES.md`): every chroma
@@ -188,6 +240,12 @@ python3 ../scripts/compare_refs.py corpus/*.jpg   # the model against Pillow / O
   the 2 unsupported files = **1,616 runs, all bit-exact, with no unexpected error bit**, with
   strict raster order and `sof`/`eol` checked and `ERR_WIDTH` raised exactly where predicted.
 - **Images back to back without reset** (`tb/run_stream_tests.py`): 80 runs.
+- **Two independent testbenches**: the C++ harness (`make test`) and the SystemVerilog testbench
+  (`tb/run_tests.sh`) run the same 2,112 checks and both pass all of them on Verilator; on Vivado's
+  xsim the SystemVerilog testbench passes a 396-run subset (both cores, MCU and raster output,
+  smoothing, malformed files). xsim's stricter 4-state semantics found two portability bugs that
+  Verilator, Quartus and the hardware never showed (a loop counter shared by several `always`
+  blocks; a signal used in a port connection before its declaration); both are fixed.
 - **Malformed and truncated files** (`tb/make_malformed.py`, `tb/run_malformed_tests.py`): 26
   files, each one edit away from a corpus file (bad, missing or incomplete DQT/DHT/SOF/SOS, RSTn
   errors, files cut in the headers, in the scan and before the EOI) x 8 configurations x 2 stall
@@ -206,15 +264,34 @@ python3 ../scripts/compare_refs.py corpus/*.jpg   # the model against Pillow / O
 
 | path | what |
 |------|------|
-| `rtl/` | the decoder (vendor-neutral): `jpeg_decoder.sv` (top, selects the core), `jpeg_dec_small.sv` (compact core), `jpeg_dec_fast.sv` + `jpeg_bitwin.sv`, `jpeg_huffdec.sv`, `jpeg_idct_fast.sv`, `jpeg_mcuout.sv`, `jpeg_raster_fast.sv` (fast core), `jpeg_parser.sv` (Annex B markers, Annex C tables), `jpeg_bitreader.sv`, `jpeg_coefdec.sv` (F.2.2 decoding), `jpeg_idct.sv` (libjpeg islow), `jpeg_pixgen.sv`, `jpeg_raster.sv` (output stages), `jpeg_ycc2rgb.sv`, `jpeg_blockram.sv`, `jpeg_sdp_ram.sv`, `jpeg_pkg.sv` |
+| `rtl/` | the decoder (vendor-neutral; `files.f` lists the files in compile order): `jpeg_decoder.sv` (top, selects the core), `jpeg_dec_small.sv` (compact core), `jpeg_dec_fast.sv` + `jpeg_bitwin.sv`, `jpeg_huffdec.sv`, `jpeg_idct_fast.sv`, `jpeg_mcuout.sv`, `jpeg_raster_fast.sv` (fast core), `jpeg_parser.sv` (Annex B markers, Annex C tables), `jpeg_bitreader.sv`, `jpeg_coefdec.sv` (F.2.2 decoding), `jpeg_idct.sv` (libjpeg islow), `jpeg_pixgen.sv`, `jpeg_raster.sv` (output stages), `jpeg_ycc2rgb.sv`, `jpeg_blockram.sv`, `jpeg_sdp_ram.sv`, `jpeg_pkg.sv` |
 | `test_images/` | your JPEGs; `adapter.jpg` is the photo the test files are made from |
-| `scripts/` | `decode.py` (decode your images), `make_corpus.py`, `compare_refs.py`, `jpeg_to_hex.py`, `pnm_checksum.py` |
+| `decode.sh` | decode your images with the SystemVerilog testbench (shell, any simulator) |
+| `scripts/` | `decode.py` (decode your images, Python), `make_corpus.py`, `compare_refs.py`, `jpeg_to_hex.py`, `pnm_checksum.py` |
 | `model/jpeg_golden.py` | bit-exact reference decoder: `--profile djpeg9|pillow`, `--out rgb|ycbcr|y`, block dumps |
-| `tb/` | Verilator testbench (`tb_jpeg.cpp`, `tb_multi.cpp`), `Makefile`, regression scripts, `corpus/`, `malformed/` |
+| `tb/` | testbenches: `tb_jpeg.sv` (SystemVerilog, any simulator; `sim.sh`, `run_tests.sh`) and `tb_jpeg.cpp`, `tb_multi.cpp` (C++, Verilator; `Makefile`, Python regression scripts); test files `corpus/`, `malformed/`; reference images `golden/` |
 | `boards/ep2c5/` | Intel/Altera Cyclone II EP2C5 board: tops (`rtl/`), Quartus projects, programming and host scripts, board-level simulations |
 | `boards/acorn_cle215/` | Xilinx Artix-7 (Acorn CLE-215+): Vivado build, UART measurement harness, host script, results |
 | `bench/` | benchmarks against CPU decoders and other FPGA decoders; results in `BENCHMARKS.md` |
 | `LICENSE`, `NOTICE.md` | Apache License 2.0; copyright and the credits that travel with the code |
+
+## History
+
+BEBCL-JPEG grew out of Meraj Hasan's 2022 JPEG decoder in SystemVerilog, a simulation model written
+from the ITU-T T.81 standard (marker parsing, quantisation and Huffman tables); those first
+commits are kept in this repository's history (tag `original-2023`). The synthesizable decoder,
+its tests and the board builds were developed from 2026 on; the full development history,
+including the timing-closure work on the EP2C5, is on the `BEBCL-JPEG-development` branch.
+
+## Acknowledgements
+
+- [fpgas.online](https://fpgas.online) (Welland site) for public remote access to the SQRL Acorn
+  CLE-215+ (Artix-7 XC7A200T) board on which the three decoders were compared.
+- The Independent JPEG Group (libjpeg) and the libjpeg-turbo project: the decoder's IDCT, colour
+  conversion and upsampling arithmetic follow their code, and their decoders are the references.
+- ultraembedded (core_jpeg) and Hidemi Ishihara (aq_djpeg), whose open-source decoders made the
+  comparison possible; their code is not part of BEBCL-JPEG.
+- Verilator, Icarus Verilog, Yosys, sv2v and openFPGALoader, used to simulate, synthesize and load it.
 
 ## License
 

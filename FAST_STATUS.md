@@ -366,7 +366,7 @@ pixels for header errors) - 42 of 42.  Note: a truncated
 scan is completed from zero bits, while libjpeg fills the rest of the scan with uniform grey, so
 those pixels differ from libjpeg's (they are to be discarded anyway; documented).
 
-## 7d. 2026-10-03/04: the three decoders on a remote Artix-7; Pasha and its layout
+## 7d. 2026-10-03/04: the three decoders on a remote Artix-7; BEBCL-JPEG and its layout
 
 - **Remote board** (fpgas.online, Welland pi46: SQRL Acorn CLE-215+, XC7A200T, Raspberry Pi 5 with
   GPIO JTAG and UART; the Chicago site's Arty A7 boards were unreachable from the site itself).
@@ -384,15 +384,15 @@ those pixels differ from libjpeg's (they are to be discarded anyway; documented)
   their own simulations exactly on the board.
 - **Vivado lint** found two signals used before their declaration (`jpeg_dec_small.sv` skip_idct,
   `jpeg_raster_fast.sv` pbase_r): declarations moved up; Verilator lint with IMPLICIT warnings clean.
-- **Pasha** (owner, 2026-10-04): the library is named Pasha; `main` = the library, this tree =
-  branch `Pasha-development` (was `claude_jpeg/`). Layout: `rtl/` holds only the decoder; the
+- **BEBCL-JPEG** (owner, 2026-10-04): the library is named BEBCL-JPEG; `main` = the library, this tree =
+  branch `BEBCL-JPEG-development` (was `claude_jpeg/`). Layout: `rtl/` holds only the decoder; the
   EP2C5 tops, Quartus projects, host scripts and board simulations moved to `boards/ep2c5/`
   (gate-level flows to `boards/ep2c5/gate_level/`); `quartus/` keeps `core` and `fpga_fast_raster`.
   Test files are made from `test_images/adapter.jpg` only (the 14 files made from screen photos were
   regenerated from it, `scr_*` renamed `adp_*`; the 21 adapter files are byte-identical, so the ROM
   images and checksums are unchanged). `scripts/decode.py` decodes `test_images/` (or given files)
   in simulation; `bench/tools.py` downloads/builds libjpeg 9e and stb_image; the comparison decoders
-  are fetched into `bench/others/third_party`. `scripts/export_pasha.py` writes `main`.
+  are fetched into `bench/others/third_party`. `scripts/export_library.py` writes `main`.
 - **Re-verified after the restructure (2026-10-04)**: regression 1616/1616, 80/80, 416/416 (new
   corpus); all 10 EP2C5 projects re-fitted from `boards/ep2c5/` and meet timing with unchanged LE
   counts except `fpga_jtag`, 4,449 LEs (was 4,455), +0.424 ns setup, Fmax 98.99 MHz; board
@@ -402,6 +402,40 @@ those pixels differ from libjpeg's (they are to be discarded anyway; documented)
   (same checksums as on 2026-10-01). A clone of `main` builds, passes the fast-core regression,
   decodes with `scripts/decode.py`, regenerates BENCHMARKS.md identically and downloads/builds
   libjpeg 9e by itself (`bench/tools.py`).
+
+## 7e. 2026-10-04: three ways to run BEBCL-JPEG, EP2C5 re-run, CPU comparison on the photos
+
+- **SystemVerilog testbench** `tb/tb_jpeg.sv` (+ `tb/sim.sh`: Verilator `--binary --timing`, Vivado
+  xsim, Icarus, Questa; `decode.sh`; `tb/run_tests.sh`): the same checks, reset, stall generator
+  and clock counts as `tb_jpeg.cpp`/`tb_multi.cpp` (verified file by file, stalled runs included).
+  Two Verilator 5.003 problems found on the way and avoided: `ref` arguments of functions are not
+  reliable (queues passed by reference, the stall generator) - buffers are module-level and the
+  generator uses `inout`; queue `==` is not supported - compared element by element. The bash
+  regression reads `tb/expected.txt`, `tb/stream_scenarios.txt`, `tb/malformed/cases.txt`
+  (written by `tb/export_expectations.py`) and the golden images, now kept in git (`tb/golden/`).
+  C++ option without Python: `make -C tb decode`. `rtl/files.f` lists the RTL in compile order.
+- **EP2C5 re-run** with the re-fitted `fpga_jtag` (4,449 LEs): 73/73 pass - 35 test files, 26
+  malformed files, the owner's 12 photos; clock counts unchanged and equal to the Artix-7's
+  (`bench/board_jtag_95mhz_2026-10-04.txt`). `jtag_decode.py` now expects non-baseline files to be
+  rejected (ERR_SOF_TYPE, no pixels).
+- **CPU comparison** (`bench/bench_photos_2026-10-04.json`, performance profile, the laptop
+  throttles to 2.3-3.9 GHz under sustained load): libjpeg-turbo 32-66 ms per 12-megapixel photo,
+  BEBCL-JPEG on the Artix-7 87-154 ms (1.9-2.7x longer), 8.5-12x fewer clocks per pixel. No FPGA decoder
+  beats libjpeg-turbo, FFmpeg or Pillow on single-image time; BEBCL-JPEG beats stb_image on every
+  original and is close to libjpeg 9e.
+- **Vivado's xsim found two RTL portability bugs** that Verilator, Quartus and the hardware never
+  showed: module-level loop counters written by several `always` blocks (`i` in jpeg_idct_fast,
+  `gi` in jpeg_dec_small, `k` in jpeg_raster, `c`/`k` in jpeg_raster_fast - illegal SystemVerilog,
+  xsim refuses to elaborate; now block-local), and `.lastrow(~more_y)` in jpeg_dec_small's raster
+  instance, a forward reference that strict tools turn into an undriven implicit net (xsim: X in
+  `fmode`, wrong pixels for 4:4:0 / 1x2 chroma; the declaration moved up). Icarus Verilog 11 is too
+  old for the RTL (internal errors on the fast raster core, wrong pixels from the compact core).
+  After the fixes: regression 1616/80/416 with both testbenches on Verilator, a 396-run subset on
+  xsim, all 10 EP2C5 builds re-fitted (LE counts unchanged except fpga_jtag 4,450, +0.33 ns), the
+  three gate-level runs and the EP2C5 board (62/62, bench/board_jtag_95mhz_2026-10-04b.txt) pass.
+- **Git**: remote `origin` = github.com/merajhasan88/jpegdecoder-systemverilog (main = the owner's
+  2022-23 work, tag `original-2023`); `main` (BEBCL-JPEG) sits on top of origin/main, so the push is a
+  fast-forward. The remote-board client stays out of the repositories (owner's decision).
 
 ## 8. Open items (in order)
 

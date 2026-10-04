@@ -3,6 +3,8 @@ $BENCH_SCRATCH): libjpeg 9e (the IJG reference; this decoder's default profile m
 `djpeg -dct int -nosmooth` bit for bit) and stb_image.h.
   libjpeg 9e source: $LIBJPEG9_SRC (an unpacked jpeg-9e folder) or downloaded from ijg.org
   stb_image.h:       $STB_IMAGE_H or downloaded from github.com/nothings/stb
+  Go (bench_go):     go on PATH or the official release downloaded from go.dev
+  zune-jpeg (Rust):  needs cargo (rustup; zune-jpeg 0.4.21 needs Rust 1.74 or later)
   python3 bench/tools.py      -> builds libjpeg 9e and prints the path of its djpeg"""
 import os, shutil, subprocess, tarfile, urllib.request
 
@@ -11,6 +13,7 @@ REPO = os.path.abspath(os.path.join(HERE, ".."))
 SCR = os.environ.get("BENCH_SCRATCH", os.path.join(HERE, "build"))
 LIBJPEG9_URL = "https://www.ijg.org/files/jpegsrc.v9e.tar.gz"
 STB_URL = "https://raw.githubusercontent.com/nothings/stb/master/stb_image.h"
+GO_URL = "https://go.dev/dl/go1.27.1.linux-amd64.tar.gz"
 
 def default_images():
     """the benchmark's images: three small corpus files and every JPEG in test_images/"""
@@ -69,6 +72,17 @@ def ref_checksum(jpg, djpeg=None):
     xy = ((x ^ y) & 0xFF).astype(np.uint64)
     words = (xy << 24) | (a[:, :, 0] << 16) | (a[:, :, 1] << 8) | a[:, :, 2]
     return int(words.sum()) & 0xFFFFFFFF, w, h
+
+def go_bin():
+    """the go command: on PATH, else the official release unpacked into SCR"""
+    if shutil.which("go"): return "go"
+    g = os.path.join(SCR, "go", "bin", "go")
+    if not os.path.exists(g):
+        os.makedirs(SCR, exist_ok=True)
+        tgz = os.path.join(SCR, "go.tgz"); urllib.request.urlretrieve(GO_URL, tgz)
+        with tarfile.open(tgz) as t: t.extractall(SCR)
+        os.remove(tgz)
+    return g
 
 def stb_image_dir():
     """folder holding stb_image.h"""

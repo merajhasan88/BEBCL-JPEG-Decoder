@@ -28,7 +28,7 @@ Fast core (`FAST=1`), MCU order, replication, RGB:
 
 | project | clock | LEs | memory | timing |
 |---|---|---:|---:|---|
-| `fpga_jtag` | **95 MHz from the PLL**; the JPEG is streamed in over the USB-Blaster (virtual JTAG), the decoder clock only runs while its next byte is waiting, so the on-chip clock count is the decode time without streaming time | 4,449 (97 %) | 59,712 bits | met at 95 MHz, +0.42 ns setup, +0.50 ns hold (Fmax 99.0 MHz); PowerPlay ~147 mW |
+| `fpga_jtag` | **95 MHz from the PLL**; the JPEG is streamed in over the USB-Blaster (virtual JTAG), the decoder clock only runs while its next byte is waiting, so the on-chip clock count is the decode time without streaming time | 4,450 (97 %) | 59,712 bits | met at 95 MHz, +0.33 ns setup, +0.50 ns hold (Fmax 98.1 MHz); PowerPlay ~147 mW |
 | `fpga_fast_bench` | **95 MHz from the PLL** (`PLL_MUL=19`, `PLL_DIV=10`), `BENCH=1` (decodes at full speed, reports the clock count over UART) | 4,368 (95 %) | 63,808 bits | met at 95 MHz, +0.13 ns (Fmax 96.2 MHz); PowerPlay ~151 mW |
 | `fpga_fast` | 50 MHz, pixels over UART like `fpga` (the board demo) | 4,296 (93 %) | 63,808 bits | met at 50 MHz, +6.18 ns (Fmax 72.4 MHz) |
 
@@ -50,10 +50,11 @@ quartus_pgm -m jtag -o "p;output_files/jpeg_fpga_raster.sof"
 ./compile_all.sh                                   # every project, one after another
 ```
 
-On the board (2026-10-01, `fpga_jtag` at 95 MHz): every test photo decodes with libjpeg's checksum
+On the board (2026-10-01 and 2026-10-04, `fpga_jtag` at 95 MHz): every test photo decodes with libjpeg's checksum
 and exactly the simulated clock count, e.g. a 2048x1365 4:2:0 photo in 2,847,577 clocks = 29.97 ms,
 3120x4160 4:2:2 (`test_images/adapter.jpg`) in 19,234,181 clocks = 202.5 ms; the 26 malformed
-files of `tb/malformed` end with the expected error bits (`bench/board_jtag_95mhz_2026-10-01.txt`).
+files of `tb/malformed` end with the expected error bits (`bench/board_jtag_95mhz_2026-10-0*.txt`: 73/73 on
+2026-10-04 including the owner's 12 photos, then 62/62 with the RTL portability fixes).
 
 **A different ROM image** (ROM demos hold at most 1,024 bytes):
 `scripts/jpeg_to_hex.py img.jpg jpeg_rom.hex 1024` (from the repository root), then set

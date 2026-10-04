@@ -1,7 +1,7 @@
-# Pasha-development
+# BEBCL-JPEG-development
 
-This branch is the full working tree behind the Pasha library. The `main` branch (the library) is
-exported from it by `scripts/export_pasha.py` and is a strict subset, so every file of `main` is
+This branch is the full working tree behind the BEBCL-JPEG library. The `main` branch (the library) is
+exported from it by `scripts/export_library.py` and is a strict subset, so every file of `main` is
 developed and verified here first.
 
 ## What is only here
@@ -21,9 +21,11 @@ developed and verified here first.
 
 ```sh
 cd tb && make && make test                      # 1,616 + 80 + 416 runs must pass (check for PASS lines)
-git add -A && git commit                        # on Pasha-development
-python3 scripts/export_pasha.py ../Pasha        # ../Pasha is the worktree of main
-cd ../Pasha && git add -A && git commit
+python3 export_expectations.py                  # refresh expected.txt etc. for run_tests.sh when the
+./run_tests.sh                                  #   corpus or the configurations change; same 2,112 runs
+git add -A && git commit                        # on BEBCL-JPEG-development
+python3 scripts/export_library.py ../BEBCL-JPEG        # ../BEBCL-JPEG is the worktree of main
+cd ../BEBCL-JPEG && git add -A && git commit
 ```
 After RTL changes also re-fit the EP2C5 builds (`boards/ep2c5/compile_all.sh`): `fpga_raster` uses
 99 % of the device, so any growth on the raster path can break it.
@@ -34,7 +36,12 @@ After RTL changes also re-fit the EP2C5 builds (`boards/ep2c5/compile_all.sh`): 
   `string` parameters, no part-selects of parameters, `import pkg::*;` inside the module body,
   `integer` loop variables, `always_ff` with synchronous reset, RAMs in the `jpeg_sdp_ram` style so
   they infer into block RAM, `(* multstyle = "dsp" *)` on the multiplies that must use DSP blocks.
-* Declare every signal before its first use (Vivado and stricter tools warn about implicit nets).
+* Declare every signal before its first use, also in the port connections of an instance inside a
+  `generate` block: a forward reference there creates an undriven implicit net in strict tools
+  (Vivado's xsim showed wrong pixels from `.lastrow(~more_y)`; Verilator and Quartus resolved it).
+* Declare loop counters inside each block (`always_comb begin : name integer i; ...`): a
+  module-level variable written by more than one `always` block is illegal SystemVerilog (xsim
+  refuses to elaborate it). Run `tb/sim.sh -s xsim` on a few files after RTL changes.
 * Every arithmetic detail follows the reference libraries - libjpeg 9e (`jidctint.c`,
   `jdcolor.c`, `jdsample.c`) for the default profile, libjpeg-turbo 2.1 (`jdsample.c` fancy
   upsampling, `FIX(0.34414)`) for `FANCY_UPSAMPLE`/`CC_TURBO` - so the golden comparisons stay

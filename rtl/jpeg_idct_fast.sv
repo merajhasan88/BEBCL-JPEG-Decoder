@@ -141,9 +141,11 @@ module jpeg_idct_fast #(
   logic signed [17:0] x1s13, x1s02, x2s13, x2s02, x2_0p;
   logic signed [15:0] w5, w7;         // pass 2: columns 5 and 7 out of the bank swap
   logic               pass1;
-  integer i;
   assign pass1 = ~ph[1];
-  always_comb for (i = 0; i < 8; i = i + 1) x[i] = pass1 ? x1[i] : x2[i];
+  always_comb begin : g_xsel
+    integer i;
+    for (i = 0; i < 8; i = i + 1) x[i] = pass1 ? x1[i] : x2[i];
+  end
 
   // ================================================================ 1-D core
   // Mirrors the INT32 arithmetic of jidctint.c; multiplier operands stay <= 18 bits.
@@ -164,7 +166,8 @@ module jpeg_idct_fast #(
   localparam logic signed [15:0] C_2_053 = 16'sd16819, C_3_072 = 16'sd25172;
   localparam logic signed [15:0] CN_1_961 = -16'sd16069, CN_0_390 = -16'sd3196;
   localparam logic signed [15:0] CN_0_899 = -16'sd7373,  CN_2_562 = -16'sd20995;
-  always_comb begin
+  always_comb begin : g_rot
+    integer i;
     for (i = 0; i < 8; i = i + 1) xe[i] = x[i];
     // stage P
     s26   = xe[2] + xe[6];
@@ -264,7 +267,8 @@ module jpeg_idct_fast #(
                  || p1_act || q1_act || p2_act || q2_act || w1_act || ws_we || w2_act;
 
   // ================================================================ sequencing
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk) begin : g_seq
+    integer i;
     if (rst) begin
       full <= '0; dirty <= 4'b1111; wp <= '0; rp <= '0; zp <= '0; zi <= '0;
       g1_act <= 1'b0; g1_col <= '0; g1_slot <= '0; g1_ws <= 1'b0; w1n <= 1'b0;

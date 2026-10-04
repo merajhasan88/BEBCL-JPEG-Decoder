@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Expected board results for run_remote.py, from simulations and the reference decoder.
+"""Expected board results for pi_bench.py runs, from simulations and the reference decoder.
   DUT 0 (this library): checksum of libjpeg 9e `djpeg -dct int -nosmooth` (the fast core's MCU-order
         output is bit-identical to it) and the clock count of the RTL simulation (tb/obj_fmcu);
   DUT 1, 2 (core_jpeg, aq_djpeg): clock count and checksum of their own Verilator simulation

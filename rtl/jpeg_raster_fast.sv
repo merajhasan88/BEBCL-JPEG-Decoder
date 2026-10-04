@@ -100,8 +100,8 @@ module jpeg_raster_fast #(
 
   logic          fetch_go [0:2];
   logic [14:0]   cw_last [0:2];        // last column of component c in this line
-  integer c, k;
-  always_comb begin
+  always_comb begin : g_cw
+    integer c;
     for (c = 0; c < 3; c = c + 1) begin
       cw_last[c] = uh[c] ? cwl_m1 : wm1[14:0];
       // room: FIFO entries + column sums on their way < 3
@@ -110,9 +110,12 @@ module jpeg_raster_fast #(
     end
   end
   logic [31:0] fjw [0:2];
-  always_comb for (c = 0; c < 3; c = c + 1) begin
-    fjw[c] = {19'd0, fj[c][14:2]};                                  // word of column fj
-    raddr[c*AW +: AW] = (fph[c] ? ffb[c] : fnb[c]) + fjw[c][AW-1:0];
+  always_comb begin : g_raddr
+    integer c;
+    for (c = 0; c < 3; c = c + 1) begin
+      fjw[c] = {19'd0, fj[c][14:2]};                                // word of column fj
+      raddr[c*AW +: AW] = (fph[c] ? ffb[c] : fnb[c]) + fjw[c][AW-1:0];
+    end
   end
 
   // ---------------------------------------------------------------- pixel stage (P)
@@ -133,7 +136,8 @@ module jpeg_raster_fast #(
   assign v_free = ~v_valid | o_take;
   assign p_free = ~p_valid | v_free;
 
-  always_comb begin
+  always_comb begin : g_pok
+    integer c;
     p_ok = 1'b1;
     for (c = 0; c < 3; c = c + 1) begin
       if (hf[c]) begin
@@ -159,7 +163,8 @@ module jpeg_raster_fast #(
   logic [7:0] val [0:2];
   logic [9:0] nbv;
   logic [3:0] bias;
-  always_comb begin
+  always_comb begin : g_filt
+    integer k;
     for (k = 0; k < 3; k = k + 1) begin
       nbv = hf[k] ? (p_x0 ? csl[k] : csr[k]) : csc[k];
       if (hf[k]) bias = vf[k] ? (p_x0 ? 4'd8 : 4'd7) : (p_x0 ? 4'd4 : 4'd8);   // h2v2 / h2v1 (p_x0: even pixel)
@@ -177,7 +182,8 @@ module jpeg_raster_fast #(
   // next line: near row of component c advances after lower rows of vertical pairs
   logic [AW-1:0] far_n [0:2];
   logic          lnext_odd;
-  always_comb begin
+  always_comb begin : g_far
+    integer c;
     for (c = 0; c < 3; c = c + 1) begin
       if (defer_r)             far_n[c] = gA(pbase_r, c);                       // row 0 of the next MCU row
       else if (!l[0]) begin                                                    // upper row: row above
@@ -197,7 +203,8 @@ module jpeg_raster_fast #(
   logic [9:0] cs_in  [0:2];
   logic prime_pop [0:2];
   logic prime_ok;
-  always_comb begin
+  always_comb begin : g_prime
+    integer c;
     prime_ok = 1'b1;
     for (c = 0; c < 3; c = c + 1) begin
       rword[c] = rdata[c*32 +: 32];
@@ -217,7 +224,8 @@ module jpeg_raster_fast #(
     end
   end
 
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk) begin : g_seq
+    integer c, k;
     done <= 1'b0;
     if (rst) begin
       state <= R_IDLE; defer_r <= 1'b0; first_r <= 1'b0; lastrow_r <= 1'b0; lines_left <= '0; l <= '0;

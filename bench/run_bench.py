@@ -8,6 +8,8 @@ CPU side (single thread, pinned to one core, JPEG already in memory, median of ~
   Pillow 9.0.1                  Image.open(BytesIO).load()           (libjpeg-turbo underneath)
   OpenCV 4.7                    cv2.imdecode, cv2.setNumThreads(1)   (libjpeg-turbo underneath)
   FFmpeg                        its own mjpeg decoder, -threads 1, many loops of one image
+  zune-jpeg 0.4                 Rust, its own decoder with run-time SIMD (bench_zune/), RGB output
+  Go image/jpeg                 Go's standard library (bench_go/), YCbCr converted to RGBA with image/draw
   model/jpeg_golden.py          pure-Python reference (small images only, for scale)
 Each CPU run is wrapped in `perf stat` (when available) to record the average CPU clock during the
 run, so the results can also be given in CPU clocks per pixel.
@@ -72,6 +74,17 @@ def build():
     r = run(cc + [f"{SCR}/bench_stb", f"{HERE}/bench_c.c", "-DBACKEND_STB", f"-I{tools.stb_image_dir()}", "-lm"]); assert r.returncode == 0, r.stderr
     j9 = tools.libjpeg9()
     r = run(cc + [f"{SCR}/bench_jpeg9", f"{HERE}/bench_c.c", "-DBACKEND_LIBJPEG", f"-I{j9}/include", f"{j9}/lib/libjpeg.a"]); assert r.returncode == 0, r.stderr
+    # Go's image/jpeg and zune-jpeg (Rust): skipped when the toolchain is missing
+    env = dict(os.environ, GOCACHE=f"{SCR}/gocache", GOPATH=f"{SCR}/gopath", GOFLAGS="-mod=mod")
+    r = subprocess.run([tools.go_bin(), "build", "-o", f"{SCR}/bench_go", "."], cwd=f"{HERE}/bench_go", env=env,
+                       capture_output=True, text=True)
+    if r.returncode: print("note: Go benchmark not built:", r.stderr[-300:])
+    if shutil.which("cargo"):
+        env = dict(os.environ, CARGO_TARGET_DIR=f"{SCR}/zune_target", RUSTFLAGS="-C target-cpu=native")
+        r = subprocess.run(["cargo", "build", "--release", "--manifest-path", f"{HERE}/bench_zune/Cargo.toml"], env=env,
+                           capture_output=True, text=True)
+        if r.returncode: print("note: zune-jpeg benchmark not built (Rust 1.74+ needed):", r.stderr[-300:])
+        else: shutil.copy(f"{SCR}/zune_target/release/bench_zune", f"{SCR}/bench_zune")
 
 def ffmpeg_bench(path, w, h):
     """FFmpeg's own mjpeg decoder: decode an MJPEG stream of N copies of the image (one process),
@@ -118,6 +131,8 @@ DECODERS = {   # name -> run(path, w, h); the names are the keys in the results
     "Pillow":                   lambda p, w, h: timed(["python3", f"{HERE}/bench_py.py", "pillow", p, "1.5"]),
     "OpenCV":                   lambda p, w, h: timed(["python3", f"{HERE}/bench_py.py", "opencv", p, "1.5"]),
     "FFmpeg mjpeg":             lambda p, w, h: ffmpeg_bench(p, w, h),
+    "zune-jpeg":                lambda p, w, h: timed([f"{SCR}/bench_zune", p, "x", "1.5"]) if os.path.exists(f"{SCR}/bench_zune") else None,
+    "Go image/jpeg":            lambda p, w, h: timed([f"{SCR}/bench_go", p, "x", "1.5"]) if os.path.exists(f"{SCR}/bench_go") else None,
     "Python reference model":   lambda p, w, h: timed(["python3", f"{HERE}/bench_py.py", "model", p, "1.0"]) if w * h <= 64 * 64 * 4 else None,
 }
 

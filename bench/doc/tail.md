@@ -40,6 +40,18 @@
    takes 1.4-2.3x and FFmpeg (its own decoder, plus the RGB conversion) 1.1-2.9x. libjpeg 9e takes
    1.8-2.3x (`-nosmooth`) and stb_image 2.0-2.9x; neither has SIMD.
 
+8. **On the owner's photos (2026-10-04, the section above), no FPGA decoder beats the fast CPU
+   decoders on single-image time.** One laptop core (2.3-3.9 GHz measured; the laptop throttles)
+   decodes a 12-megapixel photo in 32-66 ms with libjpeg-turbo, 35-81 ms with FFmpeg, 52-113 ms
+   with zune-jpeg (Rust) and 58-110 ms with Pillow. BEBCL-JPEG takes 87-154 ms on the Artix-7 at 150 MHz
+   (1.9-2.7x libjpeg-turbo's time) and 137-243 ms on the EP2C5 at 95 MHz; aq_djpeg 119-295 ms,
+   core_jpeg 301-308 ms (4:2:0 only). BEBCL-JPEG on the Artix-7 is faster than Go's `image/jpeg`
+   (168-306 ms) and stb_image on every photo and close to libjpeg 9e. Per clock
+   it does 8.5-12x more work than libjpeg-turbo (1.0-1.8 clocks per pixel against 8.5-19 CPU
+   clocks per pixel). What limits it is the clock (150 MHz against ~3.5 GHz) and its one pixel per
+   clock, not memory: a wider build (2-4 pixels per clock, more IDCT lanes, a faster Huffman
+   decoder) or several decoders side by side on a larger FPGA would be needed to pass one CPU core.
+
 ### Against other FPGA decoders
 
 - **Neither core_jpeg nor aq_djpeg fits the EP2C5.** On the EP2C35 they need 7.0k-9.5k logic
@@ -90,7 +102,8 @@
 
 ```sh
 cd tb && make obj_mcu/Vjpeg_decoder obj_fmcu/Vjpeg_decoder
-cd ../bench                              # libjpeg 9e and stb_image are fetched by tools.py
+cd ../bench                              # tools.py fetches libjpeg 9e and stb_image, and Go (~280 MB)
+                                         # when `go` is not on PATH; zune-jpeg needs cargo (Rust 1.74+)
 BENCH_POWER_PROFILE=performance python3 run_bench.py bench.json [image.jpg ...]   # CPU decoders, full clock
 python3 bench_fpga.py bench.json         # this decoder's clock counts (cycle-exact simulation)
 python3 ../boards/ep2c5/scripts/jtag_decode.py <files> > board_jtag_95mhz.txt   # EP2C5, fpga_jtag loaded

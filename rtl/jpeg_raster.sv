@@ -128,8 +128,8 @@ module jpeg_raster #(
   logic [14:0]   colh_n;
   logic [5:0]    mask_n;
   logic [2:0]    fetch_n, shift_n;
-  integer        k;
-  always_comb begin
+  always_comb begin : g_next
+    integer k;
     xs     = (state == R_HAND) ? x + 16'd1 : 16'd0;
     cxp1   = {1'b0, xs[15:1]} + 16'd1;
     colh_n = (xs == 16'd0) ? 15'd0 : ((cxp1 > {1'b0, wm1[15:1]}) ? wm1[15:1] : cxp1[14:0]);
@@ -192,7 +192,8 @@ module jpeg_raster #(
   logic [7:0] val [0:2];
   logic [9:0] nb;
   logic [3:0] bias;
-  always_comb begin
+  always_comb begin : g_filt
+    integer k;
     for (k = 0; k < 3; k = k + 1) begin
       nb   = hf[k] ? (x[0] ? csr[k] : csl[k]) : csc[k];
       if (hf[k]) bias = vf[k] ? (x[0] ? 4'd7 : 4'd8) : (x[0] ? 4'd8 : 4'd4);   // h2v2 / h2v1
