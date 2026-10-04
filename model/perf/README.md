@@ -54,3 +54,17 @@ coefficients per clock and pauses for every coefficient the Huffman decoder writ
 
 W4 matches libjpeg-turbo on every photo from 106 MHz up; W2 would need 205 MHz. Its symbols average
 about 5 bits, so a 1-symbol/clock decoder needs only ~5 bits per clock: an 8-bit input port is enough.
+
+Sizing of W4 (1-byte/clock input, worst case = busiest photo, clocks/pixel):
+
+| choice | worst case |
+|---|---|
+| lookahead table 8 / 9 / 10 bits | 0.55 / 0.54 / 0.53 |
+| codes longer than the table: today's search (L-1 clocks) / L-6 / 3 / 2 clocks | 0.63 / 0.56 / 0.55 / 0.54 |
+| clocks between blocks in the Huffman decoder 0 / 1 / 3 | 0.51 / 0.54 / 0.60 |
+| coefficient slots (valid masks) 4 / 8 / 16 | 0.54 / 0.54 / 0.54 |
+| MCU buffers 2 / 3 / 4 | within 4 % |
+| IDCT 16 clocks per block instead of 8 | 0.62 |
+| 2 pixels per clock instead of 4 | 0.60 |
+
+The wide core's plan and progress: `WIDE_STATUS.md`.
