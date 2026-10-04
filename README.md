@@ -23,9 +23,11 @@ Every build option is verified **bit for bit** against a reference decoder:
 | default | libjpeg 9e `djpeg -dct int -nosmooth` |
 | `RASTER_OUT=1 FANCY_UPSAMPLE=1 CC_TURBO=1` | **Pillow, OpenCV** and libjpeg-turbo `djpeg -dct int` (libjpeg-turbo 2.1 defaults) |
 
-Three cores share one interface: a compact core (`FAST=0`, ~13.6 clocks per pixel, the smallest),
-a pipelined core (`FAST=1`, **1.0-2.4 clocks per pixel**) and, for larger FPGAs, a wide core
-(`FAST=2`, **0.25-0.56 clocks per pixel** on phone photos, four pixels per output beat, MCU order).
+Three cores share one interface: a compact core (`FAST=0`, option `--core small`, ~13.6 clocks per
+pixel, the smallest), a pipelined core that outputs one pixel per clock (`FAST=1`, `--core single`;
+called the fast core in this README, **1.0-2.4 clocks per pixel**) and, for larger FPGAs, a wide core
+(`FAST=2`, `--core wide`, **0.25-0.56 clocks per pixel** on phone photos, four pixels per output beat,
+MCU order).
 
 | measured on a board | core | clock | resources | 12-megapixel photo |
 |---|---|---:|---|---:|
@@ -108,12 +110,26 @@ file                                    size     type       clocks  clk/px  ms@1
 adapter.jpg                        3120x4160    4:2:2     19234181   1.482     192.34  ok
 ```
 
-Options of `decode.sh` and `decode.py`: `--profile libjpeg|pillow` (which reference the pixels
-match: libjpeg 9e with replicated chroma, any image size; or Pillow / OpenCV / libjpeg-turbo with
-smoothed chroma, raster order), `--core fast|small|wide` (`wide` = `FAST=2`, MCU order: `--profile
-libjpeg` only), `--fmt rgb|ycbcr|y`, `--mhz F` (report times
-at your clock), `--out DIR`. A file the decoder does not support (progressive, 12-bit, arithmetic
-coding ...) is reported with its error bits.
+Options of `decode.sh` and `decode.py`:
+
+- `--core single|wide|small`: which core decodes. It sets the `FAST` parameter of
+  `rtl/jpeg_decoder.sv`; in hardware that is a build-time choice (the cores are different circuits),
+  here it picks the simulation build that runs.
+
+  | `--core` | core | `FAST` | pixels per clock | `--profile` | size (measured builds) |
+  |---|---|---|---|---|---|
+  | `single` (default) | pipelined (fast) core | 1 | at most 1; 1.0-2.4 clocks per pixel | `libjpeg`, `pillow` | 4,296-4,425 LEs on the Cyclone II EP2C5 |
+  | `wide` | wide core | 2 | at most 4; 0.25-0.56 clocks per pixel on phone photos | `libjpeg` (MCU order only) | ~5,800 LUTs and 33 DSPs on an Artix-7; too big for the EP2C5 |
+  | `small` | compact core | 0 (the RTL default) | ~13.6 clocks per pixel | `libjpeg`, `pillow` | 3,374-4,547 LEs on the EP2C5 |
+
+  The test scripts (`tb/run_tests.py --configs`, `tb/sim.sh -c`) name their builds after the core:
+  `fmcu`, `frbox`, `frfancy` = single; `wmcu` = wide; `mcu`, `rbox`, `rfancy`, `ep2c5`, `noyrgb` = small.
+- `--profile libjpeg|pillow`: which reference the pixels match: libjpeg 9e with replicated chroma,
+  any image size; or Pillow / OpenCV / libjpeg-turbo with smoothed chroma, raster order.
+- `--fmt rgb|ycbcr|y`, `--mhz F` (report times at your clock), `--out DIR`.
+
+A file the decoder does not support (progressive, 12-bit, arithmetic coding ...) is reported with
+its error bits.
 
 ## Using BEBCL-JPEG in your FPGA design
 
