@@ -31,7 +31,7 @@ a pipelined core (`FAST=1`, **1.0-2.4 clocks per pixel**) and, for larger FPGAs,
 |---|---|---:|---|---:|
 | Intel/Altera Cyclone II EP2C5T144C8 (2004, 4,608 LEs) | `FAST=1` | 95 MHz | 4,425 LEs (96 %), 26/26 multipliers | 202-284 ms |
 | Xilinx Artix-7 XC7A200T (Acorn CLE-215+, remote board at fpgas.online) | `FAST=1` | 150 MHz | 2,488 LUTs, 17 DSP48E1, 7.5 BRAM | 87-154 ms |
-| the same Artix-7 board | `FAST=2` | 150 MHz | 6,178 LUTs, 33 DSP48E1, 9 BRAM | **22-49 ms** |
+| the same Artix-7 board | `FAST=2` | 150 MHz | 6,211 LUTs, 33 DSP48E1, 9 BRAM | **22-49 ms** |
 
 How it compares with the two other open-source FPGA JPEG decoders and with CPU decoders: below and
 in **[BENCHMARKS.md](BENCHMARKS.md)** (Artix-7 details: `boards/acorn_cle215/README.md`).

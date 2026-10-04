@@ -39,22 +39,23 @@
    "name": "this library, wide core (FAST=2, 4 pixels per beat, MCU order, RGB)",
    "short": "this library, wide core",
    "board_mhz": 150.0,
-   "fmax": "153 MHz",
-   "luts": 6178,
-   "ffs": 7607,
+   "fmax": "150 MHz (+0.013 ns)",
+   "luts": 6211,
+   "ffs": 7575,
    "bram": 9,
    "dsps": 33,
    "decoder_alone": {
-    "luts": 5794,
+    "luts": 5827,
     "lutram": 504,
-    "ffs": 6863,
+    "ffs": 6831,
     "ramb36": 3,
     "ramb18": 10,
     "dsps": 33
    },
    "vivado_flow": "VIVADO_EFFORT=high (place ExtraTimingOpt, route/phys_opt AggressiveExplore); default flow: -0.10 ns",
    "date": "2026-10-04",
-   "site": "welland.fpgas.online, board page pi-sw2-p46 (formerly pi46)"
+   "site": "welland.fpgas.online, board page pi-sw2-p46 (formerly pi46)",
+   "note": "figures of the final build (xsim fixes, commit 6846718). The 24-file run used the build before those fixes (6,178 LUTs, +0.128 ns); the final bitstream was re-run on 3 of the files (adapter.jpg, IMG20260716020409.jpg, adapter_420.jpg): 3/3 PASS, clocks and checksums identical."
   }
  },
  "files": {

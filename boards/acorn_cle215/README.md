@@ -50,7 +50,7 @@ err[15:0], width[15:0], height[15:0], pixels[31:0], bytes[31:0], 0 0` (flags: 1 
 # Vivado (tested with 2026.1; it needs a licence file, the free "Vivado Basic" licence covers the
 # 7-series; on Ubuntu 22.04 it also needs libtinfo.so.5 from the libtinfo5 package)
 vivado -mode batch -source build.tcl -tclargs <DUT> <CLKOUT_DIV> <out_dir>
-#   DUT 3 at 150 MHz needs VIVADO_EFFORT=high (stronger placement / routing): +0.128 ns; the default flow
+#   DUT 3 at 150 MHz needs VIVADO_EFFORT=high (stronger placement / routing): +0.013 ns; the default flow
 #   gives -0.10 ns (the one-symbol-per-clock Huffman loop is routing-bound)
 #   CLKOUT_DIV 8 = 150 MHz (this library, aq_djpeg), 13 = 92.3 MHz (core_jpeg); VIVADO_THREADS limits threads
 # load the bitstream into the FPGA's configuration RAM (not its flash), e.g. on the Pi:
@@ -81,7 +81,7 @@ Board: SQRL Acorn CLE-215+ (Xilinx Artix-7 XC7A200T-3) at fpgas.online, Welland 
 | this library, fast core (MCU order, RGB) | 150.0 MHz | 160 MHz | 2,488 | 2,663 | 7.5 | 17 |
 | ultraembedded core_jpeg (SUPPORT_WRITABLE_DHT=1) | 92.3 MHz | 95-104 MHz (3 builds) | 6,681 | 6,037 | 7 | 32 |
 | H. Ishihara aq_djpeg | 150.0 MHz | 153 MHz | 4,919 | 4,933 | 4 | 14 |
-| this library, wide core (FAST=2, 4 pixels per beat, MCU order, RGB) | 150.0 MHz | 153 MHz | 6,178 | 7,607 | 9 | 33 |
+| this library, wide core (FAST=2, 4 pixels per beat, MCU order, RGB) | 150.0 MHz | 150 MHz (+0.013 ns) | 6,211 | 7,575 | 9 | 33 |
 
 Areas include the same UART harness (`uart_bench_core.sv`) around each decoder.
 
@@ -119,8 +119,11 @@ What the runs show:
   3.0-4.0x fewer clocks than the fast core: 22.0-48.6 ms per 12-megapixel photo at 150 MHz. Every
   clock count equals the cycle-exact simulation. That is 0.64-0.80x the time of libjpeg-turbo
   -nosmooth on one laptop core at 3.9 GHz and 0.64-0.88x that of the fastest CPU decoder on each file
-  (`../../BENCHMARKS.md`). With the harness it needs 6,178 LUTs, 33 DSPs and 9 block-RAM tiles (the
-  decoder alone 5,794 LUTs, 6,863 flip-flops); 150 MHz is met with `VIVADO_EFFORT=high` (+0.128 ns).
+  (`../../BENCHMARKS.md`). With the harness it needs 6,211 LUTs, 33 DSPs and 9 block-RAM tiles (the
+  decoder alone 5,827 LUTs, 6,831 flip-flops); 150 MHz is met with `VIVADO_EFFORT=high` (+0.013 ns).
+  The 24 files ran on the build before two fixes found by Vivado's xsim (a missing reset of the IDCT
+  pipeline's valid bits; a workaround for an xsim bug); the final bitstream was run on 3 of them
+  (adapter.jpg, IMG20260716020409.jpg, adapter_420.jpg): 3/3 PASS with identical clocks and checksums.
   The site had renamed the board page to `pi-sw2-p46` by then (the same Acorn).
 - **This library decoded all 24 files with pixels identical to libjpeg 9e**, at 1.18-1.78
   clocks/pixel on the 4:2:2 originals and 1.005-1.37 on the 4:2:0 copies, 87-154 ms per

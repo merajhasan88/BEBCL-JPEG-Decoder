@@ -156,6 +156,11 @@ config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_
   - build 3: the same RTL with `VIVADO_EFFORT=high` (ExtraTimingOpt placement, AggressiveExplore routing and
     physical optimisation): **+0.128 ns at 150 MHz** (~153 MHz). Harness + decoder 6,178 LUTs, 7,607 FFs,
     9 BRAM tiles, 33 DSP48E1; the decoder alone 5,794 LUTs (504 as RAM), 6,863 FFs, 3 RAMB36 + 10 RAMB18.
+  - build 4, after the xsim fixes (commit 6846718), `VIVADO_EFFORT=high`: **+0.013 ns** at 150 MHz; harness +
+    decoder 6,211 LUTs, 7,575 FFs, 9 BRAM tiles, 33 DSPs; the decoder alone 5,827 LUTs, 6,831 FFs. Board re-run
+    (owner: "using fpgas.online again but with fewer pictures"): 3 files (adapter.jpg, IMG20260716020409.jpg,
+    adapter_420.jpg; 7.4 MB) with the reworked client (one terminal session, 2-minute polling): **3/3 PASS**,
+    clocks and checksums identical to the simulation and to the 24-file run; about 3 minutes on the site.
 - **Step 4 done (board, 2026-10-04)**: fpgas.online Welland, the Acorn now at board page `pi-sw2-p46`
   (the site had renamed its pages and upload form; the private client in /root/fpgas_online_tools was
   adapted). **24/24 PASS**: every clock count = the simulation of the final RTL, every checksum = libjpeg

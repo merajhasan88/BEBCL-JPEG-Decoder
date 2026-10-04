@@ -228,7 +228,7 @@ Board: SQRL Acorn CLE-215+ (Xilinx Artix-7 XC7A200T-3) at fpgas.online, Welland 
 | this library, fast core (MCU order, RGB) | 150.0 MHz | 160 MHz | 2,488 | 2,663 | 7.5 | 17 |
 | ultraembedded core_jpeg (SUPPORT_WRITABLE_DHT=1) | 92.3 MHz | 95-104 MHz (3 builds) | 6,681 | 6,037 | 7 | 32 |
 | H. Ishihara aq_djpeg | 150.0 MHz | 153 MHz | 4,919 | 4,933 | 4 | 14 |
-| this library, wide core (FAST=2, 4 pixels per beat, MCU order, RGB) | 150.0 MHz | 153 MHz | 6,178 | 7,607 | 9 | 33 |
+| this library, wide core (FAST=2, 4 pixels per beat, MCU order, RGB) | 150.0 MHz | 150 MHz (+0.013 ns) | 6,211 | 7,575 | 9 | 33 |
 
 Areas include the same UART harness (`uart_bench_core.sv`) around each decoder.
 
@@ -375,7 +375,7 @@ BEBCL-JPEG `FAST=2` (the wide core) on the Artix-7 at 150 MHz takes 0.64-0.80x t
    counts identical to the simulation. That is 0.64-0.80x the time of libjpeg-turbo -nosmooth on one
    laptop core at a steady 3.9 GHz (1.24-1.57x faster) and 0.64-0.88x the time of the fastest CPU
    decoder on each photo (libjpeg-turbo, or FFmpeg on three files). It decodes one Huffman symbol
-   per clock and four pixels per clock in 6,178 LUTs and 33 DSPs of the XC7A200T (with the harness);
+   per clock and four pixels per clock in 6,211 LUTs and 33 DSPs of the XC7A200T (with the harness);
    at 131 MHz or more it would still beat every CPU decoder on every photo. Single-image time on one
    CPU core is the comparison here: several CPU cores decoding several photos at once would still
    outrun one decoder in throughput; several decoders side by side on one FPGA would answer that
