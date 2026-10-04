@@ -5,10 +5,12 @@ request; the names are the owner's.
 
 | item | what | state |
 |---|---|---|
-| **Proposal A** | split the stream of one image that has no restart markers, so several decoders can share one photo | research from 2026-10-04, 22:40 PKT |
-| **Proposal B** | a way around the Huffman loop limit (one code per clock) | research from 2026-10-04, 22:40 PKT, in parallel with A |
-| **Task A** | batched mode of the wide core on fpgas.online Welland | deferred |
+| **Proposal A** | split the stream of one image that has no restart markers, so several decoders can share one photo | research started 2026-10-04 after 22:40 PKT (owner: "sure go ahead keeping in mind the load on the laptop's cores") |
+| **Proposal B** | a way around the Huffman loop limit (one code per clock) | research started with A, in parallel |
+| **Task A** | batched mode of the wide core on fpgas.online Welland | started 2026-10-04 (owner: "Proceed with Task A"); each Welland run still needs the owner's OK |
 | **Task B** | all tests on AWS F2 | last; nothing is set up on AWS without the owner's go-ahead |
+
+Research, measurements, estimates and the plan for both proposals: `PROPOSALS.md`.
 
 Method for both proposals (the order the owner chose for the wide core, "model first"): published
 methods and existing decoders, then estimates with `model/perf`, then a plan with numbers for the
@@ -80,6 +82,6 @@ Owner: "In parallel (pun intended) lets find a way around Huffman loop limitatio
   licence covers one.
 - **Clock.** The F2 shell offers 15.625-500 MHz; the wide core is estimated at 225-250 MHz on the
   VU47P.
-- **"All tests", proposed scope (to agree with the owner):** the 24 photo files on each core that
-  fits (single `FAST=1`, wide `FAST=2` and, once Task A exists, the batched mode), checked against
+- **"All tests" (owner, 2026-10-04):** all 24 photo files on the single core (`FAST=1`), the wide
+  core (`FAST=2`) and the batched mode, plus whatever comes out of Proposals A and B; checked against
   libjpeg 9e's checksums and the simulated clock counts, as on Welland.

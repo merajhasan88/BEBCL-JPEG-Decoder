@@ -36,6 +36,9 @@ INCLUDE = [
 EXCLUDE = [
     "*/build_status.txt", "*/final_build.txt",          # notes of earlier builds (development history)
     "tb/regression_*", "tb/stream_tests*.txt", "tb/final_regression.txt", "tb/big*",   # run logs
+    # research for Proposals A and B (PROPOSALS.md, development branch only) until something is built
+    "model/perf/syncstats.c", "model/perf/proposals.py", "model/perf/proposals_*.json",
+    "model/perf/probes/hufloop_probe3.sv", "model/perf/probes/hufloop_probe4.sv", "model/perf/probes/probe_fmax.tcl",
 ]
 
 def tracked():
