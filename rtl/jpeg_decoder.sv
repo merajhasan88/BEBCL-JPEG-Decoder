@@ -8,9 +8,10 @@
 //                  1: pipelined core (jpeg_dec_fast): table-driven Huffman decoding, a two-lane
 //                     IDCT (32 clocks per block) and 1-pixel-per-clock output, all overlapped;
 //                     ~1-1.5 clocks per pixel.  Same pixels, errors and interface.
-//                  2: wide core (jpeg_dec_wide, work in progress, see WIDE_STATUS.md): four pixels
-//                     per output beat (NPIX = 4), MCU order only (RASTER_OUT = 0), for larger
-//                     FPGAs.  Same pixels and errors.
+//                  2: wide core (jpeg_dec_wide): one Huffman symbol per clock, an IDCT of 8 clocks
+//                     per block and four pixels per output beat (NPIX = 4), MCU order only
+//                     (RASTER_OUT = 0); ~0.25-0.56 clocks per pixel on phone photos, ~6k LUTs and
+//                     33 DSP48 on an Artix-7 (150 MHz).  Same pixels and errors.
 //   NPIX           pixels per output beat: 4 for FAST = 2, 1 otherwise (derived; do not set).
 //   RASTER_OUT     0: pixels leave in MCU order (8x8/16x16 tiles) with their coordinates; needs
 //                     only a small MCU buffer and handles any image width.

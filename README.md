@@ -29,7 +29,7 @@ a pipelined core (`FAST=1`, **1.0-2.4 clocks per pixel**) and, for larger FPGAs,
 
 | measured on a board | core | clock | resources | 12-megapixel photo |
 |---|---|---:|---|---:|
-| Intel/Altera Cyclone II EP2C5T144C8 (2004, 4,608 LEs) | `FAST=1` | 95 MHz | 4,450 LEs (97 %), 26/26 multipliers | 202-284 ms |
+| Intel/Altera Cyclone II EP2C5T144C8 (2004, 4,608 LEs) | `FAST=1` | 95 MHz | 4,425 LEs (96 %), 26/26 multipliers | 202-284 ms |
 | Xilinx Artix-7 XC7A200T (Acorn CLE-215+, remote board at fpgas.online) | `FAST=1` | 150 MHz | 2,488 LUTs, 17 DSP48E1, 7.5 BRAM | 87-154 ms |
 | the same Artix-7 board | `FAST=2` | 150 MHz | 6,178 LUTs, 33 DSP48E1, 9 BRAM | **22-49 ms** |
 
@@ -216,7 +216,7 @@ that other tools ignore.
 |---|---|---:|---:|---:|---:|
 | Cyclone II EP2C5, Quartus 13.0sp1 | compact, MCU order (`boards/ep2c5/fpga`) | 3,374 LEs | 9 M4K | 26 9-bit | 61 MHz |
 | Cyclone II EP2C5, Quartus 13.0sp1 | compact, raster + Pillow smoothing + RGB (`fpga_raster`) | 4,547 LEs | 25 M4K | 26 9-bit | 60 MHz |
-| Cyclone II EP2C5, Quartus 13.0sp1 | fast, MCU order (`fpga_jtag`, board harness included) | 4,450 LEs | 59,712 bits | 26 9-bit | 98.1 MHz |
+| Cyclone II EP2C5, Quartus 13.0sp1 | fast, MCU order (`fpga_jtag`, board harness included) | 4,425 LEs | 59,712 bits | 26 9-bit | 98.7 MHz |
 | Artix-7 XC7A200T-2, Vivado 2026.1 | fast, MCU order, decoder alone (from the build below) | 2,204 LUTs, 2,124 FFs | 13 BRAM18 | 17 DSP48E1 | - |
 | Artix-7 XC7A200T-2, Vivado 2026.1 | fast, MCU order (`boards/acorn_cle215`, UART harness included) | 2,488 LUTs, 2,671 FFs | 7.5 BRAM36 | 17 DSP48E1 | 157-160 MHz |
 

@@ -166,4 +166,11 @@ config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_
   photo** - faster than every CPU decoder on every photo. (Single-image time; a multi-core CPU decoding
   several photos at once still has more throughput.) Final RTL photo simulation:
   `model/perf/wide_photos_sim_2026-10-04.json` (24/24 identical, model within 1.6 %).
-- Step 5 (in progress): EP2C5 re-fits after the wrapper change, gate-level runs, full regression, xsim.
+- Step 5 (in progress): after the wrapper change (FAST int, NPIX, px_n) all 10 EP2C5 builds re-fitted
+  and meet timing (`boards/ep2c5/compile_all.log`, 2026-10-04 15:39-16:22): LE counts unchanged except
+  fpga_jtag 4,425 (was 4,450; +0.39 ns at 95 MHz, Fmax 98.7 MHz) - Quartus 13 accepts the wrapper's
+  untaken FAST=2 branch without the wide files in its project. Gate-level runs of the new netlists
+  (`boards/ep2c5/gate_level/verilator/gls_2026-10-04c.txt`): gls, gls_fast, gls_raster PASS with the same
+  checksums (0x10137ECE, 0x10137ECE, 0x3C7A89E2). Full regression on the final RTL, 9 configurations:
+  C++ testbench **1818/1818, 90/90, 468/468** (`tb/regression_2026-10-04d.txt`), SystemVerilog testbench on
+  Verilator the same (`tb/regression_sv_2026-10-04c.txt`). xsim on wmcu + fmcu: running.

@@ -12,7 +12,7 @@
 // decoded without a gap; it waits for the decoder only at restart intervals and at the end of the
 // scan.  The output side holds three MCUs, so the IDCT can fill two while the third is emitted,
 // and emits four pixels per beat (px_n of them valid).  Pixels, errors and handshakes are
-// identical to the other cores (WIDE_STATUS.md).
+// identical to the other cores.
 module jpeg_dec_wide #(
   parameter bit CC_TURBO       = 1'b0,
   parameter bit RGB_OUT        = 1'b1,

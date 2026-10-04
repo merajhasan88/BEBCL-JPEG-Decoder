@@ -1,4 +1,5 @@
-# Timing probe of the 1-symbol/clock Huffman loop (WIDE_STATUS.md): vivado -mode batch -source probe.tcl
+# Timing probe of the 1-symbol/clock Huffman loop of the wide core (rtl/jpeg_huffdec_wide.sv):
+#   vivado -mode batch -source probe.tcl
 # (probe 1: change the file and top to hufloop_probe1)
 read_verilog -sv hufloop_probe2.sv
 synth_design -top hufloop_probe2 -part xc7a200tfbg484-2 -mode out_of_context -flatten_hierarchy rebuilt

@@ -378,7 +378,8 @@ BEBCL-JPEG `FAST=2` (the wide core) on the Artix-7 at 150 MHz takes 0.64-0.80x t
    per clock and four pixels per clock in 6,178 LUTs and 33 DSPs of the XC7A200T (with the harness);
    at 131 MHz or more it would still beat every CPU decoder on every photo. Single-image time on one
    CPU core is the comparison here: several CPU cores decoding several photos at once would still
-   outrun one decoder in throughput (`WIDE_STATUS.md`).
+   outrun one decoder in throughput; several decoders side by side on one FPGA would answer that
+   (not built yet).
 10. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
    times as measured while the laptop throttled (2.3-3.9 GHz), and with libjpeg-turbo's default
    (smoothing) mode: "libjpeg-turbo 1.9-2.7x faster than BEBCL-JPEG on the Artix-7", "faster than

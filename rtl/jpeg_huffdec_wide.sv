@@ -5,7 +5,7 @@
 //   256-entry lookahead tables (one per {Tc, Th}, read in parallel, selected late by {AC, Th})
 //   -> n = L + SSSS (code + magnitude bits, stored in the entry) -> D << n.
 // The loop has no shifter in front of the tables and no adder behind them; bytes are merged below
-// the valid bits using only registered values (WIDE_STATUS.md, timing probe 2: 150 MHz on Artix-7).
+// the valid bits using only registered values (timing probe: model/perf/probes/hufloop_probe2.sv).
 //
 // Same contracts as jpeg_bitwin + jpeg_huffdec (T.81 F.2.2, F.1.2.3), so the pixels and errors of
 // the wide build are those of the others for any input:

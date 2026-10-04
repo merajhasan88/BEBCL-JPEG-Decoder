@@ -16,7 +16,7 @@ sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(REPO, "bench"))
 import perf_model as P
 from tools import djpeg9
 
-# the wide core as built (WIDE_STATUS.md step 3)
+# the wide core as built (rtl/jpeg_dec_wide.sv, jpeg_huffdec_wide.sv, jpeg_idct_wide.sv)
 W4 = replace(P.Cfg(name="FAST=2 (wide)"), px_clk=4, halves=3, sym_clk=1, look=8, long_fix=6, hd_fin=0, hd_gap=0,
              slots=4, in_rate=1, **P.IDCT_WIDE)
 

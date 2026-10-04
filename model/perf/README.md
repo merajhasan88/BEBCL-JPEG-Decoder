@@ -74,4 +74,5 @@ Sizing of W4 (1-byte/clock input, worst case = busiest photo, clocks/pixel):
 | IDCT 16 clocks per block instead of 8 | 0.62 |
 | 2 pixels per clock instead of 4 | 0.60 |
 
-The wide core's plan and progress: `WIDE_STATUS.md`.
+The wide core (`FAST=2`, `rtl/jpeg_dec_wide.sv`) was built from this sizing; its design log and
+measurements are in `WIDE_STATUS.md` on the development branch.

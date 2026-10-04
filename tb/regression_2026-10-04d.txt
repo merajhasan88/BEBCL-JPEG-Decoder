@@ -1,0 +1,50 @@
+done adp_13x11_q40_gray
+done adp_160x120_q95_444
+done adp_16x16_q25_420
+done adp_16x16_q25_gray
+done adp_17x33_q40_420
+done adp_1x1_q50_420
+done adp_240x320_q95_422_rst4
+done adp_256x64_q98_gray
+done adp_320x240_q90_420
+done adp_32x32_q25_420
+done adp_32x32_q25_444
+done adp_33x18_q40_440
+done adp_3x5_q50_420
+done adp_40x40_q20_sof1_UNSUPPORTED
+done adp_40x40_q40_lumasub
+done adp_40x50_q30_420_rst3
+done adp_45x37_q30_420_rst2
+done adp_45x37_q30_422
+done adp_45x37_q30_422_exifthumb
+done adp_45x37_q30_440_rst1row
+done adp_45x37_q30_gray_rst3
+done adp_45x37_q30_progressive_UNSUPPORTED
+done adp_48x40_q40_mixed
+done adp_4x6_q50_422
+done adp_5x3_q50_420
+done adp_64x64_q25_420
+done adp_8x8_q10_gray
+done board_352x32_q6_420
+done wide_1152x6_q20_gray
+done wide_1160x6_q20_gray
+done wide_352x20_q20_420
+done wide_368x20_q20_420
+done wide_384x12_q20_444
+done wide_576x10_q20_422
+done wide_592x10_q20_422
+
+mcu: 202/202  fmcu: 202/202  frbox: 202/202  frfancy: 202/202  wmcu: 202/202  rbox: 202/202  rfancy: 202/202  ep2c5: 202/202  noyrgb: 202/202
+TOTAL 1818/1818 passed
+done mcu
+done fmcu
+done frbox
+done frfancy
+done wmcu
+done rbox
+done rfancy
+done ep2c5
+done noyrgb
+STREAM TESTS 90/90 passed
+468/468 passed
+rc=0
