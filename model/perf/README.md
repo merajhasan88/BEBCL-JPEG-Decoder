@@ -19,7 +19,8 @@ python3 model/perf/perf_model.py calibrate                      # model vs the c
 python3 model/perf/perf_model.py sweep                          # variants on test_images/ + 4:2:0 copies
 ```
 
-`photos()` uses the JPEGs in `test_images/` and makes their 4:2:0 copies in `build/p420/` with
+`photos()` uses the JPEGs in `test_images/` (the library ships only `adapter.jpg`; the owner's 12
+photos behind the tables below are on the development branch) and makes their 4:2:0 copies in `build/p420/` with
 libjpeg-turbo (`djpeg -pnm | cjpeg -baseline -quality 90 -sample 2x2`, the files measured on the
 Artix-7 board, byte for byte). `blockstats` is compiled into `build/` on first use (needs `cc`).
 

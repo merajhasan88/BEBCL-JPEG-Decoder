@@ -110,7 +110,8 @@ adapter.jpg                        3120x4160    4:2:2     19234181   1.482     1
 
 Options of `decode.sh` and `decode.py`: `--profile libjpeg|pillow` (which reference the pixels
 match: libjpeg 9e with replicated chroma, any image size; or Pillow / OpenCV / libjpeg-turbo with
-smoothed chroma, raster order), `--core fast|small`, `--fmt rgb|ycbcr|y`, `--mhz F` (report times
+smoothed chroma, raster order), `--core fast|small|wide` (`wide` = `FAST=2`, MCU order: `--profile
+libjpeg` only), `--fmt rgb|ycbcr|y`, `--mhz F` (report times
 at your clock), `--out DIR`. A file the decoder does not support (progressive, 12-bit, arithmetic
 coding ...) is reported with its error bits.
 
@@ -262,10 +263,13 @@ Both regressions compare against the reference images in `tb/golden/` (made by t
 - **Images back to back without reset** (`tb/run_stream_tests.py`): 90 runs.
 - **Two independent testbenches**: the C++ harness (`make test`) and the SystemVerilog testbench
   (`tb/run_tests.sh`) run the same 2,376 checks and both pass all of them on Verilator; on Vivado's
-  xsim the SystemVerilog testbench passes a 396-run subset (both cores, MCU and raster output,
-  smoothing, malformed files). xsim's stricter 4-state semantics found two portability bugs that
-  Verilator, Quartus and the hardware never showed (a loop counter shared by several `always`
-  blocks; a signal used in a port connection before its declaration); both are fixed.
+  xsim the SystemVerilog testbench passes a 396-run subset of the compact and fast cores (MCU and
+  raster output, smoothing, malformed files) and 264 runs of the wide and fast cores. xsim's stricter
+  4-state semantics found problems that Verilator, Quartus and the hardware never showed: a loop
+  counter shared by several `always` blocks, a signal used in a port connection before its
+  declaration, and unreset valid bits in the wide core's IDCT pipeline (all fixed); and an xsim bug
+  (`tab[idx[k]]` inside a procedural loop read as `tab[k]`) that the wide core's output stage now
+  avoids.
 - **Malformed and truncated files** (`tb/make_malformed.py`, `tb/run_malformed_tests.py`): 26
   files, each one edit away from a corpus file (bad, missing or incomplete DQT/DHT/SOF/SOS, RSTn
   errors, files cut in the headers, in the scan and before the EOI) x 9 configurations x 2 stall

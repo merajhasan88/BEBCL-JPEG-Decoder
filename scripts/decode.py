@@ -10,7 +10,8 @@ options:
                       output, so any image size)
   --profile pillow    pixels identical to Pillow / OpenCV / libjpeg-turbo defaults (raster output with
                       fancy upsampling; the row buffer is sized for the widest image)
-  --core fast|small   FAST=1 pipelined core, ~1 clock/pixel (default), or the compact core (~13 clocks/pixel)
+  --core fast|small|wide  FAST=1 pipelined core, ~1 clock/pixel (default), the compact core (~13 clocks/pixel),
+                      or the wide core (FAST=2, 4 pixels per clock; MCU order, so --profile libjpeg only)
   --fmt rgb|ycbcr|y   output format (default rgb)
   --out DIR           output folder (default out/): <name>.ppm (or .pgm), plus <name>.png when Pillow is installed
   --mhz F             also report the decode time at this clock (default 100)
@@ -65,12 +66,14 @@ def main():
     files = args or sorted(glob.glob(os.path.join(REPO, "test_images", "*.jpg")) + glob.glob(os.path.join(REPO, "test_images", "*.jpeg"))
                            + glob.glob(os.path.join(REPO, "test_images", "*.JPG")))
     if not files: sys.exit("no JPEG files given and none in test_images/")
-    if profile not in ("libjpeg", "pillow") or core not in ("fast", "small") or fmt not in ("rgb", "ycbcr", "y"):
+    if profile not in ("libjpeg", "pillow") or core not in ("fast", "small", "wide") or fmt not in ("rgb", "ycbcr", "y"):
         sys.exit("bad option; see --help")
+    if core == "wide" and profile != "libjpeg":
+        sys.exit("the wide core (FAST=2) has MCU-order output only: use --profile libjpeg")
     info = {f: sof_info(f) for f in files}
     f_ = "f" if core == "fast" else ""
     if profile == "libjpeg":
-        target = f"obj_{f_}mcu/Vjpeg_decoder" if core == "fast" else "obj_mcu/Vjpeg_decoder"
+        target = {"fast": "obj_fmcu", "small": "obj_mcu", "wide": "obj_wmcu"}[core] + "/Vjpeg_decoder"
         raster = False
     else:
         need = max(((w + 15) // 16) * ROWBUF_PER_16PX for w, _, _ in info.values())
