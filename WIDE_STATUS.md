@@ -173,4 +173,18 @@ config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_
   (`boards/ep2c5/gate_level/verilator/gls_2026-10-04c.txt`): gls, gls_fast, gls_raster PASS with the same
   checksums (0x10137ECE, 0x10137ECE, 0x3C7A89E2). Full regression on the final RTL, 9 configurations:
   C++ testbench **1818/1818, 90/90, 468/468** (`tb/regression_2026-10-04d.txt`), SystemVerilog testbench on
-  Verilator the same (`tb/regression_sv_2026-10-04c.txt`). xsim on wmcu + fmcu: running.
+  Verilator the same (`tb/regression_sv_2026-10-04c.txt`).
+  **xsim (Vivado 2026.1) found two problems in the wide core that Verilator and the board did not show:**
+  1. *frame_done never came* (every wmcu file): jpeg_idct1d's valid pipeline had no reset; in a 4-state
+     simulator its X reached the IDCT's busy count (n1 += in - out) in the first clock after reset and
+     stayed there. Fix: reset the five valid bits (a real RTL weakness - on hardware they power up 0 on
+     Xilinx/Intel, but nothing guaranteed it).
+  2. *RGB wrong, YCbCr right* (all colour files): an xsim bug - inside a procedural `for` loop it evaluates
+     `tab[idx[k]]` as `tab[k]` (reproduced in a 20-line test in the scratchpad: entries 0,3,6,9 instead
+     of 300,303,306,309; explicit statements or a generate loop give the right values). The colour table
+     lookups of jpeg_mcuout_wide got entries 0-3. Fix: jpeg_mcuout_wide's per-pixel work moved into a
+     generate loop (one process per pixel, constant indexes); same logic. Both rules are now in
+     DEVELOPMENT.md. After the fixes: wmcu 202/202, 10/10, 52/52 on Verilator; 4 files x RGB/YCbCr PASS on
+     xsim; xsim regression for wmcu + fmcu (quick): **202/202, 10/10, 52/52** (`tb/regression_xsim_2026-10-04b.txt`).
+  The board run (24/24) used the RTL before these two fixes; the fixes change no clock count and no
+  pixel (Verilator, cycle-exact), and the Vivado build is to be repeated to confirm timing.

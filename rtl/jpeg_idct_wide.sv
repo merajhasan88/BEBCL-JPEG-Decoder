@@ -100,7 +100,7 @@ module jpeg_idct_wide #(
   assign c1_in_v = q1_act;
   assign c1_in_t = {q1_last, q1_ws, q1_col};
   jpeg_idct1d #(.PASS(1), .TW(6)) u_p1 (
-    .clk(clk), .in_valid(c1_in_v), .in_tag(c1_in_t),
+    .clk(clk), .rst(rst), .in_valid(c1_in_v), .in_tag(c1_in_t),
     .x0(c1x[0]), .x1(c1x[1]), .x2(c1x[2]), .x3(c1x[3]), .x4(c1x[4]), .x5(c1x[5]), .x6(c1x[6]), .x7(c1x[7]),
     .out_valid(c1_out_v), .out_tag(c1_out_t),
     .y0(c1y[0]), .y1(c1y[1]), .y2(c1y[2]), .y3(c1y[3]), .y4(c1y[4]), .y5(c1y[5]), .y6(c1y[6]), .y7(c1y[7]));
@@ -117,7 +117,7 @@ module jpeg_idct_wide #(
   logic [SAW+TW:0] c2_in_t, c2_out_t;
   logic [15:0] c2y [0:7];
   jpeg_idct1d #(.PASS(2), .TW(SAW + TW + 1)) u_p2 (
-    .clk(clk), .in_valid(c2_in_v), .in_tag(c2_in_t),
+    .clk(clk), .rst(rst), .in_valid(c2_in_v), .in_tag(c2_in_t),
     .x0(c2x[0]), .x1(c2x[1]), .x2(c2x[2]), .x3(c2x[3]), .x4(c2x[4]), .x5(c2x[5]), .x6(c2x[6]), .x7(c2x[7]),
     .out_valid(c2_out_v), .out_tag(c2_out_t),
     .y0(c2y[0]), .y1(c2y[1]), .y2(c2y[2]), .y3(c2y[3]), .y4(c2y[4]), .y5(c2y[5]), .y6(c2y[6]), .y7(c2y[7]));

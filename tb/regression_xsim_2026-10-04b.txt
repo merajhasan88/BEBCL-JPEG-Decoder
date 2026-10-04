@@ -1,0 +1,7 @@
+building wmcu (xsim) ...
+building fmcu (xsim) ...
+TEST FILES 202/202 passed
+STREAM TESTS 10/10 passed
+MALFORMED 52/52 passed
+ALL PASSED
+rc=0

@@ -46,6 +46,12 @@ model the compact core), so a larger difference points at an unintended stall.
 * Declare loop counters inside each block (`always_comb begin : name integer i; ...`): a
   module-level variable written by more than one `always` block is illegal SystemVerilog (xsim
   refuses to elaborate it). Run `tb/sim.sh -s xsim` on a few files after RTL changes.
+* Do not index an array with another array's element inside a procedural `for` loop
+  (`q[k] <= tab[idx[k]]`): Vivado 2026.1's xsim evaluates it as `tab[k]` (it gave the wide core's
+  colour conversion the table entries 0-3). Write one process per element with a `generate` loop.
+* Reset the valid bits of every pipeline, even when nothing else needs a reset: a 4-state simulator
+  starts them as X, and an X that reaches a counter stays there (the wide IDCT's busy count hung
+  xsim this way while Verilator, which starts registers at 0, passed).
 * Every arithmetic detail follows the reference libraries - libjpeg 9e (`jidctint.c`,
   `jdcolor.c`, `jdsample.c`) for the default profile, libjpeg-turbo 2.1 (`jdsample.c` fancy
   upsampling, `FIX(0.34414)`) for `FANCY_UPSAMPLE`/`CC_TURBO` - so the golden comparisons stay

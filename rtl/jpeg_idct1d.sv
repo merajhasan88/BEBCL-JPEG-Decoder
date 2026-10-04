@@ -9,6 +9,8 @@
 //                PASS = 2  range_limit(v >> 18) (pass 2 adds the range centre and rounding,
 //                          16384 + 16, to x0 before the shift by 13)
 // Five registers from x to y: in_valid / tag come out as out_valid / out_tag five clocks later.
+// Only the valid bits are reset (their X at power-up would reach the IDCT's busy count in a 4-state
+// simulator); the data registers need none.
 // Based in part on the work of the Independent JPEG Group: the arithmetic reproduces libjpeg /
 // libjpeg-turbo so that the output is bit-identical to them (see NOTICE.md).
 module jpeg_idct1d #(
@@ -16,6 +18,7 @@ module jpeg_idct1d #(
   parameter int TW   = 8              // tag width
 ) (
   input  logic                clk,
+  input  logic                rst,
   input  logic                in_valid,
   input  logic [TW-1:0]       in_tag,
   input  logic signed [15:0]  x0, x1, x2, x3, x4, x5, x6, x7,
@@ -89,35 +92,40 @@ module jpeg_idct1d #(
   endfunction
 
   always_ff @(posedge clk) begin
+    if (rst) begin p_v <= 1'b0; m_v <= 1'b0; a1_v <= 1'b0; a2_v <= 1'b0; out_valid <= 1'b0; end
+    else begin p_v <= in_valid; m_v <= p_v; a1_v <= m_v; a2_v <= a1_v; out_valid <= a2_v; end
+  end
+
+  always_ff @(posedge clk) begin
     // P
-    p_v <= in_valid; p_t <= in_tag;
+    p_t <= in_tag;
     pa_z1 <= sx18(x2) + sx18(x6);  pa_t2 <= sx18(x2);  pa_t3 <= sx18(x6);
     pa_zz1 <= s02 + s13;           pa_zz2 <= s02;      pa_zz3 <= s13;
     pa_w1 <= sx18(x7) + sx18(x1);  pa_t0 <= sx18(x7); pa_t3o <= sx18(x1);
     pa_w2 <= sx18(x5) + sx18(x3);  pa_t1 <= sx18(x5); pa_t2o <= sx18(x3);
     pa_e0 <= e_base + sx18(x4);    pa_e1 <= e_base - sx18(x4);
     // M
-    m_v <= p_v; m_t <= p_t;
+    m_t <= p_t;
     r_z1 <= p_z1[31:0]; r_t2 <= p_t2[31:0]; r_t3 <= p_t3[31:0];
     r_zz1 <= p_zz1[31:0]; r_zz2 <= p_zz2[31:0]; r_zz3 <= p_zz3[31:0];
     r_w1 <= p_w1[31:0]; r_t0 <= p_t0[31:0]; r_t3o <= p_t3o[31:0];
     r_w2 <= p_w2[31:0]; r_t1 <= p_t1[31:0]; r_t2o <= p_t2o[31:0];
     r_tmp0 <= sh13(pa_e0, PASS == 1); r_tmp1 <= sh13(pa_e1, PASS == 1);
     // A1
-    a1_v <= m_v; a1_t <= m_t;
+    a1_t <= m_t;
     b_tmp0 <= r_tmp0;           b_tmp1 <= r_tmp1;
     b_tmp2 <= r_z1 + r_t2;      b_tmp3 <= r_z1 - r_t3;
     b_zz2m <= r_zz2 + r_zz1;    b_zz3m <= r_zz3 + r_zz1;
     b_u0 <= r_t0 + r_w1;        b_u3 <= r_t3o + r_w1;
     b_u1 <= r_t1 + r_w2;        b_u2 <= r_t2o + r_w2;
     // A2
-    a2_v <= a1_v; a2_t <= a1_t;
+    a2_t <= a1_t;
     a_tmp10 <= b_tmp0 + b_tmp2;  a_tmp13 <= b_tmp0 - b_tmp2;
     a_tmp11 <= b_tmp1 + b_tmp3;  a_tmp12 <= b_tmp1 - b_tmp3;
     a_t0 <= b_u0 + b_zz2m;       a_t3 <= b_u3 + b_zz3m;
     a_t1 <= b_u1 + b_zz3m;       a_t2 <= b_u2 + b_zz2m;
     // B
-    out_valid <= a2_v; out_tag <= a2_t;
+    out_tag <= a2_t;
     y0 <= outv(yv[0]); y1 <= outv(yv[1]); y2 <= outv(yv[2]); y3 <= outv(yv[3]);
     y4 <= outv(yv[4]); y5 <= outv(yv[5]); y6 <= outv(yv[6]); y7 <= outv(yv[7]);
   end

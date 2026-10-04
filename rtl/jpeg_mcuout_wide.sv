@@ -144,14 +144,55 @@ module jpeg_mcuout_wide #(
     gterm = t[9:0];
   endfunction
 
-  logic [2:0]  d_b0 [0:3], d_b1 [0:3], d_b2 [0:3];   // byte lane per pixel and component
-  logic [33:0] crq [0:3];                            // table entries of the pixels in V
-  logic [32:0] cbq [0:3];
+  // ---------------------------------------------------------------- the four pixels of a beat
+  // One process per pixel (a generate loop) holds that pixel's byte lanes, samples, table entries,
+  // colour terms and output bytes; the main process below only moves the beat's control (valid,
+  // x, y, n, sof, eol).  Vivado 2026.1's xsim mis-evaluates array elements indexed by a procedural
+  // loop variable inside other array indexes (tab[idx[k]] read as tab[k]), which made the colour
+  // conversion wrong there; constant (genvar) indexes avoid it.  Same logic as one loop.
   logic        c2_valid, c2_conv, c2_sof, c2_eol;
   logic [2:0]  c2_n;
   logic [15:0] c2_x, c2_y;
-  logic [7:0]  c2_a [0:3], c2_b [0:3], c2_c [0:3];
-  logic signed [9:0]  c2_sr [0:3], c2_sg [0:3], c2_sb [0:3];
+  logic [7:0]  o_c0 [0:3], o_c1 [0:3], o_c2 [0:3];   // output bytes per pixel
+  assign px_c0 = {o_c0[3], o_c0[2], o_c0[1], o_c0[0]};
+  assign px_c1 = {o_c1[3], o_c1[2], o_c1[1], o_c1[0]};
+  assign px_c2 = {o_c2[3], o_c2[2], o_c2[1], o_c2[0]};
+  genvar gp;
+  generate
+    for (gp = 0; gp < 4; gp = gp + 1) begin : g_pix
+      logic [2:0]  b0, b1, b2;                       // byte lanes (D stage)
+      logic [33:0] crq;                              // table entries (V stage)
+      logic [32:0] cbq;
+      logic [7:0]  c2a, c2b, c2c;                    // samples (C2 stage)
+      logic signed [9:0] c2sr, c2sg, c2sb;           // colour terms (C2 stage)
+      always_ff @(posedge clk) begin
+        if (rst) begin
+          o_c0[gp] <= '0; o_c1[gp] <= '0; o_c2[gp] <= '0;
+        end else begin
+          if (en) begin                              // C2 -> O and V -> C2
+            o_c0[gp] <= (RGB_OUT && c2_conv) ? clamp8($signed({2'b00, c2a}) + c2sr) : c2a;
+            o_c1[gp] <= (RGB_OUT && c2_conv) ? clamp8($signed({2'b00, c2a}) + c2sg) : c2b;
+            o_c2[gp] <= (RGB_OUT && c2_conv) ? clamp8($signed({2'b00, c2a}) + c2sb) : c2c;
+            c2a <= v_a[gp]; c2b <= v_b[gp]; c2c <= v_c[gp];
+            c2sr <= crq[33:24]; c2sg <= gterm(cbq, crq); c2sb <= cbq[32:23];
+          end
+          if (d_take) begin                          // D -> V: samples out of the words, table entries
+            crq <= crtab[lane(rdata2, b2)]; cbq <= cbtab[lane(rdata1, b1)];
+            v_a[gp] <= lane(rdata0, b0);
+            if (luma_only) begin
+              v_b[gp] <= (RGB_OUT && gray && fmt == FMT_RGB) ? lane(rdata0, b0) : 8'd128;
+              v_c[gp] <= (RGB_OUT && gray && fmt == FMT_RGB) ? lane(rdata0, b0) : 8'd128;
+            end else begin
+              v_b[gp] <= lane(rdata1, b1); v_c[gp] <= lane(rdata2, b2);
+            end
+          end
+          if (a_adv) begin                           // A -> D: byte lanes of this pixel
+            b0 <= blane(ax, gp[1:0], uh[0]); b1 <= blane(ax, gp[1:0], uh[1]); b2 <= blane(ax, gp[1:0], uh[2]);
+          end
+        end
+      end
+    end
+  endgenerate
 
   assign idle  = ~a_busy & ~d_valid & ~v_valid & ~c2_valid & ~px_valid;
   assign ready = ~a_busy;
@@ -165,7 +206,6 @@ module jpeg_mcuout_wide #(
   assign cur_n = (rem[3:2] != 2'd0) ? 3'd4 : {1'b0, rem[1:0]} + 3'd1;
 
   always_ff @(posedge clk) begin : p_main
-    integer pi;
     done <= 1'b0;
     if (rst) begin
       a_busy <= 1'b0; a_buf <= '0; ax <= '0; ay <= '0; wm1 <= '0; lm1 <= '0; ax0 <= '0; ay0 <= '0;
@@ -173,37 +213,15 @@ module jpeg_mcuout_wide #(
       v_valid <= 1'b0; v_conv <= 1'b0; v_sof <= 1'b0; v_eol <= 1'b0; v_n <= '0; v_x <= '0; v_y <= '0;
       c2_valid <= 1'b0; c2_conv <= 1'b0; c2_sof <= 1'b0; c2_eol <= 1'b0; c2_n <= '0; c2_x <= '0; c2_y <= '0;
       px_valid <= 1'b0; px_x <= '0; px_y <= '0; px_n <= '0; px_sof <= 1'b0; px_eol <= 1'b0;
-      px_c0 <= '0; px_c1 <= '0; px_c2 <= '0;
-      for (pi = 0; pi < 4; pi = pi + 1) begin
-        v_a[pi] <= '0; v_b[pi] <= '0; v_c[pi] <= '0; c2_a[pi] <= '0; c2_b[pi] <= '0; c2_c[pi] <= '0;
-        c2_sr[pi] <= '0; c2_sg[pi] <= '0; c2_sb[pi] <= '0;
-      end
     end else begin
       // ---- V -> C2 -> O (bubbles move along too)
       if (en) begin
         px_valid <= c2_valid; px_x <= c2_x; px_y <= c2_y; px_n <= c2_n; px_sof <= c2_sof; px_eol <= c2_eol;
         c2_valid <= v_valid; c2_conv <= v_conv; c2_sof <= v_sof; c2_eol <= v_eol; c2_n <= v_n; c2_x <= v_x; c2_y <= v_y;
         v_valid <= 1'b0;
-        for (pi = 0; pi < 4; pi = pi + 1) begin
-          px_c0[8*pi +: 8] <= (RGB_OUT && c2_conv) ? clamp8($signed({2'b00, c2_a[pi]}) + c2_sr[pi]) : c2_a[pi];
-          px_c1[8*pi +: 8] <= (RGB_OUT && c2_conv) ? clamp8($signed({2'b00, c2_a[pi]}) + c2_sg[pi]) : c2_b[pi];
-          px_c2[8*pi +: 8] <= (RGB_OUT && c2_conv) ? clamp8($signed({2'b00, c2_a[pi]}) + c2_sb[pi]) : c2_c[pi];
-          c2_a[pi] <= v_a[pi]; c2_b[pi] <= v_b[pi]; c2_c[pi] <= v_c[pi];
-          c2_sr[pi] <= crq[pi][33:24]; c2_sg[pi] <= gterm(cbq[pi], crq[pi]); c2_sb[pi] <= cbq[pi][32:23];
-        end
       end else if (px_valid & px_ready) px_valid <= 1'b0;
-      // ---- V stage: pick the samples out of the words; colour table entries
+      // ---- V stage (the samples and table entries: per pixel, in g_pix)
       if (d_take) begin
-        for (pi = 0; pi < 4; pi = pi + 1) begin
-          crq[pi] <= crtab[lane(rdata2, d_b2[pi])]; cbq[pi] <= cbtab[lane(rdata1, d_b1[pi])];
-          v_a[pi] <= lane(rdata0, d_b0[pi]);
-          if (luma_only) begin
-            v_b[pi] <= (RGB_OUT && gray && fmt == FMT_RGB) ? lane(rdata0, d_b0[pi]) : 8'd128;
-            v_c[pi] <= (RGB_OUT && gray && fmt == FMT_RGB) ? lane(rdata0, d_b0[pi]) : 8'd128;
-          end else begin
-            v_b[pi] <= lane(rdata1, d_b1[pi]); v_c[pi] <= lane(rdata2, d_b2[pi]);
-          end
-        end
         v_valid <= 1'b1; v_x <= d_x; v_y <= d_y; v_n <= d_n; v_sof <= d_sof; v_eol <= d_eol;
         v_conv <= !luma_only && RGB_OUT && (fmt == FMT_RGB);
         if (d_last) done <= 1'b1;
@@ -211,9 +229,6 @@ module jpeg_mcuout_wide #(
       end
       // ---- A stage: this clock's addresses are being read; the data is valid next clock
       if (a_adv) begin
-        for (pi = 0; pi < 4; pi = pi + 1) begin
-          d_b0[pi] <= blane(ax, pi[1:0], uh[0]); d_b1[pi] <= blane(ax, pi[1:0], uh[1]); d_b2[pi] <= blane(ax, pi[1:0], uh[2]);
-        end
         d_valid <= 1'b1; d_x <= cur_x; d_y <= cur_y; d_ax <= ax; d_ay <= ay; d_buf <= a_buf; d_n <= cur_n;
         d_sof <= (cur_x == 16'd0) && (cur_y == 16'd0);
         d_eol <= (cur_x + {13'd0, cur_n} == img_w);
