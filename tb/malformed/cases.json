@@ -1,0 +1,106 @@
+{
+ "dqt_missing": {
+  "err": 4,
+  "pixels": false
+ },
+ "dqt_id4": {
+  "err": 4,
+  "pixels": false
+ },
+ "dqt_incomplete": {
+  "err": 4,
+  "pixels": false
+ },
+ "dqt_zero_q": {
+  "err": 4,
+  "pixels": false
+ },
+ "dht_oversubscribed": {
+  "err": 8,
+  "pixels": false
+ },
+ "dht_all_ones": {
+  "err": 8,
+  "pixels": false
+ },
+ "dht_dc_symbol12": {
+  "err": 8,
+  "pixels": false
+ },
+ "dht_incomplete": {
+  "err": 8,
+  "pixels": false
+ },
+ "dht_id2": {
+  "err": 8,
+  "pixels": false
+ },
+ "sof_width0": {
+  "err": 2048,
+  "pixels": false
+ },
+ "sof_height0_dnl": {
+  "err": 2048,
+  "pixels": false
+ },
+ "sof_length": {
+  "err": 2048,
+  "pixels": false
+ },
+ "sof_dup_ci": {
+  "err": 64,
+  "pixels": false
+ },
+ "sof_tq5": {
+  "err": 2048,
+  "pixels": false
+ },
+ "sof_tq_undefined": {
+  "err": 4,
+  "pixels": false
+ },
+ "sof_missing": {
+  "err": 2048,
+  "pixels": false
+ },
+ "sos_dup_cs": {
+  "err": 64,
+  "pixels": false
+ },
+ "sos_length": {
+  "err": 64,
+  "pixels": false
+ },
+ "sos_out_of_order": {
+  "err": 64,
+  "pixels": false
+ },
+ "sos_undefined_dht": {
+  "err": 8,
+  "pixels": false
+ },
+ "rst_out_of_order": {
+  "err": 256,
+  "pixels": true
+ },
+ "rst_without_dri": {
+  "err": 256,
+  "pixels": true
+ },
+ "trunc_in_headers": {
+  "err": 4096,
+  "pixels": false
+ },
+ "trunc_in_scan": {
+  "err": 4096,
+  "pixels": true
+ },
+ "trunc_before_eoi": {
+  "err": 4096,
+  "pixels": true
+ },
+ "trunc_in_scan_rst": {
+  "err": 4096,
+  "pixels": true
+ }
+}

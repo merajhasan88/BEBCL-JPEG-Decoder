@@ -1,0 +1,46 @@
+# EP2C5 board runs 2026-10-01 (quartus/fpga_jtag, CHECKS=1, 95 MHz): scripts/jtag_decode.py
+## corpus files and donald.jpg
+adp_64x64_q25_420.jpg: 64x64, 761 bytes | decoder 5780 clocks = 1.411 clocks/pixel = 0.061 ms at 95 MHz | streaming 0.0 s (25.4 KB/s) | checksum 0x10137ECE = reference, err 0x0000, overflow 0 -> PASS
+scr_320x240_q90_420.jpg: 320x240, 14487 bytes | decoder 96450 clocks = 1.256 clocks/pixel = 1.015 ms at 95 MHz | streaming 0.4 s (32.8 KB/s) | checksum 0x489D2E09 = reference, err 0x0000, overflow 0 -> PASS
+adp_45x37_q30_420_rst2.jpg: 45x37, 912 bytes | decoder 3902 clocks = 2.344 clocks/pixel = 0.041 ms at 95 MHz | streaming 0.0 s (24.6 KB/s) | checksum 0xFF03B557 = reference, err 0x0000, overflow 0 -> PASS
+scr_160x120_q95_444.jpg: 160x120, 8091 bytes | decoder 45761 clocks = 2.383 clocks/pixel = 0.482 ms at 95 MHz | streaming 0.2 s (32.4 KB/s) | checksum 0xDE6EDD9C = reference, err 0x0000, overflow 0 -> PASS
+adp_240x320_q95_422_rst4.jpg: 240x320, 36766 bytes | decoder 169093 clocks = 2.202 clocks/pixel = 1.780 ms at 95 MHz | streaming 1.1 s (33.4 KB/s) | checksum 0x9DD19E4E = reference, err 0x0000, overflow 0 -> PASS
+scr_256x64_q98_gray.jpg: 256x64, 9613 bytes | decoder 39465 clocks = 2.409 clocks/pixel = 0.415 ms at 95 MHz | streaming 0.3 s (34.8 KB/s) | checksum 0x33D6B6A3 = reference, err 0x0000, overflow 0 -> PASS
+donald.jpg: 2048x1365, 246974 bytes | decoder 2847577 clocks = 1.019 clocks/pixel = 29.974 ms at 95 MHz | streaming 7.2 s (34.1 KB/s) | checksum 0x805CA4E0 = reference, err 0x0000, overflow 0 -> PASS
+## full-size photos
+unnamed.jpg: 1944x2592, 532330 bytes | decoder 8392001 clocks = 1.665 clocks/pixel = 88.337 ms at 95 MHz | streaming 15.6 s (34.1 KB/s) | checksum 0x28B79EFA = reference, err 0x0000, overflow 0 -> PASS
+adapter.jpg: 3120x4160, 3533250 bytes | decoder 19234181 clocks = 1.482 clocks/pixel = 202.465 ms at 95 MHz | streaming 104.4 s (33.9 KB/s) | checksum 0x54C7A8DF = reference, err 0x0000, overflow 0 -> PASS
+IMG_20260912_000207.jpg: 4000x3000, 5799875 bytes | decoder 25879513 clocks = 2.157 clocks/pixel = 272.416 ms at 95 MHz | streaming 173.8 s (33.4 KB/s) | checksum 0x06B1CA4F = reference, err 0x0000, overflow 0 -> PASS
+IMG_20260912_003139.jpg: 4000x3000, 4120918 bytes | decoder 21215381 clocks = 1.768 clocks/pixel = 223.320 ms at 95 MHz | streaming 121.7 s (33.9 KB/s) | checksum 0x1A307F35 = reference, err 0x0000, overflow 0 -> PASS
+IMG_20260912_004330.jpg: 4000x3000, 4366971 bytes | decoder 21688261 clocks = 1.807 clocks/pixel = 228.297 ms at 95 MHz | streaming 130.3 s (33.5 KB/s) | checksum 0x994EDBAF = reference, err 0x0000, overflow 0 -> PASS
+IMG_20260912_004759.jpg: 4000x3000, 4708102 bytes | decoder 23151501 clocks = 1.929 clocks/pixel = 243.700 ms at 95 MHz | streaming 140.5 s (33.5 KB/s) | checksum 0x235D78B9 = reference, err 0x0000, overflow 0 -> PASS
+IMG_20260912_005827.jpg: 4000x3000, 5933227 bytes | decoder 26948769 clocks = 2.246 clocks/pixel = 283.671 ms at 95 MHz | streaming 176.7 s (33.6 KB/s) | checksum 0x1EAE0661 = reference, err 0x0000, overflow 0 -> PASS
+IMG_20260912_012049.jpg: 4000x3000, 3763825 bytes | decoder 19301225 clocks = 1.608 clocks/pixel = 203.171 ms at 95 MHz | streaming 111.8 s (33.7 KB/s) | checksum 0x7BB1238E = reference, err 0x0000, overflow 0 -> PASS
+IMG_20260912_012545.jpg: 4000x3000, 4487538 bytes | decoder 21801209 clocks = 1.817 clocks/pixel = 229.486 ms at 95 MHz | streaming 133.4 s (33.6 KB/s) | checksum 0x44C5824B = reference, err 0x0000, overflow 0 -> PASS
+## malformed / truncated files (tb/malformed, expectations in cases.json)
+dht_all_ones.jpg: 358 bytes | frames 1, decoder 1652 clocks, err 0x0008 (expected bits 0x0008, no pixels), checksum 0x00000000 -> PASS
+dht_dc_symbol12.jpg: 358 bytes | frames 1, decoder 1643 clocks, err 0x0008 (expected bits 0x0008, no pixels), checksum 0x00000000, != libjpeg -> PASS
+dht_id2.jpg: 357 bytes | frames 1, decoder 1387 clocks, err 0x0008 (expected bits 0x0008, no pixels), checksum 0x00000000, != libjpeg -> PASS
+dht_incomplete.jpg: 357 bytes | frames 1, decoder 1642 clocks, err 0x0008 (expected bits 0x0008, no pixels), checksum 0x00000000 -> PASS
+dht_oversubscribed.jpg: 359 bytes | frames 1, decoder 1652 clocks, err 0x0008 (expected bits 0x0008, no pixels), checksum 0x00000000 -> PASS
+dqt_id4.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0004 (expected bits 0x0004, no pixels), checksum 0x00000000 -> PASS
+dqt_incomplete.jpg: 272 bytes | frames 1, decoder 1301 clocks, err 0x0004 (expected bits 0x0004, no pixels), checksum 0x00000000, != libjpeg -> PASS
+dqt_missing.jpg: 197 bytes | frames 1, decoder 1224 clocks, err 0x0004 (expected bits 0x0004, no pixels), checksum 0x00000000 -> PASS
+dqt_zero_q.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0004 (expected bits 0x0004, no pixels), checksum 0x00000000, != libjpeg -> PASS
+rst_out_of_order.jpg: 912 bytes | frames 1, decoder 3902 clocks, err 0x0100 (expected bits 0x0100), checksum 0xFF03B557, = libjpeg -> PASS
+rst_without_dri.jpg: 906 bytes | frames 1, decoder 8111 clocks, err 0x0100 (expected bits 0x0100), checksum 0x8205878A, != libjpeg -> PASS
+sof_dup_ci.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0040 (expected bits 0x0040, no pixels), checksum 0x00000000, != libjpeg -> PASS
+sof_height0_dnl.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0800 (expected bits 0x0800, no pixels), checksum 0x00000000 -> PASS
+sof_length.jpg: 336 bytes | frames 1, decoder 1365 clocks, err 0x0A00 (expected bits 0x0800, no pixels), checksum 0x00000000 -> PASS
+sof_missing.jpg: 316 bytes | frames 1, decoder 1344 clocks, err 0x0800 (expected bits 0x0800, no pixels), checksum 0x00000000 -> PASS
+sof_tq5.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0800 (expected bits 0x0800, no pixels), checksum 0x00000000 -> PASS
+sof_tq_undefined.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0004 (expected bits 0x0004, no pixels), checksum 0x00000000 -> PASS
+sof_width0.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0800 (expected bits 0x0800, no pixels), checksum 0x00000000 -> PASS
+sos_dup_cs.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0040 (expected bits 0x0040, no pixels), checksum 0x00000000, != libjpeg -> PASS
+sos_length.jpg: 336 bytes | frames 1, decoder 1365 clocks, err 0x0040 (expected bits 0x0040, no pixels), checksum 0x00000000 -> PASS
+sos_out_of_order.jpg: 335 bytes | frames 1, decoder 1364 clocks, err 0x0040 (expected bits 0x0040, no pixels), checksum 0x00000000, != libjpeg -> PASS
+sos_undefined_dht.jpg: 208 bytes | frames 1, decoder 723 clocks, err 0x0008 (expected bits 0x0008, no pixels), checksum 0x00000000, != libjpeg -> PASS
+trunc_before_eoi.jpg: 333 bytes | frames 1, decoder 1941 clocks, err 0x1000 (expected bits 0x1000), checksum 0xE42DA008, = libjpeg -> PASS
+trunc_in_headers.jpg: 111 bytes | frames 1, decoder 122 clocks, err 0x1800 (expected bits 0x1000, no pixels), checksum 0x00000000 -> PASS
+trunc_in_scan.jpg: 316 bytes | frames 1, decoder 2385 clocks, err 0x1180 (expected bits 0x1000), checksum 0xE3BBAAF1, != libjpeg -> PASS
+trunc_in_scan_rst.jpg: 712 bytes | frames 1, decoder 8102 clocks, err 0x1100 (expected bits 0x1000), checksum 0x8CF29A81, != libjpeg -> PASS

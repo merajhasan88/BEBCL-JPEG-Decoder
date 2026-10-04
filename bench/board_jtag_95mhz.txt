@@ -1,0 +1,13 @@
+adp_64x64_q25_420.jpg: 64x64, 761 bytes | decoder 5780 clocks = 1.411 clocks/pixel = 0.061 ms at 95 MHz | streaming 0.0 s (28.2 KB/s) | checksum 0x10137ECE = reference, err 0x000, overflow 0 -> PASS
+scr_320x240_q90_420.jpg: 320x240, 14487 bytes | decoder 96450 clocks = 1.256 clocks/pixel = 1.015 ms at 95 MHz | streaming 0.4 s (33.1 KB/s) | checksum 0x489D2E09 = reference, err 0x000, overflow 0 -> PASS
+donald.jpg: 2048x1365, 246974 bytes | decoder 2847577 clocks = 1.019 clocks/pixel = 29.974 ms at 95 MHz | streaming 7.1 s (34.8 KB/s) | checksum 0x805CA4E0 = reference, err 0x000, overflow 0 -> PASS
+unnamed.jpg: 1944x2592, 532330 bytes | decoder 8392001 clocks = 1.665 clocks/pixel = 88.337 ms at 95 MHz | streaming 15.1 s (35.2 KB/s) | checksum 0x28B79EFA = reference, err 0x000, overflow 0 -> PASS
+adapter.jpg: 3120x4160, 3533250 bytes | decoder 19234181 clocks = 1.482 clocks/pixel = 202.465 ms at 95 MHz | streaming 99.6 s (35.5 KB/s) | checksum 0x54C7A8DF = reference, err 0x000, overflow 0 -> PASS
+IMG_20260912_000207.jpg: 4000x3000, 5799875 bytes | decoder 25879513 clocks = 2.157 clocks/pixel = 272.416 ms at 95 MHz | streaming 158.9 s (36.5 KB/s) | checksum 0x06B1CA4F = reference, err 0x000, overflow 0 -> PASS
+IMG_20260912_003139.jpg: 4000x3000, 4120918 bytes | decoder 21215381 clocks = 1.768 clocks/pixel = 223.320 ms at 95 MHz | streaming 119.2 s (34.6 KB/s) | checksum 0x1A307F35 = reference, err 0x000, overflow 0 -> PASS
+IMG_20260912_004330.jpg: 4000x3000, 4366971 bytes | decoder 21688261 clocks = 1.807 clocks/pixel = 228.297 ms at 95 MHz | streaming 123.1 s (35.5 KB/s) | checksum 0x994EDBAF = reference, err 0x000, overflow 0 -> PASS
+IMG_20260912_004759.jpg: 4000x3000, 4708102 bytes | decoder 23151501 clocks = 1.929 clocks/pixel = 243.700 ms at 95 MHz | streaming 134.2 s (35.1 KB/s) | checksum 0x235D78B9 = reference, err 0x000, overflow 0 -> PASS
+IMG_20260912_005827.jpg: 4000x3000, 5933227 bytes | decoder 26948769 clocks = 2.246 clocks/pixel = 283.671 ms at 95 MHz | streaming 169.1 s (35.1 KB/s) | checksum 0x1EAE0661 = reference, err 0x000, overflow 0 -> PASS
+IMG_20260912_012049.jpg: 4000x3000, 3763825 bytes | decoder 19301225 clocks = 1.608 clocks/pixel = 203.171 ms at 95 MHz | streaming 107.4 s (35.0 KB/s) | checksum 0x7BB1238E = reference, err 0x000, overflow 0 -> PASS
+IMG_20260912_012545.jpg: 4000x3000, 4487538 bytes | decoder 21801209 clocks = 1.817 clocks/pixel = 229.486 ms at 95 MHz | streaming 128.7 s (34.9 KB/s) | checksum 0x44C5824B = reference, err 0x000, overflow 0 -> PASS
+rc=0

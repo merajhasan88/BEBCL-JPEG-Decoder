@@ -1,0 +1,19 @@
+// BEBCL-JPEG: the decoder's source files in compile order (the package first). Top module: jpeg_decoder.
+jpeg_pkg.sv
+jpeg_sdp_ram.sv
+jpeg_blockram.sv
+jpeg_parser.sv
+jpeg_bitreader.sv
+jpeg_coefdec.sv
+jpeg_idct.sv
+jpeg_ycc2rgb.sv
+jpeg_pixgen.sv
+jpeg_raster.sv
+jpeg_dec_small.sv
+jpeg_bitwin.sv
+jpeg_huffdec.sv
+jpeg_idct_fast.sv
+jpeg_mcuout.sv
+jpeg_raster_fast.sv
+jpeg_dec_fast.sv
+jpeg_decoder.sv

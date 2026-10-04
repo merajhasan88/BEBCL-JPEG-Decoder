@@ -1,0 +1,27 @@
+# file err-bits(hex, at least) pixels-allowed   (written by export_expectations.py)
+dht_all_ones 8 0
+dht_dc_symbol12 8 0
+dht_id2 8 0
+dht_incomplete 8 0
+dht_oversubscribed 8 0
+dqt_id4 4 0
+dqt_incomplete 4 0
+dqt_missing 4 0
+dqt_zero_q 4 0
+rst_out_of_order 100 1
+rst_without_dri 100 1
+sof_dup_ci 40 0
+sof_height0_dnl 800 0
+sof_length 800 0
+sof_missing 800 0
+sof_tq5 800 0
+sof_tq_undefined 4 0
+sof_width0 800 0
+sos_dup_cs 40 0
+sos_length 40 0
+sos_out_of_order 40 0
+sos_undefined_dht 8 0
+trunc_before_eoi 1000 1
+trunc_in_headers 1000 0
+trunc_in_scan 1000 1
+trunc_in_scan_rst 1000 1
