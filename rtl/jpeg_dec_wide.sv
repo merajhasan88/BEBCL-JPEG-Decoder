@@ -1,8 +1,9 @@
 // jpeg_dec_wide.sv - wide core of jpeg_decoder (FAST = 2): four pixels per clock, MCU order.
 //
 //   bytes -> jpeg_parser (+ Huffman lookahead tables) -> jpeg_bitwin -> jpeg_huffdec
-//         -> 4 coefficient slots -> jpeg_idct_fast (32 clocks per block) -> one sample RAM per
-//            component, NBUF = 3 MCU buffers -> jpeg_mcuout_wide (4 pixels per clock)
+//         -> 4 coefficient slots -> jpeg_idct_wide (8 clocks per block) -> one sample RAM per
+//            component (64-bit words: 8 samples), NBUF = 3 MCU buffers -> jpeg_mcuout_wide
+//            (4 pixels per clock)
 //
 // The input side (parser, block sequencing, restarts, errors, frame completion) is that of
 // jpeg_dec_fast in MCU order; the output side holds three MCUs, so the IDCT can fill two while
@@ -39,7 +40,7 @@ module jpeg_dec_wide #(
 );
   import jpeg_pkg::*;
 
-  localparam int SAW = 8;                    // sample-RAM word address: {MCU buffer (0..2), word (0..63)}
+  localparam int SAW = 7;                    // sample-RAM word address: {MCU buffer (0..2), word (0..31)}
   // block descriptor: {last block of MCU, block row, scan component, word offset}
   localparam int D_COMP = SAW, D_VV = SAW + 2, D_LAST = SAW + 3;
   localparam int DW     = SAW + 4;
@@ -120,19 +121,26 @@ module jpeg_dec_wide #(
 
   // ---------------------------------------------------------------- IDCT
   // tag carried through pass 2: {MCU buffer, last block of MCU, component}
-  logic           cw_ready, cw_commit, p2_pending, p2_ok, smp_we, blk_done, id_busy, p2_lb_en;
+  logic           cw_ready, cw_commit, p2_pending, p2_ok, smp_we, blk_done, id_busy;
+  logic [3:0]     clean;
+  logic [1:0]     wp;                        // slot the entropy decoder fills (slots in order)
   logic [DW-1:0]  cw_desc, p2_desc;
   logic [4:0]     p2_tag, smp_tag, blk_tag;
-  logic [SAW-1:0] p2_base, p2_pitch, p2_lbase, smp_addr;
-  logic [31:0]    smp_data;
-  assign p2_tag = {p2_desc[7:6], p2_desc[D_LAST], p2_desc[D_COMP +: 2]};
-  jpeg_idct_fast #(.DW(DW), .TW(5), .SAW(SAW)) u_idct (
+  logic [SAW-1:0] p2_base, p2_pitch, smp_addr;
+  logic [63:0]    smp_data;
+  assign p2_tag   = {p2_desc[6:5], p2_desc[D_LAST], p2_desc[D_COMP +: 2]};
+  assign cw_ready = clean[wp];
+  jpeg_idct_wide #(.DW(DW), .TW(5), .SAW(SAW)) u_idct (
     .clk(clk), .rst(rst),
-    .cw_ready(cw_ready), .cw_we(cw_we), .cw_addr(cw_addr), .cw_data(cw_data), .cw_commit(cw_commit), .cw_desc(cw_desc),
+    .clean(clean), .cw_we(cw_we), .cw_slot(wp), .cw_addr(cw_addr), .cw_data(cw_data),
+    .cw_commit(cw_commit), .cw_cslot(wp), .cw_desc(cw_desc),
     .p2_pending(p2_pending), .p2_desc(p2_desc), .p2_ok(p2_ok), .p2_base(p2_base), .p2_pitch(p2_pitch),
-    .p2_lb_en(p2_lb_en), .p2_lbase(p2_lbase), .p2_tag(p2_tag),
-    .smp_we(smp_we), .smp_addr(smp_addr), .smp_data(smp_data), .smp_tag(smp_tag),
+    .p2_tag(p2_tag), .smp_we(smp_we), .smp_addr(smp_addr), .smp_data(smp_data), .smp_tag(smp_tag),
     .blk_done(blk_done), .blk_tag(blk_tag), .busy(id_busy));
+  always_ff @(posedge clk) begin
+    if (rst) wp <= '0;
+    else if (cw_commit) wp <= wp + 2'd1;
+  end
 
   // ---------------------------------------------------------------- frame state
   logic        gray, hmax2, vmax2;
@@ -188,8 +196,8 @@ module jpeg_dec_wide #(
   assign hd_wr            = ~skip_idct;
 
   // ---- descriptor of the current block
-  logic [5:0]     blk_off;                   // word offset in the component's plane
-  assign blk_off = (vv ? (cur_h2 ? 6'd32 : 6'd16) : 6'd0) + (hh ? 6'd2 : 6'd0);
+  logic [4:0]     blk_off;                   // word offset in the component's plane (8 samples per word)
+  assign blk_off = (vv ? (cur_h2 ? 5'd16 : 5'd8) : 5'd0) + (hh ? 5'd1 : 5'd0);
 
   // commit a decoded block to the IDCT in the cycle its decoder finishes (wp advances at once)
   assign cw_commit = (state == S_BLK_WAIT) && hd_done && !cur_skip;
@@ -295,26 +303,24 @@ module jpeg_dec_wide #(
   end
 
   // ================================================================ output side
-  // ---- MCU buffer: one RAM per component, three MCUs of 64 words
+  // ---- MCU buffer: one RAM per component, three MCUs of 32 words of 8 samples
   function automatic logic [1:0] nxt3(input logic [1:0] b);
     nxt3 = (b == 2'd2) ? 2'd0 : b + 2'd1;
   endfunction
   logic [2:0]  mcu_full, mcu_started;        // per buffer: complete / being emitted
-  logic [7:0]  mo_raddr [0:2];
-  logic [31:0] mo_rdata [0:2];
+  logic [6:0]  mo_raddr [0:2];
+  logic [63:0] mo_rdata [0:2];
   genvar gc;
   generate
     for (gc = 0; gc < 3; gc = gc + 1) begin : g_mbuf
-      jpeg_sdp_ram #(.WIDTH(32), .DEPTH_LOG2(8), .DEPTH(192)) u_mb (
+      jpeg_sdp_ram #(.WIDTH(64), .DEPTH_LOG2(7), .DEPTH(96)) u_mb (
         .clk(clk), .we(smp_we && smp_tag[1:0] == gc), .waddr(smp_addr), .wdata(smp_data),
         .raddr(mo_raddr[gc]), .rdata(mo_rdata[gc]));
     end
   endgenerate
   assign p2_base  = p2_desc[SAW-1:0];
-  assign p2_pitch = h2[p2_desc[D_COMP +: 2]] ? 8'd4 : 8'd2;
-  assign p2_ok    = ~mcu_full[p2_desc[7:6]];
-  assign p2_lb_en = 1'b0;
-  assign p2_lbase = '0;
+  assign p2_pitch = h2[p2_desc[D_COMP +: 2]] ? 7'd2 : 7'd1;
+  assign p2_ok    = ~mcu_full[p2_desc[6:5]];
 
   logic        mo_start, mo_done, mo_idle, mo_ready;
   logic [1:0]  os_buf, od_buf;               // buffer of the next MCU to start / to finish

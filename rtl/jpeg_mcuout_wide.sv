@@ -1,12 +1,12 @@
 // jpeg_mcuout_wide.sv - MCU-order output stage of the WIDE build (FAST = 2): four pixels per clock.
 //
 // Same job as jpeg_mcuout, four pixels at a time.  The MCU buffer is one RAM per component
-// (32-bit words, 4 samples each) holding NBUF = 3 MCUs, so the IDCT can fill two MCUs while this
-// module emits a third.  Inside a buffer, component c is stored as a plane of 8*Hc x 8*Vc samples,
-// pitch 2*Hc words; buffer b starts at word 64*b.  Every clock one word is read from each component
-// RAM: four pixels of an MCU line start at a multiple of 4, so their luma samples (or full-size
-// chroma) are one word, and horizontally subsampled chroma is two samples of one word (sample
-// replication, T.81 A.1.1, libjpeg -nosmooth).  Each beat carries pixels x .. x+n-1 of one line
+// (64-bit words: 8 samples, sample i in bits 8i+7..8i, one block row as jpeg_idct_wide writes it)
+// holding NBUF = 3 MCUs, so the IDCT can fill two MCUs while this module emits a third.  Inside a
+// buffer, component c is stored as a plane of 8*Hc x 8*Vc samples, pitch Hc words; buffer b starts
+// at word 32*b.  Every clock one word is read from each component RAM: four pixels of an MCU line
+// start at a multiple of 4, so their samples (full size or horizontally subsampled, by sample
+// replication, T.81 A.1.1, libjpeg -nosmooth) lie in one word.  Each beat carries pixels x .. x+n-1 of one line
 // (n = 4, fewer only at the right edge of the image); pixel i is in bits 8i+7..8i of px_c0/1/2.
 // Colour conversion, formats and pipeline are those of jpeg_mcuout, once per pixel: libjpeg's
 // ycc_rgb_convert (jdcolor.c) with tables Cr -> {Cr_r, Cr_g}, Cb -> {Cb_b, Cb_g} read in the clock
@@ -35,14 +35,14 @@ module jpeg_mcuout_wide #(
   input  logic [1:0]  fmt,
   input  logic [2:0]  uh,             // component c subsampled horizontally (Hc < Hmax)
   input  logic [2:0]  uv,             // ... vertically
-  input  logic [2:0]  h2,             // component c has Hc = 2 (plane pitch 4 words, else 2)
+  input  logic [2:0]  h2,             // component c has Hc = 2 (plane pitch 2 words, else 1)
   // component RAM read ports (registered read, 1 clock)
-  output logic [7:0]  raddr0,
-  output logic [7:0]  raddr1,
-  output logic [7:0]  raddr2,
-  input  logic [31:0] rdata0,
-  input  logic [31:0] rdata1,
-  input  logic [31:0] rdata2,
+  output logic [6:0]  raddr0,
+  output logic [6:0]  raddr1,
+  output logic [6:0]  raddr2,
+  input  logic [63:0] rdata0,
+  input  logic [63:0] rdata1,
+  input  logic [63:0] rdata2,
   // pixels: pixel i of the beat in bits 8i+7..8i, at (px_x + i, px_y), i < px_n
   output logic        px_valid,
   input  logic        px_ready,
@@ -63,14 +63,14 @@ module jpeg_mcuout_wide #(
   logic [3:0]  ax, ay;                 // position inside the MCU (ax: multiple of 4)
   logic [3:0]  wm1, lm1;               // width-1, nlines-1
   logic [15:0] ax0, ay0;
-  function automatic logic [7:0] waddr(input logic [1:0] b, input logic [3:0] x, input logic [3:0] y,
+  function automatic logic [6:0] waddr(input logic [1:0] b, input logic [3:0] x, input logic [3:0] y,
                                        input logic sh, input logic sv, input logic ph2);
     logic [3:0] xc, yc;
-    logic [5:0] row;
+    logic [4:0] row;
     xc  = sh ? {1'b0, x[3:1]} : x;
     yc  = sv ? {1'b0, y[3:1]} : y;
-    row = ph2 ? {yc, 2'b00} : {1'b0, yc, 1'b0};    // yc * pitch (4 or 2 words)
-    waddr = {b, row + {4'd0, xc[3:2]}};
+    row = ph2 ? {yc, 1'b0} : {1'b0, yc};           // yc * pitch (2 or 1 words)
+    waddr = {b, row + {4'd0, xc[3]}};
   endfunction
   // ---------------------------------------------------------------- data stage (D): RAM output
   // Invariant: while d_valid, the RAM outputs hold the words of beat (d_ax, d_ay).  When D cannot
@@ -100,14 +100,14 @@ module jpeg_mcuout_wide #(
   assign raddr1 = waddr(s_buf, sx, sy, uh[1], uv[1], h2[1]);
   assign raddr2 = waddr(s_buf, sx, sy, uh[2], uv[2], h2[2]);
 
-  function automatic logic [7:0] lane(input logic [31:0] w, input logic [1:0] b);
+  function automatic logic [7:0] lane(input logic [63:0] w, input logic [2:0] b);
     lane = w[8*b +: 8];
   endfunction
   // byte lane of pixel i of the beat at x (a multiple of 4) for a component subsampled or not
-  function automatic logic [1:0] blane(input logic [3:0] x, input logic [1:0] i, input logic sh);
+  function automatic logic [2:0] blane(input logic [3:0] x, input logic [1:0] i, input logic sh);
     logic [3:0] xi;
     xi = x + {2'b00, i};
-    blane = sh ? xi[2:1] : xi[1:0];
+    blane = sh ? xi[3:1] : xi[2:0];
   endfunction
 
   logic luma_only;
@@ -144,7 +144,7 @@ module jpeg_mcuout_wide #(
     gterm = t[9:0];
   endfunction
 
-  logic [1:0]  d_b0 [0:3], d_b1 [0:3], d_b2 [0:3];   // byte lane per pixel and component
+  logic [2:0]  d_b0 [0:3], d_b1 [0:3], d_b2 [0:3];   // byte lane per pixel and component
   logic [33:0] crq [0:3];                            // table entries of the pixels in V
   logic [32:0] cbq [0:3];
   logic        c2_valid, c2_conv, c2_sof, c2_eol;

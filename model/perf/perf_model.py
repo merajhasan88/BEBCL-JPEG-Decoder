@@ -100,6 +100,9 @@ class Cfg:
     # IDCT (jpeg_idct_fast): pass 1 reads a column, pass 2 a row, every `period` clocks
     period: int = 4           # 2 lanes: 4 (32 clocks per block); 8 lanes: 1 (8 clocks per block)
     ws: int = 2               # workspace slots between pass 1 and pass 2
+    g1g2: int = 0             # pass 1 start -> pass 2 may start (0: today's 8*period + period + 2)
+    wsfree: int = 0           # pass 2 start -> its workspace slot is free (0: today's 6*period + 2)
+    g2bd: int = 0             # pass 2 start -> last sample written (0: today's 8*period + 7)
     # MCU buffer and output (jpeg_mcuout)
     halves: int = 2           # MCU buffers
     px_clk: int = 1           # pixels per clock
@@ -145,6 +148,9 @@ def simulate(img, c=Cfg()):
     pout = -(-img.mcu_px // c.px_clk)                         # clocks per MCU at the output
     zclk = 64 // c.zero_rate if c.zero_rate else 0
     S, WS, H = c.slots, c.ws, c.halves
+    g1g2 = c.g1g2 or (p1len + q + 2)
+    wsf = c.wsfree or (6 * q + 2)
+    g2bd = c.g2bd or (p2len + 7)
 
     def at_phase(t, p):                                       # first cycle >= t with t = p (mod q)
         return t + ((p - t) % q) if q > 1 else t
@@ -169,7 +175,7 @@ def simulate(img, c=Cfg()):
         # G1: committed, in order, free workspace slot
         t = e + 2
         if i >= 1 and g1[i - 1] + p1len > t: t = g1[i - 1] + p1len
-        if i >= WS and g2[i - WS] + 6 * q + 2 > t: t = g2[i - WS] + 6 * q + 2
+        if i >= WS and g2[i - WS] + wsf > t: t = g2[i - WS] + wsf
         g1[i] = at_phase(t, 0)
         # clearing the slot after G1 has read it
         if zclk:
@@ -180,11 +186,11 @@ def simulate(img, c=Cfg()):
         else:
             clean[i] = g1[i] + p1len
         # G2: pass 1 settled, in order, MCU buffer free
-        t = g1[i] + p1len + q + 2
+        t = g1[i] + g1g2
         if i >= 1 and g2[i - 1] + p2len > t: t = g2[i - 1] + p2len
         if m >= H and mo_done[m - H] + 2 > t: t = mo_done[m - H] + 2
         g2[i] = at_phase(t, 2 % q if q > 1 else 0)
-        bd = g2[i] + p2len + 7
+        bd = g2[i] + g2bd
         if bd > mcu_last_bd: mcu_last_bd = bd
         if last[i]:
             ms = mcu_last_bd + 1
@@ -226,6 +232,8 @@ def calibrate(c=Cfg(), files=None, quiet=False):
 
 
 # ---------------------------------------------------------------- variants
+# jpeg_idct_wide: pass 1 and pass 2 one column / row per clock, 3 workspace buffers, valid masks
+IDCT_WIDE = dict(period=1, ws=3, g1g2=15, wsfree=9, g2bd=14, zero_rate=0)
 WIDE = dict(sym_clk=1, look=9, long_fix=3, hd_fin=0, hd_gap=1, slots=8, zero_rate=0, halves=3)
 VARIANTS = [
     Cfg(),

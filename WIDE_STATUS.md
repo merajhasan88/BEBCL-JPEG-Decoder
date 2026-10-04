@@ -104,7 +104,14 @@ config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_
   SV testbench on `wmcu` 202/202, 10/10, 52/52). Clock counts vs the model (px_clk=4, halves=3): traced crop
   +0.02 %, flat images +0.00-0.01 %, crops -0.12 to -0.61 % (the same residual as today's core). Flat 4:2:0
   1.011 -> 0.780 clocks/pixel (now the IDCT's 0.75 limits it); photos unchanged, as the model said.
-- Written, not yet built: `rtl/jpeg_idct1d.sv` (one 8-point 1-D IDCT per clock, the arithmetic of
-  jpeg_idct_fast), `rtl/jpeg_idct_wide.sv` (step 2: 8 row banks + valid masks, 3 workspace buffers - 2 would
-  limit it to ~11 clocks/block because of the 15-clock pass-1 latency - and 64-bit sample words),
-  `rtl/jpeg_huffdec_wide.sv` (step 3: probe 2's loop + the contracts of jpeg_bitwin / jpeg_huffdec).
+- **Step 2 done**: `rtl/jpeg_idct1d.sv` (one 8-point 1-D IDCT per clock, the arithmetic of jpeg_idct_fast,
+  five registers), `rtl/jpeg_idct_wide.sv` (8 row banks + valid masks, 3 workspace buffers - 2 would limit it
+  to ~11 clocks/block because of the 15-clock pass-1 latency - 64-bit sample words, 8 clocks per block);
+  MCU buffer of jpeg_dec_wide in 64-bit words. Bit-exact on the first build: wmcu 202/202, 10/10, 52/52 with
+  both testbenches. The model got the measured latencies (`IDCT_WIDE` in perf_model.py: pass 2 >= pass 1
+  + 15, workspace free 9 clocks after pass 2 starts, last row written 14 after): traced crop +0.03 %, flat
+  images +0.01 %, crops -0.20 to -0.75 %. Clocks/pixel: flat 4:4:4 1.553 -> 0.569, 4:2:2 1.038 -> 0.381,
+  4:2:0 0.780 -> 0.288; photo crops 1.19 -> 0.85 (smooth) and 1.67 -> 1.67 (busy): jpeg_huffdec's
+  3 clocks per symbol now limits.
+- Written, not yet built: `rtl/jpeg_huffdec_wide.sv` (step 3: probe 2's loop + the contracts of
+  jpeg_bitwin / jpeg_huffdec, 1 symbol per clock, block descriptors queued by the sequencer).
