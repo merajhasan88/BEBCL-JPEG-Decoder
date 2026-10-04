@@ -23,7 +23,7 @@
 // The same results as the C++ harness used during development (same reset, same stall sequence).
 `timescale 1ns/1ps
 module tb_jpeg;
-  parameter bit FAST           = 1'b0;
+  parameter int FAST           = 0;
   parameter bit RASTER_OUT     = 1'b0;
   parameter int ROWBUF_BYTES   = 16384;
   parameter bit FANCY_UPSAMPLE = 1'b0;
@@ -37,7 +37,9 @@ module tb_jpeg;
   logic [1:0]  out_fmt = 2'd0;
   logic        px_valid, px_ready = 1'b0, px_sof, px_eol;
   logic [15:0] px_x, px_y, img_w, img_h;
-  logic [7:0]  px_c0, px_c1, px_c2;
+  localparam int NPIX = (FAST == 2) ? 4 : 1;   // pixels per output beat
+  logic [8*NPIX-1:0] px_c0, px_c1, px_c2;
+  logic [2:0]  px_n;
   logic        frame_start, frame_done;
   logic [12:0] err;
 
@@ -46,7 +48,7 @@ module tb_jpeg;
                  .CHECKS(CHECKS)) dut (
     .clk(clk), .rst(rst), .in_valid(in_valid), .in_data(in_data), .in_last(in_last),
     .in_ready(in_ready), .out_fmt(out_fmt), .px_valid(px_valid), .px_ready(px_ready),
-    .px_x(px_x), .px_y(px_y), .px_c0(px_c0), .px_c1(px_c1), .px_c2(px_c2), .px_sof(px_sof),
+    .px_x(px_x), .px_y(px_y), .px_n(px_n), .px_c0(px_c0), .px_c1(px_c1), .px_c2(px_c2), .px_sof(px_sof),
     .px_eol(px_eol), .img_w(img_w), .img_h(img_h), .frame_start(frame_start),
     .frame_done(frame_done), .err(err));
 
@@ -135,7 +137,7 @@ module tb_jpeg;
   // ------------------------------------------------------------------ one file
   task automatic run_single(input string jpeg);
     string outp, gpath;
-    int stall = 0, n, pos = 0, W = 0, H = 0, rc = 0, fo, maxd, m, d, x, y, c0, c1, c2;
+    int stall = 0, n, pos = 0, W = 0, H = 0, rc = 0, fo, maxd, m, d, x, y, c0, c1, c2, pn, xi;
     bit in_st, out_st, in_fire, px_fire, fs, fd, sof, eol, gray, stop;
     logic [7:0] xy8;
     longint idx, ndiff, first;
@@ -164,7 +166,7 @@ module tb_jpeg;
       px_ready = !out_st;
       @(negedge clk);
       in_fire = in_valid && in_ready; px_fire = px_valid && px_ready;
-      x = px_x; y = px_y; c0 = px_c0; c1 = px_c1; c2 = px_c2; sof = px_sof; eol = px_eol;
+      x = px_x; y = px_y; c0 = px_c0; c1 = px_c1; c2 = px_c2; pn = px_n; sof = px_sof; eol = px_eol;
       fs = frame_start; fd = frame_done;
       @(posedge clk);
       #1;
@@ -176,23 +178,30 @@ module tb_jpeg;
         if (!quiet) $display("frame_start: %0dx%0d at cycle %0d", W, H, cycles);
       end
       if (px_fire) begin
-        if (!have_dims || x >= W || y >= H) oob++;
-        else begin
-          idx = y; idx = idx * W + x;
-          if (seen_a[idx]) dup++;
-          if (RASTER_OUT && idx != next_raster) begin
-            if (order_err < 3) $display("order: got (%0d,%0d), expected pixel #%0d", x, y, next_raster);
-            order_err++;
+        // a beat: pn pixels from (x, y); fewer than NPIX only where the image row ends
+        if (pn < 1 || pn > NPIX || (have_dims && pn < NPIX && x + pn != W)) begin
+          if (flag_err < 3) $display("beat at (%0d,%0d): px_n=%0d", x, y, pn);
+          flag_err++;
+        end else if (have_dims && (sof != (x == 0 && y == 0) || eol != (x + pn - 1 == W - 1))) begin
+          if (flag_err < 3) $display("flags at (%0d,%0d): sof=%0d eol=%0d", x, y, sof, eol);
+          flag_err++;
+        end
+        for (int i = 0; i < pn && i < NPIX; i++) begin
+          xi = x + i;
+          if (!have_dims || xi >= W || y >= H) oob++;
+          else begin
+            idx = y; idx = idx * W + xi;
+            if (seen_a[idx]) dup++;
+            if (RASTER_OUT && idx != next_raster) begin
+              if (order_err < 3) $display("order: got (%0d,%0d), expected pixel #%0d", xi, y, next_raster);
+              order_err++;
+            end
+            next_raster = idx + 1;
+            seen_a[idx] = 8'd1; img_a[idx*3] = c0[8*i +: 8]; img_a[idx*3+1] = c1[8*i +: 8]; img_a[idx*3+2] = c2[8*i +: 8];
+            xy8 = xi[7:0] ^ y[7:0];
+            chk += {xy8, c0[8*i +: 8], c1[8*i +: 8], c2[8*i +: 8]};
+            npx++; last_progress = cycles;
           end
-          next_raster = idx + 1;
-          if (sof != (x == 0 && y == 0) || eol != (x == W - 1)) begin
-            if (flag_err < 3) $display("flags at (%0d,%0d): sof=%0d eol=%0d", x, y, sof, eol);
-            flag_err++;
-          end
-          seen_a[idx] = 8'd1; img_a[idx*3] = c0[7:0]; img_a[idx*3+1] = c1[7:0]; img_a[idx*3+2] = c2[7:0];
-          xy8 = x[7:0] ^ y[7:0];
-          chk += {xy8, c0[7:0], c1[7:0], c2[7:0]};
-          npx++; last_progress = cycles;
         end
       end
       if (fd) begin done = 1; if (!quiet) $display("frame_done at cycle %0d", cycles); end
@@ -262,7 +271,7 @@ module tb_jpeg;
   task automatic run_multi(input string files);
     string goldens;
     longint ends[$];
-    int stall = 0, pos = 0, frame = 0, W = 0, H = 0, fails = 0, x, y, c0, c1, c2;
+    int stall = 0, pos = 0, frame = 0, W = 0, H = 0, fails = 0, x, y, c0, c1, c2, pn;
     longint npx = 0, cycles = 0, last = 0, k, diff;
     bit in_st, out_st, in_fire, px_fire, fs, fd, lastb, one, stop;
     string verdict;
@@ -288,16 +297,18 @@ module tb_jpeg;
       px_ready = !out_st;
       @(negedge clk);
       in_fire = in_valid && in_ready; px_fire = px_valid && px_ready;
-      x = px_x; y = px_y; c0 = px_c0; c1 = px_c1; c2 = px_c2; fs = frame_start; fd = frame_done;
+      x = px_x; y = px_y; c0 = px_c0; c1 = px_c1; c2 = px_c2; pn = px_n; fs = frame_start; fd = frame_done;
       @(posedge clk);
       #1;
       cycles++;
       if (in_fire) begin pos++; last = cycles; end
       if (fs) begin W = img_w; H = img_h; img_a = new[W * H * 3]; npx = 0; end
-      if (px_fire && x < W && y < H) begin
-        k = y; k = (k * W + x) * 3;
-        img_a[k] = c0[7:0]; img_a[k+1] = c1[7:0]; img_a[k+2] = c2[7:0]; npx++; last = cycles;
-      end
+      if (px_fire)
+        for (int i = 0; i < pn && i < NPIX; i++)
+          if (x + i < W && y < H) begin
+            k = y; k = (k * W + x + i) * 3;
+            img_a[k] = c0[8*i +: 8]; img_a[k+1] = c1[8*i +: 8]; img_a[k+2] = c2[8*i +: 8]; npx++; last = cycles;
+          end
       if (fd) begin
         verdict = "no golden";
         if (gnames_q[frame] != "-") begin

@@ -77,8 +77,34 @@ smooth 4:2:2 photos ~9 % faster, but cost ~300 LEs the EP2C5 does not have.
    expected unchanged), the three gate-level runs, full regression (1616 / 80 / 416 + the new config),
    xsim subset.
 
-Instantiations of `jpeg_decoder` to update in step 1: to be listed here when step 1 starts.
+Instantiations of `jpeg_decoder` (2026-10-04): `boards/ep2c5/rtl/fpga_top.sv`, `boards/ep2c5/rtl/jtag_stream_core.sv`,
+`boards/acorn_cle215/uart_bench_core.sv`, `bench/others/quartus/cmp_wrap.sv`, `tb/tb_jpeg.sv`; Verilator harnesses with
+`jpeg_decoder` as top: `tb/tb_jpeg.cpp`, `tb/tb_multi.cpp` (and `boards/ep2c5/sim/tb_fpga.cpp` through fpga_top). With
+NPIX = 1 the pixel ports keep their widths and the new output `px_n` may stay unconnected (named connections: no
+implicit net), so the RTL tops need no change; the harnesses get NPIX-pixel beats (C++: `-DNPIX=4` from the Makefile
+config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_n` pixels per beat for FAST=2.
 
 ## 4. Progress log
 
 - 2026-10-04: model built and validated, W4 chosen, sizing done (sections 1-2).
+- Timing probe 1 (scratchpad `probe/hufloop_probe.sv`, Vivado 2026.1 out of context, xc7a200t-2, 150 MHz):
+  the loop as in jpeg_huffdec but in one clock - LSB-aligned 64-bit window, 80-bit shifter to the next 8
+  bits, one 1024 x 12 asynchronous table, L + S adder, bit count, `have` compare - **fails by 3.05 ns**:
+  9.67 ns, 12 logic levels, 77 % routing (wcnt fan-out 61, table address fan-out 98) = ~103 MHz.
+  Probe 2: MSB-aligned window (table address = top 8 bits, no shifter before the table), n = L + S stored
+  in the table, four 256-entry tables selected late by {AC, Th}, refill merge and `have` from registers only:
+  **meets 150 MHz** (+0.095 ns: 6.53 ns, 7 logic levels, 80 % routing; 993 LUTs of which 416 as memory,
+  160 flip-flops). Both probes and the Tcl script: `model/perf/probes/` (`vivado -mode batch -source probe.tcl`).
+  Decision: the wide Huffman decoder uses probe 2's structure. The parser stays unchanged: the decoder
+  keeps its own copy of the lookahead tables and derives {n = L + S, EOB} when an entry is written.
+- **Step 1 done**: `rtl/jpeg_dec_wide.sv` (input side of jpeg_dec_fast in MCU order, three MCU buffers),
+  `rtl/jpeg_mcuout_wide.sv` (4 pixels per beat), wrapper `FAST` now `int` with `NPIX`/`px_n`, testbenches
+  (`tb_jpeg.cpp`, `tb_multi.cpp` with `-DNPIX=4`; `tb_jpeg.sv`), regression config `wmcu` (in every default
+  list: C++ regression **1818/1818, 90/90, 468/468** = 9 configurations, log `tb/regression_2026-10-04c.txt`;
+  SV testbench on `wmcu` 202/202, 10/10, 52/52). Clock counts vs the model (px_clk=4, halves=3): traced crop
+  +0.02 %, flat images +0.00-0.01 %, crops -0.12 to -0.61 % (the same residual as today's core). Flat 4:2:0
+  1.011 -> 0.780 clocks/pixel (now the IDCT's 0.75 limits it); photos unchanged, as the model said.
+- Written, not yet built: `rtl/jpeg_idct1d.sv` (one 8-point 1-D IDCT per clock, the arithmetic of
+  jpeg_idct_fast), `rtl/jpeg_idct_wide.sv` (step 2: 8 row banks + valid masks, 3 workspace buffers - 2 would
+  limit it to ~11 clocks/block because of the 15-clock pass-1 latency - and 64-bit sample words),
+  `rtl/jpeg_huffdec_wide.sv` (step 3: probe 2's loop + the contracts of jpeg_bitwin / jpeg_huffdec).

@@ -21,6 +21,7 @@ CONFIGS = {   # name: (raster, fancy+turbo, row buffer bytes or None, has RGB co
     "fmcu":   (False, False, None,  True,  True),
     "frbox":  (True,  False, 16384, True,  True),
     "frfancy":(True,  True,  16384, True,  True),
+    "wmcu":   (False, False, None,  True,  True),     # FAST=2: 4 pixels per beat, MCU order
     "rbox":   (True,  False, 16384, True),
     "rfancy": (True,  True,  16384, True),
     "ep2c5":  (True,  True,  9216,  True),

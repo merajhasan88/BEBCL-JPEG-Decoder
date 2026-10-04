@@ -14,6 +14,8 @@ jpeg_bitwin.sv
 jpeg_huffdec.sv
 jpeg_idct_fast.sv
 jpeg_mcuout.sv
+jpeg_mcuout_wide.sv
 jpeg_raster_fast.sv
 jpeg_dec_fast.sv
+jpeg_dec_wide.sv
 jpeg_decoder.sv

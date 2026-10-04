@@ -24,7 +24,8 @@ RTL      := $(RTL_DIR)/jpeg_pkg.sv $(RTL_DIR)/jpeg_sdp_ram.sv $(RTL_DIR)/jpeg_bl
             $(RTL_DIR)/jpeg_idct.sv $(RTL_DIR)/jpeg_ycc2rgb.sv $(RTL_DIR)/jpeg_pixgen.sv \
             $(RTL_DIR)/jpeg_raster.sv $(RTL_DIR)/jpeg_dec_small.sv \
             $(RTL_DIR)/jpeg_bitwin.sv $(RTL_DIR)/jpeg_huffdec.sv $(RTL_DIR)/jpeg_idct_fast.sv \
-            $(RTL_DIR)/jpeg_mcuout.sv $(RTL_DIR)/jpeg_raster_fast.sv $(RTL_DIR)/jpeg_dec_fast.sv $(RTL_DIR)/jpeg_decoder.sv
+            $(RTL_DIR)/jpeg_mcuout.sv $(RTL_DIR)/jpeg_raster_fast.sv $(RTL_DIR)/jpeg_dec_fast.sv \
+            $(RTL_DIR)/jpeg_mcuout_wide.sv $(RTL_DIR)/jpeg_dec_wide.sv $(RTL_DIR)/jpeg_decoder.sv
 TRACE    ?= 0
 VFLAGS   := -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast
 ifeq ($(TRACE),1)
@@ -40,7 +41,9 @@ CFG_fmcu   := -GFAST=1
 CFG_frbox  := -GFAST=1 -GRASTER_OUT=1
 CFG_frfancy := -GFAST=1 -GRASTER_OUT=1 -GFANCY_UPSAMPLE=1 -GCC_TURBO=1
 CFG_frfancy64k := -GFAST=1 -GRASTER_OUT=1 -GFANCY_UPSAMPLE=1 -GCC_TURBO=1 -GROWBUF_BYTES=65536
-CONFIGS    := mcu rbox rfancy ep2c5 noyrgb fmcu frbox frfancy
+CFG_wmcu   := -GFAST=2 -CFLAGS -DNPIX=4
+DEF_wmcu   := -DNPIX=4
+CONFIGS    := mcu rbox rfancy ep2c5 noyrgb fmcu frbox frfancy wmcu
 BINS       := $(foreach c,$(CONFIGS),obj_$(c)/Vjpeg_decoder)
 MULTI      := $(foreach c,$(CONFIGS),obj_$(c)/Vmulti)
 VROOT      := $(shell verilator --getenv VERILATOR_ROOT)
@@ -71,7 +74,7 @@ decode: obj_fmcu/Vjpeg_decoder
 
 # multi-image harness, linked against the model compiled for Vjpeg_decoder
 obj_%/Vmulti: obj_%/Vjpeg_decoder tb_multi.cpp
-	$(CXX) -O1 -std=c++17 -Iobj_$* -I$(VROOT)/include -I$(VROOT)/include/vltstd tb_multi.cpp \
+	$(CXX) -O1 -std=c++17 $(DEF_$*) -Iobj_$* -I$(VROOT)/include -I$(VROOT)/include/vltstd tb_multi.cpp \
 	  obj_$*/Vjpeg_decoder__ALL.a obj_$*/verilated.o -o $@ -lpthread
 
 multi: $(MULTI)

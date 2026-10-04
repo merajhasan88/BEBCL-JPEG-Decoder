@@ -14,6 +14,9 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
+#ifndef NPIX
+#define NPIX 1
+#endif
 static vluint64_t sim_time = 0;
 double sc_time_stamp() { return sim_time; }
 static bool slurp(const std::string& p, std::vector<unsigned char>& out) {
@@ -56,12 +59,18 @@ int main(int argc, char** argv) {
         dut->in_last = std::find(ends.begin(), ends.end(), pos) != ends.end();
         dut->px_ready = !out_st; dut->eval();
         bool in_fire = dut->in_valid && dut->in_ready, px_fire = dut->px_valid && dut->px_ready;
-        int x = dut->px_x, y = dut->px_y, c0 = dut->px_c0, c1 = dut->px_c1, c2 = dut->px_c2;
+        int x = dut->px_x, y = dut->px_y, pn = dut->px_n;
+        unsigned long long c0 = dut->px_c0, c1 = dut->px_c1, c2 = dut->px_c2;
         bool fs = dut->frame_start, fd = dut->frame_done;
         tick(); cycles++;
         if (in_fire) { pos++; last = cycles; }
         if (fs) { W = dut->img_w; H = dut->img_h; img.assign((size_t)W * H * 3, 0); npx = 0; }
-        if (px_fire && x < W && y < H) { size_t k = ((size_t)y * W + x) * 3; img[k] = c0; img[k+1] = c1; img[k+2] = c2; npx++; last = cycles; }
+        if (px_fire)                    // a beat of px_n pixels (NPIX > 1: FAST = 2)
+            for (int i = 0; i < pn && i < NPIX; i++)
+                if (x + i < W && y < H) {
+                    size_t k = ((size_t)y * W + x + i) * 3;
+                    img[k] = (c0 >> (8*i)) & 0xFF; img[k+1] = (c1 >> (8*i)) & 0xFF; img[k+2] = (c2 >> (8*i)) & 0xFF; npx++; last = cycles;
+                }
         if (fd) {
             std::string g = goldens[frame], verdict = "no golden";
             if (g != "-") {

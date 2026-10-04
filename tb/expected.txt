@@ -11,6 +11,9 @@ adp_13x11_q40_gray frbox y pass golden/adp_13x11_q40_gray.box.y.pnm
 adp_13x11_q40_gray frfancy rgb pass golden/adp_13x11_q40_gray.fancy.rgb.pnm
 adp_13x11_q40_gray frfancy ycbcr pass golden/adp_13x11_q40_gray.fancy.ycbcr.pnm
 adp_13x11_q40_gray frfancy y pass golden/adp_13x11_q40_gray.fancy.y.pnm
+adp_13x11_q40_gray wmcu rgb pass golden/adp_13x11_q40_gray.box.rgb.pnm
+adp_13x11_q40_gray wmcu ycbcr pass golden/adp_13x11_q40_gray.box.ycbcr.pnm
+adp_13x11_q40_gray wmcu y pass golden/adp_13x11_q40_gray.box.y.pnm
 adp_13x11_q40_gray rbox rgb pass golden/adp_13x11_q40_gray.box.rgb.pnm
 adp_13x11_q40_gray rbox ycbcr pass golden/adp_13x11_q40_gray.box.ycbcr.pnm
 adp_13x11_q40_gray rbox y pass golden/adp_13x11_q40_gray.box.y.pnm
@@ -35,6 +38,9 @@ adp_160x120_q95_444 frbox y pass golden/adp_160x120_q95_444.box.y.pnm
 adp_160x120_q95_444 frfancy rgb pass golden/adp_160x120_q95_444.fancy.rgb.pnm
 adp_160x120_q95_444 frfancy ycbcr pass golden/adp_160x120_q95_444.fancy.ycbcr.pnm
 adp_160x120_q95_444 frfancy y pass golden/adp_160x120_q95_444.fancy.y.pnm
+adp_160x120_q95_444 wmcu rgb pass golden/adp_160x120_q95_444.box.rgb.pnm
+adp_160x120_q95_444 wmcu ycbcr pass golden/adp_160x120_q95_444.box.ycbcr.pnm
+adp_160x120_q95_444 wmcu y pass golden/adp_160x120_q95_444.box.y.pnm
 adp_160x120_q95_444 rbox rgb pass golden/adp_160x120_q95_444.box.rgb.pnm
 adp_160x120_q95_444 rbox ycbcr pass golden/adp_160x120_q95_444.box.ycbcr.pnm
 adp_160x120_q95_444 rbox y pass golden/adp_160x120_q95_444.box.y.pnm
@@ -59,6 +65,9 @@ adp_16x16_q25_420 frbox y pass golden/adp_16x16_q25_420.box.y.pnm
 adp_16x16_q25_420 frfancy rgb pass golden/adp_16x16_q25_420.fancy.rgb.pnm
 adp_16x16_q25_420 frfancy ycbcr pass golden/adp_16x16_q25_420.fancy.ycbcr.pnm
 adp_16x16_q25_420 frfancy y pass golden/adp_16x16_q25_420.fancy.y.pnm
+adp_16x16_q25_420 wmcu rgb pass golden/adp_16x16_q25_420.box.rgb.pnm
+adp_16x16_q25_420 wmcu ycbcr pass golden/adp_16x16_q25_420.box.ycbcr.pnm
+adp_16x16_q25_420 wmcu y pass golden/adp_16x16_q25_420.box.y.pnm
 adp_16x16_q25_420 rbox rgb pass golden/adp_16x16_q25_420.box.rgb.pnm
 adp_16x16_q25_420 rbox ycbcr pass golden/adp_16x16_q25_420.box.ycbcr.pnm
 adp_16x16_q25_420 rbox y pass golden/adp_16x16_q25_420.box.y.pnm
@@ -83,6 +92,9 @@ adp_16x16_q25_gray frbox y pass golden/adp_16x16_q25_gray.box.y.pnm
 adp_16x16_q25_gray frfancy rgb pass golden/adp_16x16_q25_gray.fancy.rgb.pnm
 adp_16x16_q25_gray frfancy ycbcr pass golden/adp_16x16_q25_gray.fancy.ycbcr.pnm
 adp_16x16_q25_gray frfancy y pass golden/adp_16x16_q25_gray.fancy.y.pnm
+adp_16x16_q25_gray wmcu rgb pass golden/adp_16x16_q25_gray.box.rgb.pnm
+adp_16x16_q25_gray wmcu ycbcr pass golden/adp_16x16_q25_gray.box.ycbcr.pnm
+adp_16x16_q25_gray wmcu y pass golden/adp_16x16_q25_gray.box.y.pnm
 adp_16x16_q25_gray rbox rgb pass golden/adp_16x16_q25_gray.box.rgb.pnm
 adp_16x16_q25_gray rbox ycbcr pass golden/adp_16x16_q25_gray.box.ycbcr.pnm
 adp_16x16_q25_gray rbox y pass golden/adp_16x16_q25_gray.box.y.pnm
@@ -107,6 +119,9 @@ adp_17x33_q40_420 frbox y pass golden/adp_17x33_q40_420.box.y.pnm
 adp_17x33_q40_420 frfancy rgb pass golden/adp_17x33_q40_420.fancy.rgb.pnm
 adp_17x33_q40_420 frfancy ycbcr pass golden/adp_17x33_q40_420.fancy.ycbcr.pnm
 adp_17x33_q40_420 frfancy y pass golden/adp_17x33_q40_420.fancy.y.pnm
+adp_17x33_q40_420 wmcu rgb pass golden/adp_17x33_q40_420.box.rgb.pnm
+adp_17x33_q40_420 wmcu ycbcr pass golden/adp_17x33_q40_420.box.ycbcr.pnm
+adp_17x33_q40_420 wmcu y pass golden/adp_17x33_q40_420.box.y.pnm
 adp_17x33_q40_420 rbox rgb pass golden/adp_17x33_q40_420.box.rgb.pnm
 adp_17x33_q40_420 rbox ycbcr pass golden/adp_17x33_q40_420.box.ycbcr.pnm
 adp_17x33_q40_420 rbox y pass golden/adp_17x33_q40_420.box.y.pnm
@@ -131,6 +146,9 @@ adp_1x1_q50_420 frbox y pass golden/adp_1x1_q50_420.box.y.pnm
 adp_1x1_q50_420 frfancy rgb pass golden/adp_1x1_q50_420.fancy.rgb.pnm
 adp_1x1_q50_420 frfancy ycbcr pass golden/adp_1x1_q50_420.fancy.ycbcr.pnm
 adp_1x1_q50_420 frfancy y pass golden/adp_1x1_q50_420.fancy.y.pnm
+adp_1x1_q50_420 wmcu rgb pass golden/adp_1x1_q50_420.box.rgb.pnm
+adp_1x1_q50_420 wmcu ycbcr pass golden/adp_1x1_q50_420.box.ycbcr.pnm
+adp_1x1_q50_420 wmcu y pass golden/adp_1x1_q50_420.box.y.pnm
 adp_1x1_q50_420 rbox rgb pass golden/adp_1x1_q50_420.box.rgb.pnm
 adp_1x1_q50_420 rbox ycbcr pass golden/adp_1x1_q50_420.box.ycbcr.pnm
 adp_1x1_q50_420 rbox y pass golden/adp_1x1_q50_420.box.y.pnm
@@ -155,6 +173,9 @@ adp_240x320_q95_422_rst4 frbox y pass golden/adp_240x320_q95_422_rst4.box.y.pnm
 adp_240x320_q95_422_rst4 frfancy rgb pass golden/adp_240x320_q95_422_rst4.fancy.rgb.pnm
 adp_240x320_q95_422_rst4 frfancy ycbcr pass golden/adp_240x320_q95_422_rst4.fancy.ycbcr.pnm
 adp_240x320_q95_422_rst4 frfancy y pass golden/adp_240x320_q95_422_rst4.fancy.y.pnm
+adp_240x320_q95_422_rst4 wmcu rgb pass golden/adp_240x320_q95_422_rst4.box.rgb.pnm
+adp_240x320_q95_422_rst4 wmcu ycbcr pass golden/adp_240x320_q95_422_rst4.box.ycbcr.pnm
+adp_240x320_q95_422_rst4 wmcu y pass golden/adp_240x320_q95_422_rst4.box.y.pnm
 adp_240x320_q95_422_rst4 rbox rgb pass golden/adp_240x320_q95_422_rst4.box.rgb.pnm
 adp_240x320_q95_422_rst4 rbox ycbcr pass golden/adp_240x320_q95_422_rst4.box.ycbcr.pnm
 adp_240x320_q95_422_rst4 rbox y pass golden/adp_240x320_q95_422_rst4.box.y.pnm
@@ -179,6 +200,9 @@ adp_256x64_q98_gray frbox y pass golden/adp_256x64_q98_gray.box.y.pnm
 adp_256x64_q98_gray frfancy rgb pass golden/adp_256x64_q98_gray.fancy.rgb.pnm
 adp_256x64_q98_gray frfancy ycbcr pass golden/adp_256x64_q98_gray.fancy.ycbcr.pnm
 adp_256x64_q98_gray frfancy y pass golden/adp_256x64_q98_gray.fancy.y.pnm
+adp_256x64_q98_gray wmcu rgb pass golden/adp_256x64_q98_gray.box.rgb.pnm
+adp_256x64_q98_gray wmcu ycbcr pass golden/adp_256x64_q98_gray.box.ycbcr.pnm
+adp_256x64_q98_gray wmcu y pass golden/adp_256x64_q98_gray.box.y.pnm
 adp_256x64_q98_gray rbox rgb pass golden/adp_256x64_q98_gray.box.rgb.pnm
 adp_256x64_q98_gray rbox ycbcr pass golden/adp_256x64_q98_gray.box.ycbcr.pnm
 adp_256x64_q98_gray rbox y pass golden/adp_256x64_q98_gray.box.y.pnm
@@ -203,6 +227,9 @@ adp_320x240_q90_420 frbox y pass golden/adp_320x240_q90_420.box.y.pnm
 adp_320x240_q90_420 frfancy rgb pass golden/adp_320x240_q90_420.fancy.rgb.pnm
 adp_320x240_q90_420 frfancy ycbcr pass golden/adp_320x240_q90_420.fancy.ycbcr.pnm
 adp_320x240_q90_420 frfancy y pass golden/adp_320x240_q90_420.fancy.y.pnm
+adp_320x240_q90_420 wmcu rgb pass golden/adp_320x240_q90_420.box.rgb.pnm
+adp_320x240_q90_420 wmcu ycbcr pass golden/adp_320x240_q90_420.box.ycbcr.pnm
+adp_320x240_q90_420 wmcu y pass golden/adp_320x240_q90_420.box.y.pnm
 adp_320x240_q90_420 rbox rgb pass golden/adp_320x240_q90_420.box.rgb.pnm
 adp_320x240_q90_420 rbox ycbcr pass golden/adp_320x240_q90_420.box.ycbcr.pnm
 adp_320x240_q90_420 rbox y pass golden/adp_320x240_q90_420.box.y.pnm
@@ -227,6 +254,9 @@ adp_32x32_q25_420 frbox y pass golden/adp_32x32_q25_420.box.y.pnm
 adp_32x32_q25_420 frfancy rgb pass golden/adp_32x32_q25_420.fancy.rgb.pnm
 adp_32x32_q25_420 frfancy ycbcr pass golden/adp_32x32_q25_420.fancy.ycbcr.pnm
 adp_32x32_q25_420 frfancy y pass golden/adp_32x32_q25_420.fancy.y.pnm
+adp_32x32_q25_420 wmcu rgb pass golden/adp_32x32_q25_420.box.rgb.pnm
+adp_32x32_q25_420 wmcu ycbcr pass golden/adp_32x32_q25_420.box.ycbcr.pnm
+adp_32x32_q25_420 wmcu y pass golden/adp_32x32_q25_420.box.y.pnm
 adp_32x32_q25_420 rbox rgb pass golden/adp_32x32_q25_420.box.rgb.pnm
 adp_32x32_q25_420 rbox ycbcr pass golden/adp_32x32_q25_420.box.ycbcr.pnm
 adp_32x32_q25_420 rbox y pass golden/adp_32x32_q25_420.box.y.pnm
@@ -251,6 +281,9 @@ adp_32x32_q25_444 frbox y pass golden/adp_32x32_q25_444.box.y.pnm
 adp_32x32_q25_444 frfancy rgb pass golden/adp_32x32_q25_444.fancy.rgb.pnm
 adp_32x32_q25_444 frfancy ycbcr pass golden/adp_32x32_q25_444.fancy.ycbcr.pnm
 adp_32x32_q25_444 frfancy y pass golden/adp_32x32_q25_444.fancy.y.pnm
+adp_32x32_q25_444 wmcu rgb pass golden/adp_32x32_q25_444.box.rgb.pnm
+adp_32x32_q25_444 wmcu ycbcr pass golden/adp_32x32_q25_444.box.ycbcr.pnm
+adp_32x32_q25_444 wmcu y pass golden/adp_32x32_q25_444.box.y.pnm
 adp_32x32_q25_444 rbox rgb pass golden/adp_32x32_q25_444.box.rgb.pnm
 adp_32x32_q25_444 rbox ycbcr pass golden/adp_32x32_q25_444.box.ycbcr.pnm
 adp_32x32_q25_444 rbox y pass golden/adp_32x32_q25_444.box.y.pnm
@@ -275,6 +308,9 @@ adp_33x18_q40_440 frbox y pass golden/adp_33x18_q40_440.box.y.pnm
 adp_33x18_q40_440 frfancy rgb pass golden/adp_33x18_q40_440.fancy.rgb.pnm
 adp_33x18_q40_440 frfancy ycbcr pass golden/adp_33x18_q40_440.fancy.ycbcr.pnm
 adp_33x18_q40_440 frfancy y pass golden/adp_33x18_q40_440.fancy.y.pnm
+adp_33x18_q40_440 wmcu rgb pass golden/adp_33x18_q40_440.box.rgb.pnm
+adp_33x18_q40_440 wmcu ycbcr pass golden/adp_33x18_q40_440.box.ycbcr.pnm
+adp_33x18_q40_440 wmcu y pass golden/adp_33x18_q40_440.box.y.pnm
 adp_33x18_q40_440 rbox rgb pass golden/adp_33x18_q40_440.box.rgb.pnm
 adp_33x18_q40_440 rbox ycbcr pass golden/adp_33x18_q40_440.box.ycbcr.pnm
 adp_33x18_q40_440 rbox y pass golden/adp_33x18_q40_440.box.y.pnm
@@ -299,6 +335,9 @@ adp_3x5_q50_420 frbox y pass golden/adp_3x5_q50_420.box.y.pnm
 adp_3x5_q50_420 frfancy rgb pass golden/adp_3x5_q50_420.fancy.rgb.pnm
 adp_3x5_q50_420 frfancy ycbcr pass golden/adp_3x5_q50_420.fancy.ycbcr.pnm
 adp_3x5_q50_420 frfancy y pass golden/adp_3x5_q50_420.fancy.y.pnm
+adp_3x5_q50_420 wmcu rgb pass golden/adp_3x5_q50_420.box.rgb.pnm
+adp_3x5_q50_420 wmcu ycbcr pass golden/adp_3x5_q50_420.box.ycbcr.pnm
+adp_3x5_q50_420 wmcu y pass golden/adp_3x5_q50_420.box.y.pnm
 adp_3x5_q50_420 rbox rgb pass golden/adp_3x5_q50_420.box.rgb.pnm
 adp_3x5_q50_420 rbox ycbcr pass golden/adp_3x5_q50_420.box.ycbcr.pnm
 adp_3x5_q50_420 rbox y pass golden/adp_3x5_q50_420.box.y.pnm
@@ -315,6 +354,7 @@ adp_40x40_q20_sof1_UNSUPPORTED mcu rgb error -
 adp_40x40_q20_sof1_UNSUPPORTED fmcu rgb error -
 adp_40x40_q20_sof1_UNSUPPORTED frbox rgb error -
 adp_40x40_q20_sof1_UNSUPPORTED frfancy rgb error -
+adp_40x40_q20_sof1_UNSUPPORTED wmcu rgb error -
 adp_40x40_q20_sof1_UNSUPPORTED rbox rgb error -
 adp_40x40_q20_sof1_UNSUPPORTED rfancy rgb error -
 adp_40x40_q20_sof1_UNSUPPORTED ep2c5 rgb error -
@@ -331,6 +371,9 @@ adp_40x40_q40_lumasub frbox y pass golden/adp_40x40_q40_lumasub.box.y.pnm
 adp_40x40_q40_lumasub frfancy rgb pass golden/adp_40x40_q40_lumasub.fancy.rgb.pnm
 adp_40x40_q40_lumasub frfancy ycbcr pass golden/adp_40x40_q40_lumasub.fancy.ycbcr.pnm
 adp_40x40_q40_lumasub frfancy y pass golden/adp_40x40_q40_lumasub.fancy.y.pnm
+adp_40x40_q40_lumasub wmcu rgb pass golden/adp_40x40_q40_lumasub.box.rgb.pnm
+adp_40x40_q40_lumasub wmcu ycbcr pass golden/adp_40x40_q40_lumasub.box.ycbcr.pnm
+adp_40x40_q40_lumasub wmcu y pass golden/adp_40x40_q40_lumasub.box.y.pnm
 adp_40x40_q40_lumasub rbox rgb pass golden/adp_40x40_q40_lumasub.box.rgb.pnm
 adp_40x40_q40_lumasub rbox ycbcr pass golden/adp_40x40_q40_lumasub.box.ycbcr.pnm
 adp_40x40_q40_lumasub rbox y pass golden/adp_40x40_q40_lumasub.box.y.pnm
@@ -355,6 +398,9 @@ adp_40x50_q30_420_rst3 frbox y pass golden/adp_40x50_q30_420_rst3.box.y.pnm
 adp_40x50_q30_420_rst3 frfancy rgb pass golden/adp_40x50_q30_420_rst3.fancy.rgb.pnm
 adp_40x50_q30_420_rst3 frfancy ycbcr pass golden/adp_40x50_q30_420_rst3.fancy.ycbcr.pnm
 adp_40x50_q30_420_rst3 frfancy y pass golden/adp_40x50_q30_420_rst3.fancy.y.pnm
+adp_40x50_q30_420_rst3 wmcu rgb pass golden/adp_40x50_q30_420_rst3.box.rgb.pnm
+adp_40x50_q30_420_rst3 wmcu ycbcr pass golden/adp_40x50_q30_420_rst3.box.ycbcr.pnm
+adp_40x50_q30_420_rst3 wmcu y pass golden/adp_40x50_q30_420_rst3.box.y.pnm
 adp_40x50_q30_420_rst3 rbox rgb pass golden/adp_40x50_q30_420_rst3.box.rgb.pnm
 adp_40x50_q30_420_rst3 rbox ycbcr pass golden/adp_40x50_q30_420_rst3.box.ycbcr.pnm
 adp_40x50_q30_420_rst3 rbox y pass golden/adp_40x50_q30_420_rst3.box.y.pnm
@@ -379,6 +425,9 @@ adp_45x37_q30_420_rst2 frbox y pass golden/adp_45x37_q30_420_rst2.box.y.pnm
 adp_45x37_q30_420_rst2 frfancy rgb pass golden/adp_45x37_q30_420_rst2.fancy.rgb.pnm
 adp_45x37_q30_420_rst2 frfancy ycbcr pass golden/adp_45x37_q30_420_rst2.fancy.ycbcr.pnm
 adp_45x37_q30_420_rst2 frfancy y pass golden/adp_45x37_q30_420_rst2.fancy.y.pnm
+adp_45x37_q30_420_rst2 wmcu rgb pass golden/adp_45x37_q30_420_rst2.box.rgb.pnm
+adp_45x37_q30_420_rst2 wmcu ycbcr pass golden/adp_45x37_q30_420_rst2.box.ycbcr.pnm
+adp_45x37_q30_420_rst2 wmcu y pass golden/adp_45x37_q30_420_rst2.box.y.pnm
 adp_45x37_q30_420_rst2 rbox rgb pass golden/adp_45x37_q30_420_rst2.box.rgb.pnm
 adp_45x37_q30_420_rst2 rbox ycbcr pass golden/adp_45x37_q30_420_rst2.box.ycbcr.pnm
 adp_45x37_q30_420_rst2 rbox y pass golden/adp_45x37_q30_420_rst2.box.y.pnm
@@ -403,6 +452,9 @@ adp_45x37_q30_422 frbox y pass golden/adp_45x37_q30_422.box.y.pnm
 adp_45x37_q30_422 frfancy rgb pass golden/adp_45x37_q30_422.fancy.rgb.pnm
 adp_45x37_q30_422 frfancy ycbcr pass golden/adp_45x37_q30_422.fancy.ycbcr.pnm
 adp_45x37_q30_422 frfancy y pass golden/adp_45x37_q30_422.fancy.y.pnm
+adp_45x37_q30_422 wmcu rgb pass golden/adp_45x37_q30_422.box.rgb.pnm
+adp_45x37_q30_422 wmcu ycbcr pass golden/adp_45x37_q30_422.box.ycbcr.pnm
+adp_45x37_q30_422 wmcu y pass golden/adp_45x37_q30_422.box.y.pnm
 adp_45x37_q30_422 rbox rgb pass golden/adp_45x37_q30_422.box.rgb.pnm
 adp_45x37_q30_422 rbox ycbcr pass golden/adp_45x37_q30_422.box.ycbcr.pnm
 adp_45x37_q30_422 rbox y pass golden/adp_45x37_q30_422.box.y.pnm
@@ -427,6 +479,9 @@ adp_45x37_q30_422_exifthumb frbox y pass golden/adp_45x37_q30_422_exifthumb.box.
 adp_45x37_q30_422_exifthumb frfancy rgb pass golden/adp_45x37_q30_422_exifthumb.fancy.rgb.pnm
 adp_45x37_q30_422_exifthumb frfancy ycbcr pass golden/adp_45x37_q30_422_exifthumb.fancy.ycbcr.pnm
 adp_45x37_q30_422_exifthumb frfancy y pass golden/adp_45x37_q30_422_exifthumb.fancy.y.pnm
+adp_45x37_q30_422_exifthumb wmcu rgb pass golden/adp_45x37_q30_422_exifthumb.box.rgb.pnm
+adp_45x37_q30_422_exifthumb wmcu ycbcr pass golden/adp_45x37_q30_422_exifthumb.box.ycbcr.pnm
+adp_45x37_q30_422_exifthumb wmcu y pass golden/adp_45x37_q30_422_exifthumb.box.y.pnm
 adp_45x37_q30_422_exifthumb rbox rgb pass golden/adp_45x37_q30_422_exifthumb.box.rgb.pnm
 adp_45x37_q30_422_exifthumb rbox ycbcr pass golden/adp_45x37_q30_422_exifthumb.box.ycbcr.pnm
 adp_45x37_q30_422_exifthumb rbox y pass golden/adp_45x37_q30_422_exifthumb.box.y.pnm
@@ -451,6 +506,9 @@ adp_45x37_q30_440_rst1row frbox y pass golden/adp_45x37_q30_440_rst1row.box.y.pn
 adp_45x37_q30_440_rst1row frfancy rgb pass golden/adp_45x37_q30_440_rst1row.fancy.rgb.pnm
 adp_45x37_q30_440_rst1row frfancy ycbcr pass golden/adp_45x37_q30_440_rst1row.fancy.ycbcr.pnm
 adp_45x37_q30_440_rst1row frfancy y pass golden/adp_45x37_q30_440_rst1row.fancy.y.pnm
+adp_45x37_q30_440_rst1row wmcu rgb pass golden/adp_45x37_q30_440_rst1row.box.rgb.pnm
+adp_45x37_q30_440_rst1row wmcu ycbcr pass golden/adp_45x37_q30_440_rst1row.box.ycbcr.pnm
+adp_45x37_q30_440_rst1row wmcu y pass golden/adp_45x37_q30_440_rst1row.box.y.pnm
 adp_45x37_q30_440_rst1row rbox rgb pass golden/adp_45x37_q30_440_rst1row.box.rgb.pnm
 adp_45x37_q30_440_rst1row rbox ycbcr pass golden/adp_45x37_q30_440_rst1row.box.ycbcr.pnm
 adp_45x37_q30_440_rst1row rbox y pass golden/adp_45x37_q30_440_rst1row.box.y.pnm
@@ -475,6 +533,9 @@ adp_45x37_q30_gray_rst3 frbox y pass golden/adp_45x37_q30_gray_rst3.box.y.pnm
 adp_45x37_q30_gray_rst3 frfancy rgb pass golden/adp_45x37_q30_gray_rst3.fancy.rgb.pnm
 adp_45x37_q30_gray_rst3 frfancy ycbcr pass golden/adp_45x37_q30_gray_rst3.fancy.ycbcr.pnm
 adp_45x37_q30_gray_rst3 frfancy y pass golden/adp_45x37_q30_gray_rst3.fancy.y.pnm
+adp_45x37_q30_gray_rst3 wmcu rgb pass golden/adp_45x37_q30_gray_rst3.box.rgb.pnm
+adp_45x37_q30_gray_rst3 wmcu ycbcr pass golden/adp_45x37_q30_gray_rst3.box.ycbcr.pnm
+adp_45x37_q30_gray_rst3 wmcu y pass golden/adp_45x37_q30_gray_rst3.box.y.pnm
 adp_45x37_q30_gray_rst3 rbox rgb pass golden/adp_45x37_q30_gray_rst3.box.rgb.pnm
 adp_45x37_q30_gray_rst3 rbox ycbcr pass golden/adp_45x37_q30_gray_rst3.box.ycbcr.pnm
 adp_45x37_q30_gray_rst3 rbox y pass golden/adp_45x37_q30_gray_rst3.box.y.pnm
@@ -491,6 +552,7 @@ adp_45x37_q30_progressive_UNSUPPORTED mcu rgb error -
 adp_45x37_q30_progressive_UNSUPPORTED fmcu rgb error -
 adp_45x37_q30_progressive_UNSUPPORTED frbox rgb error -
 adp_45x37_q30_progressive_UNSUPPORTED frfancy rgb error -
+adp_45x37_q30_progressive_UNSUPPORTED wmcu rgb error -
 adp_45x37_q30_progressive_UNSUPPORTED rbox rgb error -
 adp_45x37_q30_progressive_UNSUPPORTED rfancy rgb error -
 adp_45x37_q30_progressive_UNSUPPORTED ep2c5 rgb error -
@@ -507,6 +569,9 @@ adp_48x40_q40_mixed frbox y pass golden/adp_48x40_q40_mixed.box.y.pnm
 adp_48x40_q40_mixed frfancy rgb pass golden/adp_48x40_q40_mixed.fancy.rgb.pnm
 adp_48x40_q40_mixed frfancy ycbcr pass golden/adp_48x40_q40_mixed.fancy.ycbcr.pnm
 adp_48x40_q40_mixed frfancy y pass golden/adp_48x40_q40_mixed.fancy.y.pnm
+adp_48x40_q40_mixed wmcu rgb pass golden/adp_48x40_q40_mixed.box.rgb.pnm
+adp_48x40_q40_mixed wmcu ycbcr pass golden/adp_48x40_q40_mixed.box.ycbcr.pnm
+adp_48x40_q40_mixed wmcu y pass golden/adp_48x40_q40_mixed.box.y.pnm
 adp_48x40_q40_mixed rbox rgb pass golden/adp_48x40_q40_mixed.box.rgb.pnm
 adp_48x40_q40_mixed rbox ycbcr pass golden/adp_48x40_q40_mixed.box.ycbcr.pnm
 adp_48x40_q40_mixed rbox y pass golden/adp_48x40_q40_mixed.box.y.pnm
@@ -531,6 +596,9 @@ adp_4x6_q50_422 frbox y pass golden/adp_4x6_q50_422.box.y.pnm
 adp_4x6_q50_422 frfancy rgb pass golden/adp_4x6_q50_422.fancy.rgb.pnm
 adp_4x6_q50_422 frfancy ycbcr pass golden/adp_4x6_q50_422.fancy.ycbcr.pnm
 adp_4x6_q50_422 frfancy y pass golden/adp_4x6_q50_422.fancy.y.pnm
+adp_4x6_q50_422 wmcu rgb pass golden/adp_4x6_q50_422.box.rgb.pnm
+adp_4x6_q50_422 wmcu ycbcr pass golden/adp_4x6_q50_422.box.ycbcr.pnm
+adp_4x6_q50_422 wmcu y pass golden/adp_4x6_q50_422.box.y.pnm
 adp_4x6_q50_422 rbox rgb pass golden/adp_4x6_q50_422.box.rgb.pnm
 adp_4x6_q50_422 rbox ycbcr pass golden/adp_4x6_q50_422.box.ycbcr.pnm
 adp_4x6_q50_422 rbox y pass golden/adp_4x6_q50_422.box.y.pnm
@@ -555,6 +623,9 @@ adp_5x3_q50_420 frbox y pass golden/adp_5x3_q50_420.box.y.pnm
 adp_5x3_q50_420 frfancy rgb pass golden/adp_5x3_q50_420.fancy.rgb.pnm
 adp_5x3_q50_420 frfancy ycbcr pass golden/adp_5x3_q50_420.fancy.ycbcr.pnm
 adp_5x3_q50_420 frfancy y pass golden/adp_5x3_q50_420.fancy.y.pnm
+adp_5x3_q50_420 wmcu rgb pass golden/adp_5x3_q50_420.box.rgb.pnm
+adp_5x3_q50_420 wmcu ycbcr pass golden/adp_5x3_q50_420.box.ycbcr.pnm
+adp_5x3_q50_420 wmcu y pass golden/adp_5x3_q50_420.box.y.pnm
 adp_5x3_q50_420 rbox rgb pass golden/adp_5x3_q50_420.box.rgb.pnm
 adp_5x3_q50_420 rbox ycbcr pass golden/adp_5x3_q50_420.box.ycbcr.pnm
 adp_5x3_q50_420 rbox y pass golden/adp_5x3_q50_420.box.y.pnm
@@ -579,6 +650,9 @@ adp_64x64_q25_420 frbox y pass golden/adp_64x64_q25_420.box.y.pnm
 adp_64x64_q25_420 frfancy rgb pass golden/adp_64x64_q25_420.fancy.rgb.pnm
 adp_64x64_q25_420 frfancy ycbcr pass golden/adp_64x64_q25_420.fancy.ycbcr.pnm
 adp_64x64_q25_420 frfancy y pass golden/adp_64x64_q25_420.fancy.y.pnm
+adp_64x64_q25_420 wmcu rgb pass golden/adp_64x64_q25_420.box.rgb.pnm
+adp_64x64_q25_420 wmcu ycbcr pass golden/adp_64x64_q25_420.box.ycbcr.pnm
+adp_64x64_q25_420 wmcu y pass golden/adp_64x64_q25_420.box.y.pnm
 adp_64x64_q25_420 rbox rgb pass golden/adp_64x64_q25_420.box.rgb.pnm
 adp_64x64_q25_420 rbox ycbcr pass golden/adp_64x64_q25_420.box.ycbcr.pnm
 adp_64x64_q25_420 rbox y pass golden/adp_64x64_q25_420.box.y.pnm
@@ -603,6 +677,9 @@ adp_8x8_q10_gray frbox y pass golden/adp_8x8_q10_gray.box.y.pnm
 adp_8x8_q10_gray frfancy rgb pass golden/adp_8x8_q10_gray.fancy.rgb.pnm
 adp_8x8_q10_gray frfancy ycbcr pass golden/adp_8x8_q10_gray.fancy.ycbcr.pnm
 adp_8x8_q10_gray frfancy y pass golden/adp_8x8_q10_gray.fancy.y.pnm
+adp_8x8_q10_gray wmcu rgb pass golden/adp_8x8_q10_gray.box.rgb.pnm
+adp_8x8_q10_gray wmcu ycbcr pass golden/adp_8x8_q10_gray.box.ycbcr.pnm
+adp_8x8_q10_gray wmcu y pass golden/adp_8x8_q10_gray.box.y.pnm
 adp_8x8_q10_gray rbox rgb pass golden/adp_8x8_q10_gray.box.rgb.pnm
 adp_8x8_q10_gray rbox ycbcr pass golden/adp_8x8_q10_gray.box.ycbcr.pnm
 adp_8x8_q10_gray rbox y pass golden/adp_8x8_q10_gray.box.y.pnm
@@ -627,6 +704,9 @@ board_352x32_q6_420 frbox y pass golden/board_352x32_q6_420.box.y.pnm
 board_352x32_q6_420 frfancy rgb pass golden/board_352x32_q6_420.fancy.rgb.pnm
 board_352x32_q6_420 frfancy ycbcr pass golden/board_352x32_q6_420.fancy.ycbcr.pnm
 board_352x32_q6_420 frfancy y pass golden/board_352x32_q6_420.fancy.y.pnm
+board_352x32_q6_420 wmcu rgb pass golden/board_352x32_q6_420.box.rgb.pnm
+board_352x32_q6_420 wmcu ycbcr pass golden/board_352x32_q6_420.box.ycbcr.pnm
+board_352x32_q6_420 wmcu y pass golden/board_352x32_q6_420.box.y.pnm
 board_352x32_q6_420 rbox rgb pass golden/board_352x32_q6_420.box.rgb.pnm
 board_352x32_q6_420 rbox ycbcr pass golden/board_352x32_q6_420.box.ycbcr.pnm
 board_352x32_q6_420 rbox y pass golden/board_352x32_q6_420.box.y.pnm
@@ -651,6 +731,9 @@ wide_1152x6_q20_gray frbox y width -
 wide_1152x6_q20_gray frfancy rgb width -
 wide_1152x6_q20_gray frfancy ycbcr width -
 wide_1152x6_q20_gray frfancy y width -
+wide_1152x6_q20_gray wmcu rgb pass golden/wide_1152x6_q20_gray.box.rgb.pnm
+wide_1152x6_q20_gray wmcu ycbcr pass golden/wide_1152x6_q20_gray.box.ycbcr.pnm
+wide_1152x6_q20_gray wmcu y pass golden/wide_1152x6_q20_gray.box.y.pnm
 wide_1152x6_q20_gray rbox rgb pass golden/wide_1152x6_q20_gray.box.rgb.pnm
 wide_1152x6_q20_gray rbox ycbcr pass golden/wide_1152x6_q20_gray.box.ycbcr.pnm
 wide_1152x6_q20_gray rbox y pass golden/wide_1152x6_q20_gray.box.y.pnm
@@ -675,6 +758,9 @@ wide_1160x6_q20_gray frbox y width -
 wide_1160x6_q20_gray frfancy rgb width -
 wide_1160x6_q20_gray frfancy ycbcr width -
 wide_1160x6_q20_gray frfancy y width -
+wide_1160x6_q20_gray wmcu rgb pass golden/wide_1160x6_q20_gray.box.rgb.pnm
+wide_1160x6_q20_gray wmcu ycbcr pass golden/wide_1160x6_q20_gray.box.ycbcr.pnm
+wide_1160x6_q20_gray wmcu y pass golden/wide_1160x6_q20_gray.box.y.pnm
 wide_1160x6_q20_gray rbox rgb pass golden/wide_1160x6_q20_gray.box.rgb.pnm
 wide_1160x6_q20_gray rbox ycbcr pass golden/wide_1160x6_q20_gray.box.ycbcr.pnm
 wide_1160x6_q20_gray rbox y pass golden/wide_1160x6_q20_gray.box.y.pnm
@@ -699,6 +785,9 @@ wide_352x20_q20_420 frbox y pass golden/wide_352x20_q20_420.box.y.pnm
 wide_352x20_q20_420 frfancy rgb pass golden/wide_352x20_q20_420.fancy.rgb.pnm
 wide_352x20_q20_420 frfancy ycbcr pass golden/wide_352x20_q20_420.fancy.ycbcr.pnm
 wide_352x20_q20_420 frfancy y pass golden/wide_352x20_q20_420.fancy.y.pnm
+wide_352x20_q20_420 wmcu rgb pass golden/wide_352x20_q20_420.box.rgb.pnm
+wide_352x20_q20_420 wmcu ycbcr pass golden/wide_352x20_q20_420.box.ycbcr.pnm
+wide_352x20_q20_420 wmcu y pass golden/wide_352x20_q20_420.box.y.pnm
 wide_352x20_q20_420 rbox rgb pass golden/wide_352x20_q20_420.box.rgb.pnm
 wide_352x20_q20_420 rbox ycbcr pass golden/wide_352x20_q20_420.box.ycbcr.pnm
 wide_352x20_q20_420 rbox y pass golden/wide_352x20_q20_420.box.y.pnm
@@ -723,6 +812,9 @@ wide_368x20_q20_420 frbox y pass golden/wide_368x20_q20_420.box.y.pnm
 wide_368x20_q20_420 frfancy rgb pass golden/wide_368x20_q20_420.fancy.rgb.pnm
 wide_368x20_q20_420 frfancy ycbcr pass golden/wide_368x20_q20_420.fancy.ycbcr.pnm
 wide_368x20_q20_420 frfancy y pass golden/wide_368x20_q20_420.fancy.y.pnm
+wide_368x20_q20_420 wmcu rgb pass golden/wide_368x20_q20_420.box.rgb.pnm
+wide_368x20_q20_420 wmcu ycbcr pass golden/wide_368x20_q20_420.box.ycbcr.pnm
+wide_368x20_q20_420 wmcu y pass golden/wide_368x20_q20_420.box.y.pnm
 wide_368x20_q20_420 rbox rgb pass golden/wide_368x20_q20_420.box.rgb.pnm
 wide_368x20_q20_420 rbox ycbcr pass golden/wide_368x20_q20_420.box.ycbcr.pnm
 wide_368x20_q20_420 rbox y pass golden/wide_368x20_q20_420.box.y.pnm
@@ -747,6 +839,9 @@ wide_384x12_q20_444 frbox y pass golden/wide_384x12_q20_444.box.y.pnm
 wide_384x12_q20_444 frfancy rgb pass golden/wide_384x12_q20_444.fancy.rgb.pnm
 wide_384x12_q20_444 frfancy ycbcr pass golden/wide_384x12_q20_444.fancy.ycbcr.pnm
 wide_384x12_q20_444 frfancy y pass golden/wide_384x12_q20_444.fancy.y.pnm
+wide_384x12_q20_444 wmcu rgb pass golden/wide_384x12_q20_444.box.rgb.pnm
+wide_384x12_q20_444 wmcu ycbcr pass golden/wide_384x12_q20_444.box.ycbcr.pnm
+wide_384x12_q20_444 wmcu y pass golden/wide_384x12_q20_444.box.y.pnm
 wide_384x12_q20_444 rbox rgb pass golden/wide_384x12_q20_444.box.rgb.pnm
 wide_384x12_q20_444 rbox ycbcr pass golden/wide_384x12_q20_444.box.ycbcr.pnm
 wide_384x12_q20_444 rbox y pass golden/wide_384x12_q20_444.box.y.pnm
@@ -771,6 +866,9 @@ wide_576x10_q20_422 frbox y pass golden/wide_576x10_q20_422.box.y.pnm
 wide_576x10_q20_422 frfancy rgb pass golden/wide_576x10_q20_422.fancy.rgb.pnm
 wide_576x10_q20_422 frfancy ycbcr pass golden/wide_576x10_q20_422.fancy.ycbcr.pnm
 wide_576x10_q20_422 frfancy y pass golden/wide_576x10_q20_422.fancy.y.pnm
+wide_576x10_q20_422 wmcu rgb pass golden/wide_576x10_q20_422.box.rgb.pnm
+wide_576x10_q20_422 wmcu ycbcr pass golden/wide_576x10_q20_422.box.ycbcr.pnm
+wide_576x10_q20_422 wmcu y pass golden/wide_576x10_q20_422.box.y.pnm
 wide_576x10_q20_422 rbox rgb pass golden/wide_576x10_q20_422.box.rgb.pnm
 wide_576x10_q20_422 rbox ycbcr pass golden/wide_576x10_q20_422.box.ycbcr.pnm
 wide_576x10_q20_422 rbox y pass golden/wide_576x10_q20_422.box.y.pnm
@@ -795,6 +893,9 @@ wide_592x10_q20_422 frbox y pass golden/wide_592x10_q20_422.box.y.pnm
 wide_592x10_q20_422 frfancy rgb pass golden/wide_592x10_q20_422.fancy.rgb.pnm
 wide_592x10_q20_422 frfancy ycbcr pass golden/wide_592x10_q20_422.fancy.ycbcr.pnm
 wide_592x10_q20_422 frfancy y pass golden/wide_592x10_q20_422.fancy.y.pnm
+wide_592x10_q20_422 wmcu rgb pass golden/wide_592x10_q20_422.box.rgb.pnm
+wide_592x10_q20_422 wmcu ycbcr pass golden/wide_592x10_q20_422.box.ycbcr.pnm
+wide_592x10_q20_422 wmcu y pass golden/wide_592x10_q20_422.box.y.pnm
 wide_592x10_q20_422 rbox rgb pass golden/wide_592x10_q20_422.box.rgb.pnm
 wide_592x10_q20_422 rbox ycbcr pass golden/wide_592x10_q20_422.box.ycbcr.pnm
 wide_592x10_q20_422 rbox y pass golden/wide_592x10_q20_422.box.y.pnm

@@ -9,7 +9,7 @@
 #   tb/run_tests.sh [-s verilator|xsim|icarus|questa] [--quick] [--configs a,b,...]
 # --quick: no stall runs.  Data files are written by export_expectations.py in the development tree.
 HERE=$(cd "$(dirname "$0")" && pwd)
-SIM=verilator; STALLS="0 30"; CONFIGS="mcu rbox rfancy ep2c5 noyrgb fmcu frbox frfancy"
+SIM=verilator; STALLS="0 30"; CONFIGS="mcu rbox rfancy ep2c5 noyrgb fmcu frbox frfancy wmcu"
 while [ $# -gt 0 ]; do
   case $1 in
     -s) SIM=$2; shift 2;;

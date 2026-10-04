@@ -11,6 +11,7 @@
 #               rbox     FAST=0 RASTER_OUT=1      frbox  FAST=1 RASTER_OUT=1
 #               rfancy   FAST=0 raster + FANCY_UPSAMPLE + CC_TURBO   = Pillow / OpenCV / libjpeg-turbo
 #               frfancy  FAST=1 raster + FANCY_UPSAMPLE + CC_TURBO
+#               wmcu     FAST=2, MCU order, 4 pixels per beat       (work in progress, WIDE_STATUS.md)
 #               ep2c5    rfancy with a 9,216-byte row buffer          noyrgb  ep2c5 with RGB_OUT=0
 #               <raster config>_rbN   with ROWBUF_BYTES=N (e.g. frfancy_rb262144 for wide photos)
 #     +PLUSARGS for tb_jpeg.sv: +JPEG=in.jpg +OUT=out.ppm +GOLDEN=ref.ppm +FMT=rgb|ycbcr|y +STALL=N ...
@@ -32,6 +33,7 @@ case $CFG in *_rb*) rb=${CFG##*_rb};; esac
 case $base in
   mcu)     P="FAST=0";;
   fmcu)    P="FAST=1";;
+  wmcu)    P="FAST=2";;
   rbox)    P="FAST=0 RASTER_OUT=1 ROWBUF_BYTES=$rb";;
   frbox)   P="FAST=1 RASTER_OUT=1 ROWBUF_BYTES=$rb";;
   rfancy)  P="FAST=0 RASTER_OUT=1 FANCY_UPSAMPLE=1 CC_TURBO=1 ROWBUF_BYTES=$rb";;
