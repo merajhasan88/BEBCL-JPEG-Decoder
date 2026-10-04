@@ -37,20 +37,22 @@ in **[BENCHMARKS.md](BENCHMARKS.md)** (Artix-7 details: `boards/acorn_cle215/REA
 Compared with the two other open-source FPGA JPEG decoders that could be measured, ultraembedded
 core_jpeg and H. Ishihara's aq_djpeg (same harness, same board, same files):
 
-- **Bit-exact.** core_jpeg and aq_djpeg differ from libjpeg by up to 4-32 levels per pixel
-  (PSNR 41.6-51 dB); BEBCL-JPEG is identical to libjpeg 9e, or with `RASTER_OUT=1
-  FANCY_UPSAMPLE=1 CC_TURBO=1` to Pillow, OpenCV and libjpeg-turbo.
+- **Bit-exact.** BEBCL-JPEG's pixels are identical to libjpeg 9e, or with `RASTER_OUT=1
+  FANCY_UPSAMPLE=1 CC_TURBO=1` to Pillow, OpenCV and libjpeg-turbo. Those of core_jpeg and
+  aq_djpeg differ from libjpeg's by up to 4-14 levels on the photos (PSNR 41.6-46.8 dB) and by up
+  to 32 on one small test file.
 - **Fewest clocks per pixel.** 1.0-2.4 for the fast core, against 1.4-5.0 (aq_djpeg) and 2.1-3.3
   (core_jpeg, on the files it can decode). On the same Artix-7 board the others needed 1.4-2.1x
-  more clocks per photo, and BEBCL-JPEG also ran at the highest clock (150 MHz; Fmax ~160 MHz
-  against 153 and 95-104 MHz), so it decoded every photo fastest.
+  more clocks per photo, and BEBCL-JPEG has the highest Fmax of the three (160 MHz against 153
+  and 95-104 MHz), so it decoded every photo fastest: 87-154 ms at 150 MHz, against 119-295 ms
+  (aq_djpeg, 150 MHz) and about 301 ms (core_jpeg, 92.3 MHz, 4:2:0 copies only).
 - **Small enough for a 2004 FPGA.** The fast decoder fits the 4,608-LE Cyclone II EP2C5 with its 26
   multipliers and runs at 95 MHz; on the larger EP2C35 the others need 7.8k-9.5k LEs and 34-64
   multiplier elements. On the Artix-7 it is 2,204 LUTs alone and 2,488 with the measurement
   harness, against 4,919 (aq_djpeg) and 6,681 (core_jpeg) with the same harness.
 - **Handles real camera files.** Every baseline chroma layout (4:4:4, 4:2:2, 4:2:0, 4:4:0, mixed),
   restart markers, EXIF thumbnails skipped correctly. core_jpeg supports neither 4:2:2 nor restart
-  markers, and on phone photos decodes the embedded thumbnail instead of the photo.
+  markers, and on phone photos with an EXIF thumbnail it read the thumbnail instead of the photo.
 - **Defined behaviour on bad input.** Headers and tables are validated; every image ends with
   exactly one "frame done" and an error code, also when the file is truncated or corrupt (26
   malformed files, tested in simulation and on the board).
@@ -60,15 +62,17 @@ core_jpeg and H. Ishihara's aq_djpeg (same harness, same board, same files):
 - **Two cores, one interface.** A compact core (3.4k LEs, ~13.6 clocks/pixel) and a fast core
   (~1-2.4 clocks/pixel), chosen with one parameter.
 - **Verified in depth.** Two independent testbenches (C++ and SystemVerilog) run the same 2,112
-  bit-exact checks; gate-level simulation of the placed design; Verilator and Vivado's simulator;
-  hardware from two vendors.
+  checks (bit-exact pixels, files back to back, malformed files); gate-level simulation of the
+  placed design; Verilator and Vivado's simulator; hardware from two vendors.
 
 Where the others are ahead: aq_djpeg uses fewer block RAMs (4 against 7.5 tiles) and DSP blocks
-(14 against 17) and can extract the first layer of a progressive JPEG, which BEBCL-JPEG rejects;
-core_jpeg has a smaller build with fixed Huffman tables. Commercial cores quote more pixels per
-clock on large FPGAs (e.g. CAST JPEG-DX: 2-32 samples per clock), and one laptop CPU core with
-libjpeg-turbo still decodes a single photo 1.9-2.7x faster than BEBCL-JPEG at 150 MHz
-([BENCHMARKS.md](BENCHMARKS.md)).
+(14 against 17), and its README says it can extract the first layer of a progressive JPEG (not
+tested here), which BEBCL-JPEG rejects; core_jpeg has a smaller build with fixed Huffman tables.
+"Least clocks per pixel" holds among open-source decoders: commercial cores claim more, e.g. CAST's
+JPEG-DX-F decodes 2 to 32 colour samples per clock depending on its configuration, where
+BEBCL-JPEG's fast core decodes 1.1-1.7 on the photos (a 4:2:2 pixel is 2 samples, a 4:2:0 pixel
+1.5). And one laptop CPU core with libjpeg-turbo still decodes a single photo 1.9-2.7x faster than
+BEBCL-JPEG at 150 MHz ([BENCHMARKS.md](BENCHMARKS.md)).
 
 ## Quick start: decode your own images
 
