@@ -8,9 +8,11 @@
 #                         output, any image size)
 #     --profile pillow    pixels identical to Pillow / OpenCV / libjpeg-turbo (raster output with fancy
 #                         upsampling; the row buffer is sized for the widest image)
-#     --core fast|small|wide  FAST=1 pipelined core, ~1-2.4 clocks/pixel (default), the compact core,
-#                         or the wide core (FAST=2, 4 pixels per clock, ~0.25-0.56 clocks/pixel on
-#                         photos; MCU order, so --profile libjpeg only)
+#     --core single|wide|small  the decoder core (the FAST parameter; in hardware a build-time choice):
+#                         single  FAST=1, one pixel per clock, ~1-2.4 clocks/pixel (default)
+#                         wide    FAST=2, four pixels per clock, ~0.25-0.56 clocks/pixel on photos
+#                                 (MCU order, so --profile libjpeg only)
+#                         small   FAST=0, the compact core, ~13.6 clocks/pixel
 #     --fmt rgb|ycbcr|y   output format (default rgb)
 #     --sim SIM           verilator (default) or xsim (Vivado); icarus 12+ / questa untested
 #     --out DIR           output folder (default out/): <name>.ppm (.pgm for y); <name>.png too when
@@ -22,7 +24,7 @@
 # Other ways to run the decoder: scripts/decode.py (Python), tb/Makefile (C++ Verilator harness).
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
-PROFILE=libjpeg; CORE=fast; FMT=rgb; SIM=verilator; OUT=$HERE/out; MHZ=100; CHECK=0; DJPEG=djpeg
+PROFILE=libjpeg; CORE=single; FMT=rgb; SIM=verilator; OUT=$HERE/out; MHZ=100; CHECK=0; DJPEG=djpeg
 while [ $# -gt 0 ]; do
   case $1 in
     --profile) PROFILE=$2; shift 2;;
@@ -75,8 +77,12 @@ sof_info() {
 }
 
 # build configuration
-F=""; [ "$CORE" = fast ] && F=f
-case $CORE in fast|small|wide) ;; *) echo "--core fast, small or wide" >&2; exit 2;; esac
+case $CORE in
+  single|wide|small) ;;
+  fast) echo "--core fast is now called --core single" >&2; exit 2;;
+  *) echo "--core single, wide or small" >&2; exit 2;;
+esac
+F=""; [ "$CORE" = single ] && F=f
 case $PROFILE in
   libjpeg) CFG=${F}mcu; [ "$CORE" = wide ] && CFG=wmcu;;
   pillow)
