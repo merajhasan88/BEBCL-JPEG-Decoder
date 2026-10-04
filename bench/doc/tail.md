@@ -53,9 +53,18 @@
    photo, than stb_image on 20 of 24 and than libjpeg 9e with its default upsampling on 16 of 24.
    Per clock it does 8.2-11.7x more work than libjpeg-turbo (1.0-1.8 clocks per pixel against
    8.3-18.5 CPU clocks per pixel). What limits it is the clock (150 MHz against 3.9 GHz) and its one
-   pixel per clock, not memory: the wide core (`FAST=2`, 4 pixels per clock, `WIDE_STATUS.md`) is
-   the answer to that.
-9. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
+   pixel per clock, not memory.
+9. **The wide core (`FAST=2`, 2026-10-04) is faster than every CPU decoder on every photo.** On the
+   same Artix-7 board at 150 MHz it decodes the 24 files in 22.0-48.6 ms (0.255-0.561 clocks per
+   pixel, 3.0-4.0x fewer clocks than the fast core), with pixels identical to libjpeg 9e and clock
+   counts identical to the simulation. That is 0.64-0.80x the time of libjpeg-turbo -nosmooth on one
+   laptop core at a steady 3.9 GHz (1.24-1.57x faster) and 0.64-0.88x the time of the fastest CPU
+   decoder on each photo (libjpeg-turbo, or FFmpeg on three files). It decodes one Huffman symbol
+   per clock and four pixels per clock in 6,178 LUTs and 33 DSPs of the XC7A200T (with the harness);
+   at 131 MHz or more it would still beat every CPU decoder on every photo. Single-image time on one
+   CPU core is the comparison here: several CPU cores decoding several photos at once would still
+   outrun one decoder in throughput (`WIDE_STATUS.md`).
+10. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
    times as measured while the laptop throttled (2.3-3.9 GHz), and with libjpeg-turbo's default
    (smoothing) mode: "libjpeg-turbo 1.9-2.7x faster than BEBCL-JPEG on the Artix-7", "faster than
    stb_image on every photo". With every CPU time at a steady 3.9 GHz and libjpeg-turbo -nosmooth,

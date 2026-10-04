@@ -1,194 +1,194 @@
 {
  "IMG20260405182829.jpg": {
-  "clocks": 6648062,
+  "clocks": 6834885,
   "pixels": 12979200,
-  "model": 6643294,
+  "model": 6830097,
   "fast": 20908689,
   "ok": true,
-  "sim_s": 24.8
+  "sim_s": 27.7
  },
  "IMG20260405182833.jpg": {
-  "clocks": 6889785,
+  "clocks": 7088167,
   "pixels": 12979200,
-  "model": 6885167,
+  "model": 7083540,
   "fast": 21531453,
   "ok": true,
-  "sim_s": 26.2
+  "sim_s": 28.2
  },
  "IMG20260425135544.jpg": {
-  "clocks": 5428150,
+  "clocks": 5527453,
   "pixels": 12979200,
-  "model": 5367014,
+  "model": 5460275,
   "fast": 19143517,
   "ok": true,
-  "sim_s": 20.8
+  "sim_s": 22.1
  },
  "IMG20260425135628.jpg": {
-  "clocks": 7121548,
+  "clocks": 7282828,
   "pixels": 12979200,
-  "model": 7008653,
+  "model": 7169522,
   "fast": 23107669,
   "ok": true,
-  "sim_s": 23.3
+  "sim_s": 20.6
  },
  "IMG20260425141210.jpg": {
-  "clocks": 5609979,
+  "clocks": 5735471,
   "pixels": 12979200,
-  "model": 5581643,
+  "model": 5707544,
   "fast": 19061153,
   "ok": true,
-  "sim_s": 21.6
+  "sim_s": 17.8
  },
  "IMG20260523191343.jpg": {
-  "clocks": 6007882,
+  "clocks": 6121368,
   "pixels": 12979200,
-  "model": 5971959,
+  "model": 6085476,
   "fast": 20037777,
   "ok": true,
-  "sim_s": 23.9
+  "sim_s": 18.0
  },
  "IMG20260612210949.jpg": {
-  "clocks": 4456500,
+  "clocks": 4511424,
   "pixels": 12979200,
-  "model": 4431013,
+  "model": 4486520,
   "fast": 17004745,
   "ok": true,
-  "sim_s": 20.7
+  "sim_s": 14.1
  },
  "IMG20260716020409.jpg": {
-  "clocks": 3810692,
+  "clocks": 3825225,
   "pixels": 12979200,
-  "model": 3793046,
+  "model": 3806860,
   "fast": 15364517,
   "ok": true,
-  "sim_s": 18.2
+  "sim_s": 14.2
  },
  "IMG20260716020422.jpg": {
-  "clocks": 3852064,
+  "clocks": 3872129,
   "pixels": 12979200,
-  "model": 3813397,
+  "model": 3830257,
   "fast": 15411569,
+  "ok": true,
+  "sim_s": 17.9
+ },
+ "IMG20260716020424.jpg": {
+  "clocks": 3845880,
+  "pixels": 12979200,
+  "model": 3809419,
+  "fast": 15364489,
+  "ok": true,
+  "sim_s": 13.1
+ },
+ "IMG20260723160735.jpg": {
+  "clocks": 4696006,
+  "pixels": 12979200,
+  "model": 4627830,
+  "fast": 17368025,
   "ok": true,
   "sim_s": 15.8
  },
- "IMG20260716020424.jpg": {
-  "clocks": 3827377,
-  "pixels": 12979200,
-  "model": 3794038,
-  "fast": 15364489,
-  "ok": true,
-  "sim_s": 13.0
- },
- "IMG20260723160735.jpg": {
-  "clocks": 4624381,
-  "pixels": 12979200,
-  "model": 4562573,
-  "fast": 17368025,
-  "ok": true,
-  "sim_s": 19.6
- },
  "adapter.jpg": {
-  "clocks": 5924370,
+  "clocks": 6049456,
   "pixels": 12979200,
-  "model": 5914538,
+  "model": 6039639,
   "fast": 19234181,
   "ok": true,
-  "sim_s": 21.8
+  "sim_s": 18.3
  },
  "IMG20260405182829_420.jpg": {
-  "clocks": 4754165,
+  "clocks": 4934321,
   "pixels": 12979200,
-  "model": 4752486,
+  "model": 4932627,
   "fast": 15231961,
   "ok": true,
-  "sim_s": 18.8
+  "sim_s": 15.3
  },
  "IMG20260405182833_420.jpg": {
-  "clocks": 4941090,
+  "clocks": 5136822,
   "pixels": 12979200,
-  "model": 4939396,
+  "model": 5135108,
   "fast": 15664865,
   "ok": true,
-  "sim_s": 19.3
+  "sim_s": 15.9
  },
  "IMG20260425135544_420.jpg": {
-  "clocks": 4197906,
+  "clocks": 4262388,
   "pixels": 12979200,
-  "model": 4187462,
+  "model": 4251273,
   "fast": 14954646,
-  "ok": true,
-  "sim_s": 18.5
- },
- "IMG20260425135628_420.jpg": {
-  "clocks": 5307407,
-  "pixels": 12979200,
-  "model": 5284185,
-  "fast": 17724709,
-  "ok": true,
-  "sim_s": 22.5
- },
- "IMG20260425141210_420.jpg": {
-  "clocks": 4009437,
-  "pixels": 12979200,
-  "model": 3997810,
-  "fast": 14349817,
   "ok": true,
   "sim_s": 17.7
  },
- "IMG20260523191343_420.jpg": {
-  "clocks": 4214274,
+ "IMG20260425135628_420.jpg": {
+  "clocks": 5411864,
   "pixels": 12979200,
-  "model": 4202052,
+  "model": 5388258,
+  "fast": 17724709,
+  "ok": true,
+  "sim_s": 19.8
+ },
+ "IMG20260425141210_420.jpg": {
+  "clocks": 4095509,
+  "pixels": 12979200,
+  "model": 4082808,
+  "fast": 14349817,
+  "ok": true,
+  "sim_s": 17.9
+ },
+ "IMG20260523191343_420.jpg": {
+  "clocks": 4284834,
+  "pixels": 12979200,
+  "model": 4271546,
   "fast": 15008091,
   "ok": true,
-  "sim_s": 18.8
+  "sim_s": 19.1
  },
  "IMG20260612210949_420.jpg": {
-  "clocks": 3389624,
+  "clocks": 3403678,
   "pixels": 12979200,
-  "model": 3385959,
+  "model": 3399591,
   "fast": 13210175,
   "ok": true,
-  "sim_s": 15.8
+  "sim_s": 16.1
  },
  "IMG20260716020409_420.jpg": {
-  "clocks": 3311962,
+  "clocks": 3314346,
   "pixels": 12979200,
-  "model": 3311305,
+  "model": 3313627,
   "fast": 13057711,
   "ok": true,
-  "sim_s": 15.6
+  "sim_s": 14.9
  },
  "IMG20260716020422_420.jpg": {
-  "clocks": 3303090,
+  "clocks": 3304743,
   "pixels": 12979200,
-  "model": 3302831,
+  "model": 3304426,
   "fast": 13039929,
   "ok": true,
-  "sim_s": 15.7
+  "sim_s": 14.2
  },
  "IMG20260716020424_420.jpg": {
-  "clocks": 3303579,
+  "clocks": 3305261,
   "pixels": 12979200,
-  "model": 3303295,
+  "model": 3304928,
   "fast": 13041569,
   "ok": true,
   "sim_s": 14.8
  },
  "IMG20260723160735_420.jpg": {
-  "clocks": 3666601,
+  "clocks": 3702006,
   "pixels": 12979200,
-  "model": 3660625,
+  "model": 3695336,
   "fast": 13763058,
   "ok": true,
-  "sim_s": 16.2
+  "sim_s": 14.8
  },
  "adapter_420.jpg": {
-  "clocks": 4055192,
+  "clocks": 4163793,
   "pixels": 12979200,
-  "model": 4048881,
+  "model": 4157383,
   "fast": 13940234,
   "ok": true,
-  "sim_s": 18.0
+  "sim_s": 13.2
  }
 }

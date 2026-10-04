@@ -13,11 +13,11 @@ tables = subprocess.run(["python3", os.path.join(HERE, "bench_report.py"), bj] +
 others = subprocess.run(["python3", os.path.join(HERE, "others", "report.py")], capture_output=True, text=True, check=True).stdout
 # the same decoders on a remote Artix-7 board (boards/acorn_cle215, results file of the run)
 acorn = os.path.join(HERE, "..", "boards", "acorn_cle215")
-artix = subprocess.run(["python3", os.path.join(acorn, "report.py"), os.path.join(acorn, "results_2026-10-03.json")],
+artix = subprocess.run(["python3", os.path.join(acorn, "report.py"), os.path.join(acorn, "results_2026-10-04.json")],
                        capture_output=True, text=True, check=True).stdout
 # the CPU decoders on the same photos (bench_photos_2026-10-04.json) against the FPGA decoders
 photos = subprocess.run(["python3", os.path.join(HERE, "photos_report.py"), os.path.join(HERE, "bench_photos_2026-10-04.json"),
-                         os.path.join(acorn, "results_2026-10-03.json")], capture_output=True, text=True, check=True).stdout
+                         os.path.join(acorn, "results_2026-10-04.json")], capture_output=True, text=True, check=True).stdout
 parts = [open(os.path.join(HERE, "doc", "head.md")).read(), tables, open(os.path.join(HERE, "doc", "middle.md")).read(),
          others, open(os.path.join(HERE, "doc", "artix7.md")).read() + "\n" + artix,
          open(os.path.join(HERE, "doc", "photos.md")).read() + "\n" + photos, open(os.path.join(HERE, "doc", "tail.md")).read()]

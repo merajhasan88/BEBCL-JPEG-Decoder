@@ -207,9 +207,10 @@ their own Fmax on the EP2C35; this decoder's times are at the 95 MHz it runs at 
 | phone photo 6, 4000x3000 4:2:0 | 12,000,000 | 1.61 clocks/px, 203.17 ms at 95 MHz (EP2C5); bit-exact | fails (196096 of 12000000 pixels, decoded a 512x384 image) | 3.24 clocks/px, 646.41 ms at 60 MHz; PSNR 42.9 dB, max diff 6 |
 | phone photo 7, 4000x3000 4:2:0 | 12,000,000 | 1.82 clocks/px, 229.49 ms at 95 MHz (EP2C5); bit-exact | fails (196096 of 12000000 pixels, decoded a 512x384 image) | 3.62 clocks/px, 721.45 ms at 60 MHz; PSNR 42.9 dB, max diff 9 |
 
-## The three decoders on one board: Xilinx Artix-7 XC7A200T
+## The decoders on one board: Xilinx Artix-7 XC7A200T
 
-On 2026-10-03 all three decoders ran on the same remote board, an SQRL Acorn CLE-215+ (Artix-7
+On 2026-10-03 the three decoders - this library's fast core, core_jpeg and aq_djpeg - ran on the
+same remote board, and on 2026-10-04 this library's wide core (`FAST=2`, DUT 3) followed on it, an SQRL Acorn CLE-215+ (Artix-7
 XC7A200T) at [fpgas.online](https://fpgas.online) (Welland site), each in the same UART harness
 (`boards/acorn_cle215/uart_bench_core.sv`): the file arrives over the Raspberry Pi's UART, the
 decoder's clock is gated so that it only runs while its next input is waiting, and the board
@@ -220,42 +221,43 @@ Vivado 2026.1 at a clock it meets (-2 speed grade timing). Files: the owner's 12
 were checked against their own simulations (`bench/others/tb_other.cpp`): identical clock counts
 and checksums for every file they decoded.
 
-Board: SQRL Acorn CLE-215+ (Xilinx Artix-7 XC7A200T-3) at fpgas.online, Welland site, pi46 (Raspberry Pi 5: JTAG and UART on GPIO). Date: 2026-10-03. Timing: Vivado 2026.1, part xc7a200tfbg484-2 (conservative; the board's chip is -3).
+Board: SQRL Acorn CLE-215+ (Xilinx Artix-7 XC7A200T-3) at fpgas.online, Welland site, pi46 (Raspberry Pi 5: JTAG and UART on GPIO). Date: 2026-10-03 (DUTs 0-2), 2026-10-04 (DUT 3). Timing: Vivado 2026.1, part xc7a200tfbg484-2 (conservative; the board's chip is -3).
 
 | decoder | board clock | Fmax (Vivado) | LUTs | flip-flops | block RAM (36 kb tiles) | DSP48E1 |
 |---|---:|---:|---:|---:|---:|---:|
 | this library, fast core (MCU order, RGB) | 150.0 MHz | 160 MHz | 2,488 | 2,663 | 7.5 | 17 |
 | ultraembedded core_jpeg (SUPPORT_WRITABLE_DHT=1) | 92.3 MHz | 95-104 MHz (3 builds) | 6,681 | 6,037 | 7 | 32 |
 | H. Ishihara aq_djpeg | 150.0 MHz | 153 MHz | 4,919 | 4,933 | 4 | 14 |
+| this library, wide core (FAST=2, 4 pixels per beat, MCU order, RGB) | 150.0 MHz | 153 MHz | 6,178 | 7,607 | 9 | 33 |
 
 Areas include the same UART harness (`uart_bench_core.sv`) around each decoder.
 
-| file | size | this library | core_jpeg | aq_djpeg |
-|---|---|---|---|---|
-| adapter.jpg | 3120x4160 4:2:2 | 1.482 clk/px, 128.2 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.870 clk/px, 248.4 ms; = its simulation; vs libjpeg max diff 6, PSNR 43.0 dB |
-| IMG20260405182829.jpg | 3120x4160 4:2:2 | 1.611 clk/px, 139.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.133 clk/px, 271.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB |
-| IMG20260405182833.jpg | 3120x4160 4:2:2 | 1.659 clk/px, 143.5 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.242 clk/px, 280.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.2 dB |
-| IMG20260425135544.jpg | 3120x4160 4:2:2 | 1.475 clk/px, 127.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.625 clk/px, 227.2 ms; = its simulation; vs libjpeg max diff 6, PSNR 41.7 dB |
-| IMG20260425135628.jpg | 4160x3120 4:2:2 | 1.780 clk/px, 154.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 3.405 clk/px, 294.6 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB |
-| IMG20260425141210.jpg | 4160x3120 4:2:2 | 1.469 clk/px, 127.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.687 clk/px, 232.5 ms; = its simulation; vs libjpeg max diff 7, PSNR 42.3 dB |
-| IMG20260523191343.jpg | 3120x4160 4:2:2 | 1.544 clk/px, 133.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.930 clk/px, 253.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB |
-| IMG20260612210949.jpg | 4160x3120 4:2:2 | 1.310 clk/px, 113.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.204 clk/px, 190.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB |
-| IMG20260716020409.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.909 clk/px, 165.2 ms; = its simulation; vs libjpeg max diff 5, PSNR 44.0 dB |
-| IMG20260716020422.jpg | 4160x3120 4:2:2 | 1.187 clk/px, 102.7 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.916 clk/px, 165.8 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.0 dB |
-| IMG20260716020424.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.906 clk/px, 164.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.2 dB |
-| IMG20260723160735.jpg | 4160x3120 4:2:2 | 1.338 clk/px, 115.8 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.241 clk/px, 193.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 41.6 dB |
-| adapter_420.jpg | 3120x4160 4:2:0 | 1.074 clk/px, 92.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 1.984 clk/px, 171.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB |
-| IMG20260405182829_420.jpg | 3120x4160 4:2:0 | 1.174 clk/px, 101.5 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.194 clk/px, 189.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB |
-| IMG20260405182833_420.jpg | 3120x4160 4:2:0 | 1.207 clk/px, 104.4 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.271 clk/px, 196.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.0 dB |
-| IMG20260425135544_420.jpg | 3120x4160 4:2:0 | 1.152 clk/px, 99.7 ms; identical to libjpeg 9e | 2.148 clk/px, 302.0 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.0 dB | 1.967 clk/px, 170.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.4 dB |
-| IMG20260425135628_420.jpg | 4160x3120 4:2:0 | 1.366 clk/px, 118.2 ms; identical to libjpeg 9e | 2.188 clk/px, 307.7 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.3 dB | 2.614 clk/px, 226.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.7 dB |
-| IMG20260425141210_420.jpg | 4160x3120 4:2:0 | 1.106 clk/px, 95.7 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.5 dB | 1.947 clk/px, 168.5 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.9 dB |
-| IMG20260523191343_420.jpg | 3120x4160 4:2:0 | 1.156 clk/px, 100.1 ms; identical to libjpeg 9e | 2.152 clk/px, 302.6 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 2.072 clk/px, 179.3 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB |
-| IMG20260612210949_420.jpg | 4160x3120 4:2:0 | 1.018 clk/px, 88.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.6 dB | 1.492 clk/px, 129.1 ms; = its simulation; vs libjpeg max diff 8, PSNR 43.0 dB |
-| IMG20260716020409_420.jpg | 4160x3120 4:2:0 | 1.006 clk/px, 87.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.0 dB | 1.379 clk/px, 119.4 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.2 dB |
-| IMG20260716020422_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.4 dB | 1.397 clk/px, 120.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.5 dB |
-| IMG20260716020424_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.7 dB | 1.388 clk/px, 120.1 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.8 dB |
-| IMG20260723160735_420.jpg | 4160x3120 4:2:0 | 1.060 clk/px, 91.8 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB | 1.643 clk/px, 142.1 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.6 dB |
+| file | size | this library | core_jpeg | aq_djpeg | this library, wide core |
+|---|---|---|---|---|---|
+| adapter.jpg | 3120x4160 4:2:2 | 1.482 clk/px, 128.2 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.870 clk/px, 248.4 ms; = its simulation; vs libjpeg max diff 6, PSNR 43.0 dB | 0.466 clk/px, 40.3 ms; identical to libjpeg 9e |
+| IMG20260405182829.jpg | 3120x4160 4:2:2 | 1.611 clk/px, 139.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.133 clk/px, 271.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB | 0.527 clk/px, 45.6 ms; identical to libjpeg 9e |
+| IMG20260405182833.jpg | 3120x4160 4:2:2 | 1.659 clk/px, 143.5 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.242 clk/px, 280.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.2 dB | 0.546 clk/px, 47.3 ms; identical to libjpeg 9e |
+| IMG20260425135544.jpg | 3120x4160 4:2:2 | 1.475 clk/px, 127.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.625 clk/px, 227.2 ms; = its simulation; vs libjpeg max diff 6, PSNR 41.7 dB | 0.426 clk/px, 36.8 ms; identical to libjpeg 9e |
+| IMG20260425135628.jpg | 4160x3120 4:2:2 | 1.780 clk/px, 154.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 3.405 clk/px, 294.6 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB | 0.561 clk/px, 48.6 ms; identical to libjpeg 9e |
+| IMG20260425141210.jpg | 4160x3120 4:2:2 | 1.469 clk/px, 127.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.687 clk/px, 232.5 ms; = its simulation; vs libjpeg max diff 7, PSNR 42.3 dB | 0.442 clk/px, 38.2 ms; identical to libjpeg 9e |
+| IMG20260523191343.jpg | 3120x4160 4:2:2 | 1.544 clk/px, 133.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.930 clk/px, 253.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB | 0.472 clk/px, 40.8 ms; identical to libjpeg 9e |
+| IMG20260612210949.jpg | 4160x3120 4:2:2 | 1.310 clk/px, 113.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.204 clk/px, 190.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB | 0.348 clk/px, 30.1 ms; identical to libjpeg 9e |
+| IMG20260716020409.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.909 clk/px, 165.2 ms; = its simulation; vs libjpeg max diff 5, PSNR 44.0 dB | 0.295 clk/px, 25.5 ms; identical to libjpeg 9e |
+| IMG20260716020422.jpg | 4160x3120 4:2:2 | 1.187 clk/px, 102.7 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.916 clk/px, 165.8 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.0 dB | 0.298 clk/px, 25.8 ms; identical to libjpeg 9e |
+| IMG20260716020424.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.906 clk/px, 164.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.2 dB | 0.296 clk/px, 25.6 ms; identical to libjpeg 9e |
+| IMG20260723160735.jpg | 4160x3120 4:2:2 | 1.338 clk/px, 115.8 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.241 clk/px, 193.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 41.6 dB | 0.362 clk/px, 31.3 ms; identical to libjpeg 9e |
+| adapter_420.jpg | 3120x4160 4:2:0 | 1.074 clk/px, 92.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 1.984 clk/px, 171.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB | 0.321 clk/px, 27.8 ms; identical to libjpeg 9e |
+| IMG20260405182829_420.jpg | 3120x4160 4:2:0 | 1.174 clk/px, 101.5 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.194 clk/px, 189.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB | 0.380 clk/px, 32.9 ms; identical to libjpeg 9e |
+| IMG20260405182833_420.jpg | 3120x4160 4:2:0 | 1.207 clk/px, 104.4 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.271 clk/px, 196.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.0 dB | 0.396 clk/px, 34.2 ms; identical to libjpeg 9e |
+| IMG20260425135544_420.jpg | 3120x4160 4:2:0 | 1.152 clk/px, 99.7 ms; identical to libjpeg 9e | 2.148 clk/px, 302.0 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.0 dB | 1.967 clk/px, 170.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.4 dB | 0.328 clk/px, 28.4 ms; identical to libjpeg 9e |
+| IMG20260425135628_420.jpg | 4160x3120 4:2:0 | 1.366 clk/px, 118.2 ms; identical to libjpeg 9e | 2.188 clk/px, 307.7 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.3 dB | 2.614 clk/px, 226.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.7 dB | 0.417 clk/px, 36.1 ms; identical to libjpeg 9e |
+| IMG20260425141210_420.jpg | 4160x3120 4:2:0 | 1.106 clk/px, 95.7 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.5 dB | 1.947 clk/px, 168.5 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.9 dB | 0.316 clk/px, 27.3 ms; identical to libjpeg 9e |
+| IMG20260523191343_420.jpg | 3120x4160 4:2:0 | 1.156 clk/px, 100.1 ms; identical to libjpeg 9e | 2.152 clk/px, 302.6 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 2.072 clk/px, 179.3 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB | 0.330 clk/px, 28.6 ms; identical to libjpeg 9e |
+| IMG20260612210949_420.jpg | 4160x3120 4:2:0 | 1.018 clk/px, 88.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.6 dB | 1.492 clk/px, 129.1 ms; = its simulation; vs libjpeg max diff 8, PSNR 43.0 dB | 0.262 clk/px, 22.7 ms; identical to libjpeg 9e |
+| IMG20260716020409_420.jpg | 4160x3120 4:2:0 | 1.006 clk/px, 87.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.0 dB | 1.379 clk/px, 119.4 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.2 dB | 0.255 clk/px, 22.1 ms; identical to libjpeg 9e |
+| IMG20260716020422_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.4 dB | 1.397 clk/px, 120.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.5 dB | 0.255 clk/px, 22.0 ms; identical to libjpeg 9e |
+| IMG20260716020424_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.7 dB | 1.388 clk/px, 120.1 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.8 dB | 0.255 clk/px, 22.0 ms; identical to libjpeg 9e |
+| IMG20260723160735_420.jpg | 4160x3120 4:2:0 | 1.060 clk/px, 91.8 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB | 1.643 clk/px, 142.1 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.6 dB | 0.285 clk/px, 24.7 ms; identical to libjpeg 9e |
 
 ## CPU decoders against the three FPGA decoders on the owner's photos (2026-10-04)
 
@@ -271,41 +273,45 @@ CPU: one core of the laptop's i7-8550U in the performance profile, single thread
 
 #### The owner's 12 photos (4:2:2, EXIF thumbnail)
 
-| photo | libjpeg-turbo -nosmooth | libjpeg-turbo | FFmpeg | zune-jpeg | Pillow | OpenCV | libjpeg 9e -nosmooth | stb_image | Go image/jpeg | **BEBCL-JPEG** Artix-7 150 MHz | BEBCL-JPEG EP2C5 95 MHz | aq_djpeg Artix-7 150 MHz | core_jpeg Artix-7 92.3 MHz |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| adapter | 55.5 | 56.4 | 70.0 | 112.4 | 83.9 | 95.6 | 119.7 | 138.3 | 304.5 | **128.2** | 202.5 | 248.4 | fails |
-| IMG20260405182829 | 58.8 | 60.1 | 73.1 | 81.0 | 87.2 | 98.8 | 124.1 | 143.1 | 266.2 | **139.4** | 220.1 | 271.1 | fails |
-| IMG20260405182833 | 60.2 | 61.2 | 74.9 | 82.9 | 95.0 | 100.4 | 127.1 | 144.0 | 264.6 | **143.5** | 226.6 | 280.5 | fails |
-| IMG20260425135544 | 49.6 | 52.8 | 63.5 | 71.9 | 79.7 | 90.0 | 107.4 | 135.2 | 263.1 | **127.6** | 201.5 | 227.2 | fails |
-| IMG20260425135628 | 61.5 | 62.9 | 80.0 | 85.4 | 92.3 | 102.3 | 127.7 | 154.5 | 279.9 | **154.1** | 243.2 | 294.6 | fails |
-| IMG20260425141210 | 52.3 | 54.7 | 48.0 | 75.6 | 82.9 | 93.7 | 112.0 | 135.2 | 244.4 | **127.1** | 200.6 | 232.5 | fails |
-| IMG20260523191343 | 57.3 | 58.3 | 62.5 | 80.3 | 81.6 | 98.2 | 150.2 | 131.7 | 280.7 | **133.6** | 210.9 | 253.5 | fails |
-| IMG20260612210949 | 46.5 | 48.9 | 60.2 | 71.0 | 78.3 | 87.4 | 100.8 | 123.8 | 225.6 | **113.4** | 179.0 | 190.7 | fails |
-| IMG20260716020409 | 38.2 | 40.2 | 29.6 | 61.0 | 68.8 | 76.5 | 83.0 | 109.0 | 200.8 | **102.4** | 161.7 | 165.2 | fails |
-| IMG20260716020422 | 34.0 | 35.9 | 43.6 | 53.5 | 65.3 | 72.9 | 75.3 | 111.9 | 199.7 | **102.7** | 162.2 | 165.8 | fails |
-| IMG20260716020424 | 34.5 | 36.2 | 44.2 | 53.5 | 65.2 | 74.0 | 74.3 | 111.2 | 197.3 | **102.4** | 161.7 | 164.9 | fails |
-| IMG20260723160735 | 44.6 | 45.8 | 56.5 | 65.4 | 75.6 | 82.8 | 94.9 | 123.4 | 223.2 | **115.8** | 182.8 | 193.9 | fails |
+| photo | libjpeg-turbo -nosmooth | libjpeg-turbo | FFmpeg | zune-jpeg | Pillow | OpenCV | libjpeg 9e -nosmooth | stb_image | Go image/jpeg | **BEBCL-JPEG `FAST=2`** Artix-7 150 MHz | BEBCL-JPEG `FAST=1` Artix-7 150 MHz | BEBCL-JPEG `FAST=1` EP2C5 95 MHz | aq_djpeg Artix-7 150 MHz | core_jpeg Artix-7 92.3 MHz |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| adapter | 55.5 | 56.4 | 70.0 | 112.4 | 83.9 | 95.6 | 119.7 | 138.3 | 304.5 | **40.3** | 128.2 | 202.5 | 248.4 | fails |
+| IMG20260405182829 | 58.8 | 60.1 | 73.1 | 81.0 | 87.2 | 98.8 | 124.1 | 143.1 | 266.2 | **45.6** | 139.4 | 220.1 | 271.1 | fails |
+| IMG20260405182833 | 60.2 | 61.2 | 74.9 | 82.9 | 95.0 | 100.4 | 127.1 | 144.0 | 264.6 | **47.3** | 143.5 | 226.6 | 280.5 | fails |
+| IMG20260425135544 | 49.6 | 52.8 | 63.5 | 71.9 | 79.7 | 90.0 | 107.4 | 135.2 | 263.1 | **36.8** | 127.6 | 201.5 | 227.2 | fails |
+| IMG20260425135628 | 61.5 | 62.9 | 80.0 | 85.4 | 92.3 | 102.3 | 127.7 | 154.5 | 279.9 | **48.6** | 154.1 | 243.2 | 294.6 | fails |
+| IMG20260425141210 | 52.3 | 54.7 | 48.0 | 75.6 | 82.9 | 93.7 | 112.0 | 135.2 | 244.4 | **38.2** | 127.1 | 200.6 | 232.5 | fails |
+| IMG20260523191343 | 57.3 | 58.3 | 62.5 | 80.3 | 81.6 | 98.2 | 150.2 | 131.7 | 280.7 | **40.8** | 133.6 | 210.9 | 253.5 | fails |
+| IMG20260612210949 | 46.5 | 48.9 | 60.2 | 71.0 | 78.3 | 87.4 | 100.8 | 123.8 | 225.6 | **30.1** | 113.4 | 179.0 | 190.7 | fails |
+| IMG20260716020409 | 38.2 | 40.2 | 29.6 | 61.0 | 68.8 | 76.5 | 83.0 | 109.0 | 200.8 | **25.5** | 102.4 | 161.7 | 165.2 | fails |
+| IMG20260716020422 | 34.0 | 35.9 | 43.6 | 53.5 | 65.3 | 72.9 | 75.3 | 111.9 | 199.7 | **25.8** | 102.7 | 162.2 | 165.8 | fails |
+| IMG20260716020424 | 34.5 | 36.2 | 44.2 | 53.5 | 65.2 | 74.0 | 74.3 | 111.2 | 197.3 | **25.6** | 102.4 | 161.7 | 164.9 | fails |
+| IMG20260723160735 | 44.6 | 45.8 | 56.5 | 65.4 | 75.6 | 82.8 | 94.9 | 123.4 | 223.2 | **31.3** | 115.8 | 182.8 | 193.9 | fails |
 
 BEBCL-JPEG (`FAST=1`) on the Artix-7 takes 2.31-3.02x the time of libjpeg-turbo -nosmooth at 3.9 GHz per photo (2.31-3.46x that of the fastest CPU decoder on each photo); per clock it does 8.6-11.3x more work (1.18-1.78 clocks/pixel against libjpeg-turbo's 10.2-18.5 CPU clocks/pixel).
 
+BEBCL-JPEG `FAST=2` (the wide core) on the Artix-7 at 150 MHz takes 0.65-0.79x the time of libjpeg-turbo -nosmooth at 3.9 GHz (1.27-1.55x faster) and 0.65-0.86x that of the fastest CPU decoder on each photo; 0.295-0.561 clocks/pixel.
+
 #### 4:2:0 re-encodes of the same photos (core_jpeg supports only 4:4:4 / 4:2:0)
 
-| photo | libjpeg-turbo -nosmooth | libjpeg-turbo | FFmpeg | zune-jpeg | Pillow | OpenCV | libjpeg 9e -nosmooth | stb_image | Go image/jpeg | **BEBCL-JPEG** Artix-7 150 MHz | BEBCL-JPEG EP2C5 95 MHz | aq_djpeg Artix-7 150 MHz | core_jpeg Artix-7 92.3 MHz |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| adapter_420 | 41.9 | 41.6 | 50.2 | 63.3 | 68.2 | 79.1 | 88.8 | 100.4 | 195.9 | **92.9** | 146.7 | 171.7 | 301.1 |
-| IMG20260405182829_420 | 45.2 | 43.9 | 53.5 | 65.7 | 70.6 | 82.7 | 93.7 | 104.2 | 204.8 | **101.5** | 160.3 | 189.9 | 301.0 |
-| IMG20260405182833_420 | 45.4 | 47.3 | 55.0 | 66.6 | 72.3 | 82.4 | 97.4 | 107.8 | 209.1 | **104.4** | 164.9 | 196.5 | 301.0 |
-| IMG20260425135544_420 | 39.9 | 41.4 | 45.7 | 63.3 | 66.9 | 79.2 | 84.4 | 100.1 | 193.0 | **99.7** | 157.4 | 170.2 | 302.0 |
-| IMG20260425135628_420 | 49.0 | 50.3 | 61.8 | 72.6 | 75.5 | 87.4 | 101.8 | 117.0 | 218.5 | **118.2** | 186.6 | 226.2 | 307.7 |
-| IMG20260425141210_420 | 41.8 | 41.9 | 50.8 | 64.3 | 68.4 | 80.0 | 88.3 | 102.8 | 195.0 | **95.7** | 151.1 | 168.5 | 301.3 |
-| IMG20260523191343_420 | 43.0 | 42.7 | 52.3 | 64.7 | 69.8 | 80.4 | 88.9 | 103.4 | 197.5 | **100.1** | 158.0 | 179.3 | 302.6 |
-| IMG20260612210949_420 | 35.6 | 35.6 | 41.1 | 56.7 | 62.1 | 73.4 | 74.3 | 93.4 | 176.8 | **88.1** | 139.1 | 129.1 | 301.0 |
-| IMG20260716020409_420 | 27.5 | 28.8 | 25.2 | 48.4 | 54.3 | 65.3 | 57.0 | 83.9 | 155.7 | **87.1** | 137.4 | 119.4 | 301.0 |
-| IMG20260716020422_420 | 29.6 | 29.2 | 34.9 | 48.8 | 54.1 | 64.7 | 66.7 | 97.5 | 162.0 | **86.9** | 137.3 | 120.9 | 301.0 |
-| IMG20260716020424_420 | 28.2 | 28.4 | 32.7 | 48.7 | 55.7 | 66.2 | 58.9 | 84.1 | 159.7 | **86.9** | 137.3 | 120.1 | 301.0 |
-| IMG20260723160735_420 | 35.2 | 36.4 | 39.6 | 57.8 | 62.2 | 72.2 | 76.1 | 92.3 | 177.7 | **91.8** | 144.9 | 142.1 | 301.3 |
+| photo | libjpeg-turbo -nosmooth | libjpeg-turbo | FFmpeg | zune-jpeg | Pillow | OpenCV | libjpeg 9e -nosmooth | stb_image | Go image/jpeg | **BEBCL-JPEG `FAST=2`** Artix-7 150 MHz | BEBCL-JPEG `FAST=1` Artix-7 150 MHz | BEBCL-JPEG `FAST=1` EP2C5 95 MHz | aq_djpeg Artix-7 150 MHz | core_jpeg Artix-7 92.3 MHz |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| adapter_420 | 41.9 | 41.6 | 50.2 | 63.3 | 68.2 | 79.1 | 88.8 | 100.4 | 195.9 | **27.8** | 92.9 | 146.7 | 171.7 | 301.1 |
+| IMG20260405182829_420 | 45.2 | 43.9 | 53.5 | 65.7 | 70.6 | 82.7 | 93.7 | 104.2 | 204.8 | **32.9** | 101.5 | 160.3 | 189.9 | 301.0 |
+| IMG20260405182833_420 | 45.4 | 47.3 | 55.0 | 66.6 | 72.3 | 82.4 | 97.4 | 107.8 | 209.1 | **34.2** | 104.4 | 164.9 | 196.5 | 301.0 |
+| IMG20260425135544_420 | 39.9 | 41.4 | 45.7 | 63.3 | 66.9 | 79.2 | 84.4 | 100.1 | 193.0 | **28.4** | 99.7 | 157.4 | 170.2 | 302.0 |
+| IMG20260425135628_420 | 49.0 | 50.3 | 61.8 | 72.6 | 75.5 | 87.4 | 101.8 | 117.0 | 218.5 | **36.1** | 118.2 | 186.6 | 226.2 | 307.7 |
+| IMG20260425141210_420 | 41.8 | 41.9 | 50.8 | 64.3 | 68.4 | 80.0 | 88.3 | 102.8 | 195.0 | **27.3** | 95.7 | 151.1 | 168.5 | 301.3 |
+| IMG20260523191343_420 | 43.0 | 42.7 | 52.3 | 64.7 | 69.8 | 80.4 | 88.9 | 103.4 | 197.5 | **28.6** | 100.1 | 158.0 | 179.3 | 302.6 |
+| IMG20260612210949_420 | 35.6 | 35.6 | 41.1 | 56.7 | 62.1 | 73.4 | 74.3 | 93.4 | 176.8 | **22.7** | 88.1 | 139.1 | 129.1 | 301.0 |
+| IMG20260716020409_420 | 27.5 | 28.8 | 25.2 | 48.4 | 54.3 | 65.3 | 57.0 | 83.9 | 155.7 | **22.1** | 87.1 | 137.4 | 119.4 | 301.0 |
+| IMG20260716020422_420 | 29.6 | 29.2 | 34.9 | 48.8 | 54.1 | 64.7 | 66.7 | 97.5 | 162.0 | **22.0** | 86.9 | 137.3 | 120.9 | 301.0 |
+| IMG20260716020424_420 | 28.2 | 28.4 | 32.7 | 48.7 | 55.7 | 66.2 | 58.9 | 84.1 | 159.7 | **22.0** | 86.9 | 137.3 | 120.1 | 301.0 |
+| IMG20260723160735_420 | 35.2 | 36.4 | 39.6 | 57.8 | 62.2 | 72.2 | 76.1 | 92.3 | 177.7 | **24.7** | 91.8 | 144.9 | 142.1 | 301.3 |
 
 BEBCL-JPEG (`FAST=1`) on the Artix-7 takes 2.22-3.17x the time of libjpeg-turbo -nosmooth at 3.9 GHz per photo (2.24-3.45x that of the fastest CPU decoder on each photo); per clock it does 8.2-11.7x more work (1.00-1.37 clocks/pixel against libjpeg-turbo's 8.3-14.7 CPU clocks/pixel).
+
+BEBCL-JPEG `FAST=2` (the wide core) on the Artix-7 at 150 MHz takes 0.64-0.80x the time of libjpeg-turbo -nosmooth at 3.9 GHz (1.24-1.57x faster) and 0.64-0.88x that of the fastest CPU decoder on each photo; 0.255-0.417 clocks/pixel.
 
 
 ## What the numbers say
@@ -362,9 +368,18 @@ BEBCL-JPEG (`FAST=1`) on the Artix-7 takes 2.22-3.17x the time of libjpeg-turbo 
    photo, than stb_image on 20 of 24 and than libjpeg 9e with its default upsampling on 16 of 24.
    Per clock it does 8.2-11.7x more work than libjpeg-turbo (1.0-1.8 clocks per pixel against
    8.3-18.5 CPU clocks per pixel). What limits it is the clock (150 MHz against 3.9 GHz) and its one
-   pixel per clock, not memory: the wide core (`FAST=2`, 4 pixels per clock, `WIDE_STATUS.md`) is
-   the answer to that.
-9. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
+   pixel per clock, not memory.
+9. **The wide core (`FAST=2`, 2026-10-04) is faster than every CPU decoder on every photo.** On the
+   same Artix-7 board at 150 MHz it decodes the 24 files in 22.0-48.6 ms (0.255-0.561 clocks per
+   pixel, 3.0-4.0x fewer clocks than the fast core), with pixels identical to libjpeg 9e and clock
+   counts identical to the simulation. That is 0.64-0.80x the time of libjpeg-turbo -nosmooth on one
+   laptop core at a steady 3.9 GHz (1.24-1.57x faster) and 0.64-0.88x the time of the fastest CPU
+   decoder on each photo (libjpeg-turbo, or FFmpeg on three files). It decodes one Huffman symbol
+   per clock and four pixels per clock in 6,178 LUTs and 33 DSPs of the XC7A200T (with the harness);
+   at 131 MHz or more it would still beat every CPU decoder on every photo. Single-image time on one
+   CPU core is the comparison here: several CPU cores decoding several photos at once would still
+   outrun one decoder in throughput (`WIDE_STATUS.md`).
+10. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
    times as measured while the laptop throttled (2.3-3.9 GHz), and with libjpeg-turbo's default
    (smoothing) mode: "libjpeg-turbo 1.9-2.7x faster than BEBCL-JPEG on the Artix-7", "faster than
    stb_image on every photo". With every CPU time at a steady 3.9 GHz and libjpeg-turbo -nosmooth,

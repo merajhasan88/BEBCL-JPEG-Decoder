@@ -142,3 +142,28 @@ config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_
   of up to 4 pixels per beat in a 3-stage pipeline; the clock count stops at frame_done as for DUT 0);
   `build.tcl` reads `rtl/files.f`; `make_expected.py --duts 3` (clocks from tb/obj_wmcu). Harness simulation
   (`sim/obj_dut3`): 4 corpus files, clocks = the decoder simulation, checksums = libjpeg 9e.
+  Vivado 2026.1, Artix-7 harness with DUT 3 at 150 MHz (xc7a200t-2 timing):
+  - build 1: **-1.465 ns** (~123 MHz), 183 failing endpoints; worst: the long-code path (block state ->
+    MAXCODE compare -> offset add -> HUFFVAL RAM address in one clock, 7.6 ns) and the run-length control
+    (phase_ac -> table -> k + r -> compares -> k, 7.1 ns). Decoder: 5,748 LUTs (504 as RAM), 6,621 FFs,
+    33 DSP48E1, 3 RAMB36 + 10 RAMB18.
+  - fixes (commit 9f33f67): MAXCODE entries registered at the miss, compare/select and offset add in
+    separate clocks (long codes 6 clocks instead of 5); 63 - k kept in a register so the block-end tests
+    are 4-bit compares. wmcu still 202/202, 10/10, 52/52.
+  - build 2: **-0.100 ns** (~147.8 MHz), 4 failing endpoints, all in the symbol loop (window top bits ->
+    lookahead RAM, address fan-out 81 -> table select -> n, fan-out 70 -> 64-bit shift -> window; 8 levels,
+    81 % routing) and one from it to the descriptor queue. Decoder 5,787 LUTs, 6,830 FFs.
+  - build 3: the same RTL with `VIVADO_EFFORT=high` (ExtraTimingOpt placement, AggressiveExplore routing and
+    physical optimisation): **+0.128 ns at 150 MHz** (~153 MHz). Harness + decoder 6,178 LUTs, 7,607 FFs,
+    9 BRAM tiles, 33 DSP48E1; the decoder alone 5,794 LUTs (504 as RAM), 6,863 FFs, 3 RAMB36 + 10 RAMB18.
+- **Step 4 done (board, 2026-10-04)**: fpgas.online Welland, the Acorn now at board page `pi-sw2-p46`
+  (the site had renamed its pages and upload form; the private client in /root/fpgas_online_tools was
+  adapted). **24/24 PASS**: every clock count = the simulation of the final RTL, every checksum = libjpeg
+  9e, no error bits (`boards/acorn_cle215/results_2026-10-04.json`). 0.295-0.561 clocks/pixel on the
+  owner's photos, 0.255-0.417 on the 4:2:0 copies, 22.0-48.6 ms per 12 MP photo at 150 MHz, 3.0-4.0x
+  fewer clocks than the fast core. Against one laptop core at a steady 3.9 GHz: **0.64-0.80x the time of
+  libjpeg-turbo -nosmooth (1.24-1.57x faster) and 0.64-0.88x the time of the fastest CPU decoder on each
+  photo** - faster than every CPU decoder on every photo. (Single-image time; a multi-core CPU decoding
+  several photos at once still has more throughput.) Final RTL photo simulation:
+  `model/perf/wide_photos_sim_2026-10-04.json` (24/24 identical, model within 1.6 %).
+- Step 5 (in progress): EP2C5 re-fits after the wrapper change, gate-level runs, full regression, xsim.
