@@ -125,3 +125,15 @@ config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_
   per clock, IDCT_WIDE): traced crop +0.06 %, flat images +0.01 %, crops -0.15 to -0.85 %. Clocks/pixel:
   photo crops 0.275 / 0.382 / 0.523 (today's core 1.19 / 1.39 / 1.67); flat 4:4:4 0.381 (IDCT), 4:2:0 0.260
   (output).
+- **Step 4 (in progress)**: the 24 photos in cycle-exact simulation (`python3 model/perf/check_wide.py`,
+  results `model/perf/wide_photos_sim_2026-10-04.json`): **all 24 identical to libjpeg 9e** (`djpeg -dct int
+  -nosmooth`), 0.29-0.55 clocks/pixel on the owner's 12 photos (4:2:2; the fast core 1.18-1.78) and 0.25-0.41
+  on the 4:2:0 copies (1.005-1.37); the model is 0.01-1.59 % low. Against libjpeg-turbo on one laptop core
+  (`bench/bench_photos_2026-10-04.json`: 38-66 ms on the photos at a measured 3.5-3.9 GHz, 32-56 ms on the
+  copies at 3.0-3.7 GHz): at 150 MHz the wide core would take 25-48 ms / 22-35 ms = 0.55-0.75x turbo's time;
+  0.61-0.78x if turbo had run at a steady 3.9 GHz throughout. Parity on every photo from 113 MHz (117 MHz
+  against the 3.9 GHz-scaled times).
+  Board harness: DUT 3 = `jpeg_decoder #(.FAST(2))` in `boards/acorn_cle215/uart_bench_core.sv` (checksum
+  of up to 4 pixels per beat in a 3-stage pipeline; the clock count stops at frame_done as for DUT 0);
+  `build.tcl` reads `rtl/files.f`; `make_expected.py --duts 3` (clocks from tb/obj_wmcu). Harness simulation
+  (`sim/obj_dut3`): 4 corpus files, clocks = the decoder simulation, checksums = libjpeg 9e.

@@ -14,6 +14,7 @@
 // DUT 0: jpeg_decoder (this library: FAST=1, MCU order, RGB), byte input, in_last on the last byte
 // DUT 1: ultraembedded core_jpeg (jpeg_core), 32-bit input words (first byte in bits 7:0)
 // DUT 2: H. Ishihara's aq_djpeg (via ultraembedded legacy_jpeg_decoder), 32-bit input words
+// DUT 3: jpeg_decoder FAST=2 (this library's wide core: 4 pixels per beat, px_n valid), byte input
 // The other decoders' sources are not part of this library (bench/others/fetch.sh fetches them).
 //
 // Protocol (8N1 at BAUD):
@@ -40,7 +41,7 @@ module uart_bench_core #(
   output logic [3:0] led
 );
   localparam int DIV = (CLK_HZ + BAUD / 2) / BAUD;   // clocks per bit
-  localparam bit WORDS = (DUT != 0);
+  localparam bit WORDS = (DUT == 1 || DUT == 2);
 
   // ================================================================ UART receiver
   logic [2:0]  rxs;
@@ -159,6 +160,8 @@ module uart_bench_core #(
   logic [15:0] px_x, px_y, w_, h_;
   logic [7:0]  r_, g_, b_;
   logic [12:0] err;
+  logic [2:0]  pn;                             // pixels in the beat (DUT 3: px_n; else 1)
+  logic [31:0] r4, g4, b4;                     // DUT 3: pixel i in bits 8i+7..8i
   generate
     if (DUT == 0) begin : g_ours
       logic sof, eol, fs;
@@ -167,6 +170,14 @@ module uart_bench_core #(
         .out_fmt(2'd0), .px_valid(px), .px_ready(1'b1), .px_x(px_x), .px_y(px_y),
         .px_c0(r_), .px_c1(g_), .px_c2(b_), .px_sof(sof), .px_eol(eol),
         .img_w(w_), .img_h(h_), .frame_start(fs), .frame_done(dfd), .err(err));
+    end else if (DUT == 3) begin : g_wide
+      logic sof, eol, fs;
+      jpeg_decoder #(.FAST(2)) u_dut (
+        .clk(dclk), .rst(in_rst), .in_valid(dv), .in_data(hd), .in_last(last_b), .in_ready(dut_ready),
+        .out_fmt(2'd0), .px_valid(px), .px_ready(1'b1), .px_x(px_x), .px_y(px_y), .px_n(pn),
+        .px_c0(r4), .px_c1(g4), .px_c2(b4), .px_sof(sof), .px_eol(eol),
+        .img_w(w_), .img_h(h_), .frame_start(fs), .frame_done(dfd), .err(err));
+      assign r_ = r4[7:0]; assign g_ = g4[7:0]; assign b_ = b4[7:0];
     end else if (DUT == 1) begin : g_core_jpeg
       logic idle;
       jpeg_core #(.SUPPORT_WRITABLE_DHT(1)) u_dut (
@@ -184,28 +195,56 @@ module uart_bench_core #(
         .OutWidth(w_), .OutHeight(h_), .OutPixelX(px_x), .OutPixelY(px_y), .OutR(r_), .OutG(g_), .OutB(b_));
       assign err = '0; assign dfd = 1'b0;
     end
+
+  if (DUT != 3) begin : g_pn1
+    assign pn = 3'd1; assign r4 = '0; assign g4 = '0; assign b4 = '0;
+  end
   endgenerate
 
   // counters (dclk domain: they only move while the DUT's clock runs)
-  logic [31:0] chk, cyc, npx, tgt, wdog;
+  logic [31:0] chk, chk1, chk4, cyc, npx, tgt, wdog;
   logic        wdog_hit;
+  logic        fin;                            // DUT 3: frame_done seen, checksum pipeline draining
+  logic [1:0]  fin_d;
+  assign chk = (DUT == 3) ? chk4 : chk1;
   always_ff @(posedge dclk) begin
     if (in_rst) begin
-      chk <= '0; cyc <= '0; npx <= '0; tgt <= '0; wdog <= '0; done_d <= 1'b0; wdog_hit <= 1'b0;
+      chk1 <= '0; cyc <= '0; npx <= '0; tgt <= '0; wdog <= '0; done_d <= 1'b0; wdog_hit <= 1'b0; fin <= 1'b0; fin_d <= '0;
     end else if (!done_d) begin
-      cyc <= cyc + 32'd1;
+      if (!fin) cyc <= cyc + 32'd1;
       if (px) begin
-        chk <= chk + {px_x[7:0] ^ px_y[7:0], r_, g_, b_};
-        npx <= npx + 32'd1;
+        chk1 <= chk1 + {px_x[7:0] ^ px_y[7:0], r_, g_, b_};
+        npx <= npx + {29'd0, pn};
         if (npx == 32'd0) tgt <= {16'd0, w_} * {16'd0, h_};
       end
-      // DUT 0 reports the end of the frame; for the others, the frame ends with its last pixel
-      if (DUT == 0 ? dfd : (px && npx != 32'd0 && npx + 32'd1 == tgt)) done_d <= 1'b1;
+      // DUTs 0 and 3 report the end of the frame (DUT 3: done once its checksum pipeline has
+      // drained, 3 clocks later, without counting them); for the others it ends with the last pixel
+      if (DUT == 3) begin
+        if (dfd) fin <= 1'b1;
+        fin_d <= {fin_d[0], fin};
+        if (fin_d[1]) done_d <= 1'b1;
+      end else if (DUT == 0 ? dfd : (px && npx != 32'd0 && npx + 32'd1 == tgt)) done_d <= 1'b1;
       // a decoder that stops (stuck input, or nothing more to output) is ended after WATCHDOG of its
       // clocks without a pixel; its clock only runs while input waits or after the input ended
       if (px) wdog <= '0;
       else begin wdog <= wdog + 32'd1; if (wdog == WATCHDOG - 1) begin wdog_hit <= 1'b1; done_d <= 1'b1; end end
     end
+  end
+  // DUT 3: checksum of up to four pixels per beat, {(x ^ y)[7:0], R, G, B} each, in a pipeline
+  logic        cv1, cv2;
+  logic [31:0] ct [0:3];
+  logic [31:0] csa, csb;
+  always_ff @(posedge dclk) begin : g_chk4
+    integer i;
+    logic [7:0] xi;
+    cv1 <= px && !in_rst && !done_d;
+    for (i = 0; i < 4; i = i + 1) begin
+      xi = px_x[7:0] + i[7:0];
+      ct[i] <= (i < pn) ? {xi ^ px_y[7:0], r4[8*i +: 8], g4[8*i +: 8], b4[8*i +: 8]} : 32'd0;
+    end
+    cv2 <= cv1; csa <= ct[0] + ct[1]; csb <= ct[2] + ct[3];
+    if (in_rst) chk4 <= '0;
+    else if (cv2) chk4 <= chk4 + csa + csb;
   end
 
   // ================================================================ result (clk domain)
