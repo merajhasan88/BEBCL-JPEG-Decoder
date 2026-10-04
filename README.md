@@ -87,7 +87,7 @@ run the decoder. All three simulate the same RTL cycle by cycle, write the decod
 | **Python** (`scripts/decode.py`, drives the C++ harness) | the above + Python 3 (Pillow optional) | `python3 scripts/decode.py` | `python3 scripts/decode.py --profile pillow --check` |
 
 ```sh
-git clone https://github.com/merajhasan88/jpegdecoder-systemverilog.git bebcl-jpeg && cd bebcl-jpeg
+git clone https://github.com/merajhasan88/BEBCL-JPEG-Decoder.git && cd BEBCL-JPEG-Decoder
 cp ~/photos/*.jpg test_images/
 ./decode.sh                                   # or: ./decode.sh --sim xsim   (Vivado's simulator)
 ```
