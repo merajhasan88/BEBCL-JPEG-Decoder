@@ -10,6 +10,7 @@ developed and verified here first.
 |---|---|
 | `FAST_STATUS.md` | design of the fast core (`FAST=1`), timing-closure history on the EP2C5, verification log, open items |
 | `WIDE_STATUS.md` | the wide core (`FAST=2`, 4 pixels per clock): the model that chose it, timing probes, steps, results |
+| `ROADMAP.md` | the next work, in the owner's names: Proposals A and B (splitting a stream without restart markers; a way around the Huffman loop limit), Task A (batched wide decoders on Welland), Task B (all tests on AWS F2) |
 | `test_images/` | all of the owner's test photos (12 phone photos; `main` has `adapter.jpg` only) for runs on other boards |
 | `boards/ep2c5/gate_level/` | gate-level simulation of the post-fit netlists (Verilator with this project's own Cyclone II cell models, Icarus + SDF, ModelSim-ASE) |
 | `boards/ep2c5/gls*/` | fast-UART twins of the EP2C5 builds, for the gate-level runs |
