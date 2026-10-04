@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Expected board results for pi_bench.py runs, from simulations and the reference decoder.
-  DUT 0 (this library): checksum of libjpeg 9e `djpeg -dct int -nosmooth` (the fast core's MCU-order
-        output is bit-identical to it) and the clock count of the RTL simulation (tb/obj_fmcu);
+  DUT 0, 3 (this library, FAST=1 / FAST=2): checksum of libjpeg 9e `djpeg -dct int -nosmooth` (the MCU-order
+        output is bit-identical to it) and the clock count of the RTL simulation (tb/obj_fmcu / tb/obj_wmcu);
   DUT 1, 2 (core_jpeg, aq_djpeg): clock count and checksum of their own Verilator simulation
         (bench/others/obj_*: build.sh; files below 64 KB: the board harness simulation sim/obj_dut<d>),
         i.e. the board must reproduce the simulation exactly.
-usage: make_expected.py [--djpeg PATH] --out expected.json [--duts 0,1,2] file.jpg [...]
-Needs tb/obj_fmcu (cd tb && make) and, for DUT 1/2, bench/others/build.sh."""
+usage: make_expected.py [--djpeg PATH] --out expected.json [--duts 0,1,2,3] file.jpg [...]
+Needs tb/obj_fmcu / tb/obj_wmcu (cd tb && make) and, for DUT 1/2, bench/others/build.sh."""
 import os, sys, re, json, subprocess, tempfile
 import numpy as np
 from PIL import Image
@@ -32,14 +32,15 @@ def main():
     exp = json.load(open(out)) if os.path.exists(out) else {}
     for f in args:
         name = os.path.basename(f)
-        if 0 in duts:
+        for d, obj in ((0, "obj_fmcu"), (3, "obj_wmcu")):
+            if d not in duts: continue
             chk, w, h = ref_checksum(f, djpeg)
-            r = subprocess.run(["nice", "-n", "19", os.path.join(LIB, "tb", "obj_fmcu", "Vjpeg_decoder"), f, "/dev/null",
+            r = subprocess.run(["nice", "-n", "19", os.path.join(LIB, "tb", obj, "Vjpeg_decoder"), f, "/dev/null",
                                 "--fmt", "rgb", "--quiet"], capture_output=True, text=True, timeout=7200).stderr
             m = re.search(r"cycles=(\d+) .*pixels=(\d+).*err=0x([0-9a-f]+)", r)
             e = {"clocks": int(m[1]), "err": f"0x{int(m[3], 16):04X}", "w": w, "h": h}
             if chk is not None: e["checksum"] = f"0x{chk:08X}"
-            exp[f"0/{name}"] = e; print("0", name, e, flush=True)
+            exp[f"{d}/{name}"] = e; print(d, name, e, flush=True)
         for d, tag in ((1, "core_jpeg"), (2, "aq_djpeg")):
             if d not in duts: continue
             if os.path.getsize(f) < 65536:

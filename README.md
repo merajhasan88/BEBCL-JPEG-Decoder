@@ -12,7 +12,9 @@ samples), which is what cameras, phones and almost all software write.
   Cyclone II (EP2C5, 4,608 logic elements) and a current Xilinx Artix-7, and builds with Quartus,
   Vivado and Yosys (Lattice ECP5).
 - **Least clocks per pixel** among the open-source FPGA JPEG decoders measured (below): 1.0-2.4
-  clocks per pixel for the fast core.
+  clocks per pixel for the fast core, 0.25-0.56 on phone photos for the wide core (`FAST=2`, four
+  pixels per clock), which on an Artix-7 at 150 MHz decodes a 12-megapixel photo faster than any CPU
+  decoder on one laptop core.
 
 Every build option is verified **bit for bit** against a reference decoder:
 
@@ -21,13 +23,15 @@ Every build option is verified **bit for bit** against a reference decoder:
 | default | libjpeg 9e `djpeg -dct int -nosmooth` |
 | `RASTER_OUT=1 FANCY_UPSAMPLE=1 CC_TURBO=1` | **Pillow, OpenCV** and libjpeg-turbo `djpeg -dct int` (libjpeg-turbo 2.1 defaults) |
 
-Two cores share one interface: a compact core (`FAST=0`, ~13.6 clocks per pixel, the smallest)
-and a pipelined core (`FAST=1`, **1.0-2.4 clocks per pixel**).
+Three cores share one interface: a compact core (`FAST=0`, ~13.6 clocks per pixel, the smallest),
+a pipelined core (`FAST=1`, **1.0-2.4 clocks per pixel**) and, for larger FPGAs, a wide core
+(`FAST=2`, **0.25-0.56 clocks per pixel** on phone photos, four pixels per output beat, MCU order).
 
 | measured on a board | core | clock | resources | 12-megapixel photo |
 |---|---|---:|---|---:|
-| Intel/Altera Cyclone II EP2C5T144C8 (2004, 4,608 LEs) | `FAST=1` | 95 MHz | 4,450 LEs (97 %), 26/26 multipliers | 202-284 ms |
+| Intel/Altera Cyclone II EP2C5T144C8 (2004, 4,608 LEs) | `FAST=1` | 95 MHz | 4,425 LEs (96 %), 26/26 multipliers | 202-284 ms |
 | Xilinx Artix-7 XC7A200T (Acorn CLE-215+, remote board at fpgas.online) | `FAST=1` | 150 MHz | 2,488 LUTs, 17 DSP48E1, 7.5 BRAM | 87-154 ms |
+| the same Artix-7 board | `FAST=2` | 150 MHz | 6,211 LUTs, 33 DSP48E1, 9 BRAM | **22-49 ms** |
 
 How it compares with the two other open-source FPGA JPEG decoders and with CPU decoders: below and
 in **[BENCHMARKS.md](BENCHMARKS.md)** (Artix-7 details: `boards/acorn_cle215/README.md`).
@@ -41,7 +45,8 @@ core_jpeg and H. Ishihara's aq_djpeg (same harness, same board, same files):
   FANCY_UPSAMPLE=1 CC_TURBO=1` to Pillow, OpenCV and libjpeg-turbo. Those of core_jpeg and
   aq_djpeg differ from libjpeg's by up to 4-14 levels on the photos (PSNR 41.6-46.8 dB) and by up
   to 32 on one small test file.
-- **Fewest clocks per pixel.** 1.0-2.4 for the fast core, against 1.4-5.0 (aq_djpeg) and 2.1-3.3
+- **Fewest clocks per pixel.** 0.25-0.56 for the wide core on the photos and 1.0-2.4 for the fast
+  core, against 1.4-5.0 (aq_djpeg) and 2.1-3.3
   (core_jpeg, on the files it can decode). On the same Artix-7 board the others needed 1.4-2.1x
   more clocks per photo, and BEBCL-JPEG has the highest Fmax of the three (160 MHz against 153
   and 95-104 MHz), so it decoded every photo fastest: 87-154 ms at 150 MHz, against 119-295 ms
@@ -59,9 +64,10 @@ core_jpeg and H. Ishihara's aq_djpeg (same harness, same board, same files):
 - **Output for real pipelines.** MCU order, or strict raster order with start-of-frame /
   end-of-line flags for an AXI4-Stream video path; RGB, YCbCr or luma-only output (luma-only skips
   the chroma blocks and is ~30 % faster); the colour converter can be removed.
-- **Two cores, one interface.** A compact core (3.4k LEs, ~13.6 clocks/pixel) and a fast core
-  (~1-2.4 clocks/pixel), chosen with one parameter.
-- **Verified in depth.** Two independent testbenches (C++ and SystemVerilog) run the same 2,112
+- **Three cores, one interface.** A compact core (3.4k LEs, ~13.6 clocks/pixel), a fast core
+  (~1-2.4 clocks/pixel, fits the EP2C5) and a wide core (~6k LUTs, 0.25-0.56 clocks/pixel), chosen
+  with one parameter.
+- **Verified in depth.** Two independent testbenches (C++ and SystemVerilog) run the same 2,376
   checks (bit-exact pixels, files back to back, malformed files); gate-level simulation of the
   placed design; Verilator and Vivado's simulator; hardware from two vendors.
 
@@ -70,9 +76,15 @@ Where the others are ahead: aq_djpeg uses fewer block RAMs (4 against 7.5 tiles)
 tested here), which BEBCL-JPEG rejects; core_jpeg has a smaller build with fixed Huffman tables.
 "Least clocks per pixel" holds among open-source decoders: commercial cores claim more, e.g. CAST's
 JPEG-DX-F decodes 2 to 32 colour samples per clock depending on its configuration, where
-BEBCL-JPEG's fast core decodes 1.1-1.7 on the photos (a 4:2:2 pixel is 2 samples, a 4:2:0 pixel
-1.5). And one laptop CPU core with libjpeg-turbo still decodes a single photo 1.9-2.7x faster than
-BEBCL-JPEG at 150 MHz ([BENCHMARKS.md](BENCHMARKS.md)).
+BEBCL-JPEG's fast core decodes 1.1-1.7 on the photos and its wide core 3.6-6.8 (a 4:2:2 pixel is 2
+samples, a 4:2:0 pixel 1.5).
+
+**Against CPU decoders** (one laptop core, CPU times rescaled to a steady 3.9 GHz, the laptop's best
+case; [BENCHMARKS.md](BENCHMARKS.md)): libjpeg-turbo -nosmooth (the same pixels) decodes a single
+photo 2.2-3.2x faster than the `FAST=1` core at 150 MHz, but the `FAST=2` core at 150 MHz takes
+0.64-0.80x libjpeg-turbo's time and 0.64-0.88x that of the fastest CPU decoder on each photo, measured
+on the board. This is single-image time on one CPU core; a multi-core CPU decoding several photos at
+once still has more throughput than one decoder.
 
 ## Quick start: decode your own images
 
@@ -128,7 +140,9 @@ bytes in ─► jpeg_parser ─► table RAMs (DQT, Huffman MAXCODE/VALPTR, HUFF
                      pixels out: (x, y, c0, c1, c2, sof, eol) with a valid/ready handshake
 ```
 (the compact core; the `FAST=1` core has the same structure with a 32-bit bit window, lookahead
-Huffman tables, a 2-lane pipelined IDCT and 1-pixel-per-clock output stages.)
+Huffman tables, a 2-lane pipelined IDCT and 1-pixel-per-clock output stages; the `FAST=2` core
+decodes one Huffman symbol per clock, transforms a block in 8 clocks with two pipelined 1-D IDCTs
+and emits four pixels per clock, in MCU order.)
 
 ### Interface (`rtl/jpeg_decoder.sv`)
 
@@ -138,10 +152,11 @@ Huffman tables, a 2-lane pipelined IDCT and 1-pixel-per-clock output stages.)
 | `in_valid`, `in_data[7:0]`, `in_ready` | in | the JPEG file, one byte per accepted clock (files may follow back to back) |
 | `in_last` | in | 1 on the last byte of a file (0 if unknown): a file cut short before its EOI still ends with `frame_done` and `ERR_TRUNC` |
 | `out_fmt[1:0]` | in | `FMT_RGB` (0), `FMT_YCBCR` (1), `FMT_Y` (2); sampled when a frame starts |
-| `px_valid`, `px_ready` | out/in | pixel handshake (AXI4-Stream style: a pixel moves when both are high) |
-| `px_x`, `px_y` | out | pixel coordinates |
-| `px_c0`, `px_c1`, `px_c2` | out | R,G,B / Y,Cb,Cr / Y,128,128 (grey images in RGB: Y,Y,Y) |
-| `px_sof`, `px_eol` | out | first pixel of the frame (0,0) / last pixel of an image row (x = W-1) |
+| `px_valid`, `px_ready` | out/in | pixel handshake (AXI4-Stream style: a beat moves when both are high) |
+| `px_x`, `px_y` | out | coordinates of the beat's first pixel |
+| `px_n[2:0]` | out | pixels in the beat: always 1 for `FAST=0/1`; for `FAST=2` 4, fewer only where the beat reaches the right edge of the image |
+| `px_c0`, `px_c1`, `px_c2` `[8*NPIX-1:0]` | out | R,G,B / Y,Cb,Cr / Y,128,128 (grey images in RGB: Y,Y,Y); pixel i of the beat (at `px_x + i`) in bits 8i+7..8i, `NPIX` = 1 (`FAST=0/1`) or 4 (`FAST=2`) |
+| `px_sof`, `px_eol` | out | the beat starts the frame (0,0) / holds the last pixel of an image row (x = W-1) |
 | `img_w`, `img_h`, `frame_start`, `frame_done` | out | frame size (valid from `frame_start`), end of frame |
 | `err[12:0]` | out | errors of the current image (`rtl/jpeg_pkg.sv`): unsupported frame type, invalid/missing/incomplete tables or headers, corrupt data, truncated file, row buffer too small ... |
 
@@ -170,7 +185,8 @@ only, or no SOI) produces no frame.
 
 | parameter | default | effect |
 |---|---|---|
-| `FAST` | 0 | 0: compact core (~13.6 clocks/pixel, smallest). 1: pipelined core, **~1-2.4 clocks/pixel** (Huffman lookahead tables, 2-lane pipelined IDCT, 1 pixel/clock output); same pixels, same interface |
+| `FAST` | 0 | 0: compact core (~13.6 clocks/pixel, smallest). 1: pipelined core, **~1-2.4 clocks/pixel** (Huffman lookahead tables, 2-lane pipelined IDCT, 1 pixel/clock output); same pixels, same interface. 2: wide core for larger FPGAs (Artix-7 class), **0.25-0.55 clocks/pixel** on phone photos (one Huffman symbol per clock, IDCT in 8 clocks per block, 4 pixels per beat), MCU order only (`RASTER_OUT=0`), same pixels |
+| `NPIX` | derived | pixels per beat, 4 for `FAST=2` and 1 otherwise; set by `FAST` (other values stop the elaboration) |
 | `RASTER_OUT` | 0 | 0: pixels in MCU order, 1 KB buffer, any width. 1: raster order via an MCU-row buffer |
 | `ROWBUF_BYTES` | 16384 | row-buffer size for `RASTER_OUT=1`; images whose MCU row does not fit set `err[ERR_WIDTH]` and produce no pixels (the file is still consumed) |
 | `FANCY_UPSAMPLE` | 0 | libjpeg-turbo's triangle-filter chroma upsampling (Pillow/OpenCV default) instead of replication; needs `RASTER_OUT=1` |
@@ -200,7 +216,7 @@ that other tools ignore.
 |---|---|---:|---:|---:|---:|
 | Cyclone II EP2C5, Quartus 13.0sp1 | compact, MCU order (`boards/ep2c5/fpga`) | 3,374 LEs | 9 M4K | 26 9-bit | 61 MHz |
 | Cyclone II EP2C5, Quartus 13.0sp1 | compact, raster + Pillow smoothing + RGB (`fpga_raster`) | 4,547 LEs | 25 M4K | 26 9-bit | 60 MHz |
-| Cyclone II EP2C5, Quartus 13.0sp1 | fast, MCU order (`fpga_jtag`, board harness included) | 4,450 LEs | 59,712 bits | 26 9-bit | 98.1 MHz |
+| Cyclone II EP2C5, Quartus 13.0sp1 | fast, MCU order (`fpga_jtag`, board harness included) | 4,425 LEs | 59,712 bits | 26 9-bit | 98.7 MHz |
 | Artix-7 XC7A200T-2, Vivado 2026.1 | fast, MCU order, decoder alone (from the build below) | 2,204 LUTs, 2,124 FFs | 13 BRAM18 | 17 DSP48E1 | - |
 | Artix-7 XC7A200T-2, Vivado 2026.1 | fast, MCU order (`boards/acorn_cle215`, UART harness included) | 2,488 LUTs, 2,671 FFs | 7.5 BRAM36 | 17 DSP48E1 | 157-160 MHz |
 
@@ -223,7 +239,7 @@ from 8-bit sources stay far inside that, so all test files match exactly.
 ## Verification
 
 ```sh
-tb/run_tests.sh                       # SystemVerilog testbench: 1,616 + 80 + 416 runs (-s xsim for Vivado's simulator)
+tb/run_tests.sh                       # SystemVerilog testbench: 1,818 + 90 + 468 runs (-s xsim for Vivado's simulator)
 cd tb && make && make test            # the same runs with the C++ harness, driven by Python
 python3 ../scripts/compare_refs.py corpus/*.jpg   # the model against Pillow / OpenCV / libjpeg-turbo
 ```
@@ -239,21 +255,21 @@ Both regressions compare against the reference images in `tb/golden/` (made by t
 - **Reference model** (`model/jpeg_golden.py`): a bit-exact Python decoder in both profiles; on
   every corpus file it is identical to Pillow, OpenCV and libjpeg-turbo `djpeg` (default,
   `-nosmooth`, `-grayscale`) and to Pillow's YCbCr/luma draft modes (`scripts/compare_refs.py`).
-- **RTL regression** (`tb/run_tests.py`): 8 build configurations (5 compact, 3 `FAST=1`) x 3
-  output formats x 33 files x {no stalls, 30 % random input stalls + output back-pressure}, plus
-  the 2 unsupported files = **1,616 runs, all bit-exact, with no unexpected error bit**, with
+- **RTL regression** (`tb/run_tests.py`): 9 build configurations (5 compact, 3 `FAST=1`, 1 `FAST=2`)
+  x 3 output formats x 33 files x {no stalls, 30 % random input stalls + output back-pressure}, plus
+  the 2 unsupported files = **1,818 runs, all bit-exact, with no unexpected error bit**, with
   strict raster order and `sof`/`eol` checked and `ERR_WIDTH` raised exactly where predicted.
-- **Images back to back without reset** (`tb/run_stream_tests.py`): 80 runs.
+- **Images back to back without reset** (`tb/run_stream_tests.py`): 90 runs.
 - **Two independent testbenches**: the C++ harness (`make test`) and the SystemVerilog testbench
-  (`tb/run_tests.sh`) run the same 2,112 checks and both pass all of them on Verilator; on Vivado's
+  (`tb/run_tests.sh`) run the same 2,376 checks and both pass all of them on Verilator; on Vivado's
   xsim the SystemVerilog testbench passes a 396-run subset (both cores, MCU and raster output,
   smoothing, malformed files). xsim's stricter 4-state semantics found two portability bugs that
   Verilator, Quartus and the hardware never showed (a loop counter shared by several `always`
   blocks; a signal used in a port connection before its declaration); both are fixed.
 - **Malformed and truncated files** (`tb/make_malformed.py`, `tb/run_malformed_tests.py`): 26
   files, each one edit away from a corpus file (bad, missing or incomplete DQT/DHT/SOF/SOS, RSTn
-  errors, files cut in the headers, in the scan and before the EOI) x 8 configurations x 2 stall
-  settings = **416 runs**: each must end with `frame_done`, the expected error bit and, for header
+  errors, files cut in the headers, in the scan and before the EOI) x 9 configurations x 2 stall
+  settings = **468 runs**: each must end with `frame_done`, the expected error bit and, for header
   errors, no pixels.
 - **Colour converter**: exhaustive over all 2^24 (Y,Cb,Cr) inputs for both constant sets.
 - **On hardware**: on the EP2C5 every test photo decodes with libjpeg's checksum and exactly the

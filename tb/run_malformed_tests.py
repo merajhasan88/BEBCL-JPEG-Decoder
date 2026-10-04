@@ -6,7 +6,7 @@ pixels.  The file's last byte carries in_last (the truncation cases depend on it
 usage: run_malformed_tests.py [--configs=a,b]"""
 import os, sys, json, subprocess
 HERE = os.path.dirname(os.path.abspath(__file__))
-CONFIGS = ["mcu", "rbox", "rfancy", "ep2c5", "noyrgb", "fmcu", "frbox", "frfancy"]
+CONFIGS = ["mcu", "rbox", "rfancy", "ep2c5", "noyrgb", "fmcu", "frbox", "frfancy", "wmcu"]
 
 def main():
     cfgs = CONFIGS
@@ -16,7 +16,7 @@ def main():
     n = fails = 0
     for cfg in cfgs:
         exe = os.path.join(HERE, f"obj_{cfg}", "Vjpeg_decoder")
-        raster = cfg not in ("mcu", "fmcu")
+        raster = cfg not in ("mcu", "fmcu", "wmcu")
         for name, exp in sorted(cases.items()):
             for st in (0, 30):
                 cmd = [exe, os.path.join(HERE, "malformed", name + ".jpg"), "/dev/null", "--quiet",

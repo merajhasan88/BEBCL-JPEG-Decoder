@@ -7,7 +7,8 @@
 // output back-pressure, N % of cycles), rebuilds the image from the pixel stream and writes it
 // as PNM: rgb -> P6 (P5 for grey images when the golden is P5), ycbcr -> P6 holding Y,Cb,Cr,
 // y -> P5.  Checks: every pixel exactly once, px_sof only on (0,0), px_eol exactly on x = W-1,
-// and with --raster that pixels arrive in strict raster order.  With --golden the image is
+// and with --raster that pixels arrive in strict raster order.  Built with -DNPIX=4 (FAST = 2) it
+// takes beats of px_n pixels (pixel i at px_x + i, bits 8i+7..8i), all full except at the right edge.  With --golden the image is
 // compared byte for byte against model/jpeg_golden.py (or djpeg / Pillow) output.
 // --expect-err: the frame must end with exactly these err bits and produce no pixels.
 // --expect-err-mask: the frame must end (frame_done) with at least these err bits; pixels allowed
@@ -23,6 +24,10 @@
 #include <fstream>
 #if VM_TRACE
 #include <verilated_vcd_c.h>
+#endif
+
+#ifndef NPIX
+#define NPIX 1
 #endif
 
 static vluint64_t sim_time = 0;
@@ -94,7 +99,8 @@ int main(int argc, char** argv) {
         dut->eval();
         bool in_fire = dut->in_valid && dut->in_ready;
         bool px_fire = dut->px_valid && dut->px_ready;
-        int px_x = dut->px_x, px_y = dut->px_y, c0 = dut->px_c0, c1 = dut->px_c1, c2 = dut->px_c2;
+        int px_x = dut->px_x, px_y = dut->px_y, pn = dut->px_n;
+        unsigned long long c0 = dut->px_c0, c1 = dut->px_c1, c2 = dut->px_c2;
         bool sof = dut->px_sof, eol = dut->px_eol;
         bool fs = dut->frame_start, fd = dut->frame_done;
         tick();
@@ -106,14 +112,22 @@ int main(int argc, char** argv) {
             if (!quiet) fprintf(stderr, "frame_start: %dx%d at cycle %llu\n", W, H, (unsigned long long)cycles);
         }
         if (px_fire) {
-            if (!have_dims || px_x >= W || px_y >= H) { oob++; }
-            else {
-                size_t idx = (size_t)px_y * W + px_x;
+            // a beat: px_n pixels from (px_x, px_y); fewer than NPIX only where the image row ends
+            if (pn < 1 || pn > NPIX || (have_dims && pn < NPIX && px_x + pn != W)) {
+                if (flag_err < 3) fprintf(stderr, "beat at (%d,%d): px_n=%d\n", px_x, px_y, pn);
+                flag_err++;
+            } else if (have_dims && (sof != (px_x == 0 && px_y == 0) || eol != (px_x + pn - 1 == W - 1))) {
+                if (flag_err < 3) fprintf(stderr, "flags at (%d,%d): sof=%d eol=%d\n", px_x, px_y, sof, eol);
+                flag_err++;
+            }
+            for (int i = 0; i < pn && i < NPIX; i++) {
+                int x = px_x + i;
+                if (!have_dims || x >= W || px_y >= H) { oob++; continue; }
+                size_t idx = (size_t)px_y * W + x;
                 if (seen[idx]) dup++;
-                if (raster && (long long)idx != next_raster) { if (order_err < 3) fprintf(stderr, "order: got (%d,%d), expected pixel #%lld\n", px_x, px_y, next_raster); order_err++; }
+                if (raster && (long long)idx != next_raster) { if (order_err < 3) fprintf(stderr, "order: got (%d,%d), expected pixel #%lld\n", x, px_y, next_raster); order_err++; }
                 next_raster = (long long)idx + 1;
-                if (sof != (px_x == 0 && px_y == 0) || eol != (px_x == W - 1)) { if (flag_err < 3) fprintf(stderr, "flags at (%d,%d): sof=%d eol=%d\n", px_x, px_y, sof, eol); flag_err++; }
-                seen[idx] = 1; img[idx*3] = c0; img[idx*3+1] = c1; img[idx*3+2] = c2; npx++;
+                seen[idx] = 1; img[idx*3] = (c0 >> (8*i)) & 0xFF; img[idx*3+1] = (c1 >> (8*i)) & 0xFF; img[idx*3+2] = (c2 >> (8*i)) & 0xFF; npx++;
                 last_progress = cycles;
             }
         }

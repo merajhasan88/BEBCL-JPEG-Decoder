@@ -3,12 +3,14 @@
 
 ### Against CPU decoders
 
-1. **At full clock, one laptop core beats the EP2C5 on every image.** In the performance profile
-   (3.4-3.9 GHz) libjpeg-turbo decodes donald.jpg in 6.9 ms against the EP2C5's 30.0 ms (4.4x
-   faster). It decodes the 12-megapixel phone photos in 54-73 ms against 203-284 ms (3.7-4.0x) and
-   the 4:4:4 portrait in 16.8-17.8 ms against 88.3 ms (5.0-5.3x). Even the slowest CPU decoder on
-   each large photo is 1.4-1.8x faster than the EP2C5 (libjpeg 9e with its default upsampling, or
-   stb_image, depending on the image). Apart from the pure-Python reference model, the only CPU
+1. **At full clock, one laptop core beats the EP2C5 on every image.** All CPU times in these
+   comparisons are taken at a steady 3.9 GHz, the laptop's highest measured clock: the runs were
+   measured at 3.4-3.9 GHz (the laptop throttles), so each is rescaled from its cycle count (the
+   CPU's best case). libjpeg-turbo -nosmooth (the same pixels as this decoder) decodes donald.jpg in
+   6.8 ms against the EP2C5's 30.0 ms (4.4x faster), the 12-megapixel phone photos in 53-68 ms
+   against 203-284 ms (3.8-4.1x) and the 4:4:4 portrait in 16.7 ms against 88.3 ms (5.3x). Even the
+   slowest CPU decoder on each large photo is 1.4-1.9x faster than the EP2C5 (libjpeg 9e with its
+   default upsampling, or stb_image, depending on the image). Apart from the pure-Python reference model, the only CPU
    result the FPGA beats is Pillow on the 64x64 image, where Python's per-call overhead dominates.
 2. **Per clock, the FPGA does about 10x more work.** It needs 1.0-2.25 clocks per pixel. libjpeg-turbo
    with SIMD (AVX2) needs 8-22 CPU clocks per pixel, and libjpeg 9e and stb_image need 20-52 on the
@@ -35,22 +37,40 @@
 6. **The compact core** (`FAST=0`, 3.4k LEs, 50 MHz) needs 12.8-21 clocks/pixel (0.75 s for
    donald.jpg). Use it when area matters more than speed. It is also the core that fits the EP2C5
    with raster output and Pillow-exact smoothing (up to 352 pixels wide for 4:2:0).
-7. **Among the CPU decoders** at full clock (on the 320x240 image and the large photos),
-   libjpeg-turbo is the fastest. Pillow (which uses it inside) takes 1.15-1.5x as long. OpenCV
-   takes 1.4-2.3x and FFmpeg (its own decoder, plus the RGB conversion) 1.1-2.9x. libjpeg 9e takes
-   1.8-2.3x (`-nosmooth`) and stb_image 2.0-2.9x; neither has SIMD.
+7. **Among the CPU decoders** at 3.9 GHz (on the 320x240 image and the large photos),
+   libjpeg-turbo is the fastest. Pillow (which uses it inside) takes 1.14-1.47x as long. OpenCV
+   takes 1.45-2.29x and FFmpeg (its own decoder, plus the RGB conversion) 1.18-2.91x. libjpeg 9e
+   takes 1.89-2.16x (`-nosmooth`) and stb_image 2.04-2.67x; neither has SIMD. (On some of the
+   owner's photos below FFmpeg is faster than libjpeg-turbo.)
 
-8. **On the owner's photos (2026-10-04, the section above), no FPGA decoder beats the fast CPU
-   decoders on single-image time.** One laptop core (2.3-3.9 GHz measured; the laptop throttles)
-   decodes a 12-megapixel photo in 32-66 ms with libjpeg-turbo, 35-81 ms with FFmpeg, 52-113 ms
-   with zune-jpeg (Rust) and 58-110 ms with Pillow. BEBCL-JPEG takes 87-154 ms on the Artix-7 at 150 MHz
-   (1.9-2.7x libjpeg-turbo's time) and 137-243 ms on the EP2C5 at 95 MHz; aq_djpeg 119-295 ms,
-   core_jpeg 301-308 ms (4:2:0 only). BEBCL-JPEG on the Artix-7 is faster than Go's `image/jpeg`
-   (168-306 ms) and stb_image on every photo and close to libjpeg 9e. Per clock
-   it does 8.5-12x more work than libjpeg-turbo (1.0-1.8 clocks per pixel against 8.5-19 CPU
-   clocks per pixel). What limits it is the clock (150 MHz against ~3.5 GHz) and its one pixel per
-   clock, not memory: a wider build (2-4 pixels per clock, more IDCT lanes, a faster Huffman
-   decoder) or several decoders side by side on a larger FPGA would be needed to pass one CPU core.
+8. **On the owner's photos (2026-10-04, the section above), none of the FPGA decoders measured on
+   2026-10-03 beats the fast CPU decoders on single-image time.** At a steady 3.9 GHz (the runs
+   measured 2.3-3.9 GHz) one laptop core decodes a 12-megapixel photo in 28-62 ms with libjpeg-turbo
+   -nosmooth, 25-80 ms with FFmpeg, 48-112 ms with zune-jpeg (Rust) and 54-95 ms with Pillow.
+   BEBCL-JPEG (`FAST=1`) takes 87-154 ms on the Artix-7 at 150 MHz (2.2-3.2x libjpeg-turbo
+   -nosmooth's time) and 137-243 ms on the EP2C5 at 95 MHz; aq_djpeg 119-295 ms, core_jpeg 301-308 ms
+   (4:2:0 only). BEBCL-JPEG on the Artix-7 is faster than Go's `image/jpeg` (156-305 ms) on every
+   photo, than stb_image on 20 of 24 and than libjpeg 9e with its default upsampling on 16 of 24.
+   Per clock it does 8.2-11.7x more work than libjpeg-turbo (1.0-1.8 clocks per pixel against
+   8.3-18.5 CPU clocks per pixel). What limits it is the clock (150 MHz against 3.9 GHz) and its one
+   pixel per clock, not memory.
+9. **The wide core (`FAST=2`, 2026-10-04) is faster than every CPU decoder on every photo.** On the
+   same Artix-7 board at 150 MHz it decodes the 24 files in 22.0-48.6 ms (0.255-0.561 clocks per
+   pixel, 3.0-4.0x fewer clocks than the fast core), with pixels identical to libjpeg 9e and clock
+   counts identical to the simulation. That is 0.64-0.80x the time of libjpeg-turbo -nosmooth on one
+   laptop core at a steady 3.9 GHz (1.24-1.57x faster) and 0.64-0.88x the time of the fastest CPU
+   decoder on each photo (libjpeg-turbo, or FFmpeg on three files). It decodes one Huffman symbol
+   per clock and four pixels per clock in 6,211 LUTs and 33 DSPs of the XC7A200T (with the harness);
+   at 131 MHz or more it would still beat every CPU decoder on every photo. Single-image time on one
+   CPU core is the comparison here: several CPU cores decoding several photos at once would still
+   outrun one decoder in throughput; several decoders side by side on one FPGA would answer that
+   (not built yet).
+10. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
+   times as measured while the laptop throttled (2.3-3.9 GHz), and with libjpeg-turbo's default
+   (smoothing) mode: "libjpeg-turbo 1.9-2.7x faster than BEBCL-JPEG on the Artix-7", "faster than
+   stb_image on every photo". With every CPU time at a steady 3.9 GHz and libjpeg-turbo -nosmooth,
+   which gives the same pixels as this decoder, these are 2.2-3.2x and 20 of 24 (the owner spotted
+   the throttled comparison). Per-clock figures were always computed from cycle counts and stand.
 
 ### Against other FPGA decoders
 

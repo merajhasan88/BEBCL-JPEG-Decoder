@@ -1,6 +1,7 @@
-## The three decoders on one board: Xilinx Artix-7 XC7A200T
+## The decoders on one board: Xilinx Artix-7 XC7A200T
 
-On 2026-10-03 all three decoders ran on the same remote board, an SQRL Acorn CLE-215+ (Artix-7
+On 2026-10-03 the three decoders - this library's fast core, core_jpeg and aq_djpeg - ran on the
+same remote board, and on 2026-10-04 this library's wide core (`FAST=2`, DUT 3) followed on it, an SQRL Acorn CLE-215+ (Artix-7
 XC7A200T) at [fpgas.online](https://fpgas.online) (Welland site), each in the same UART harness
 (`boards/acorn_cle215/uart_bench_core.sv`): the file arrives over the Raspberry Pi's UART, the
 decoder's clock is gated so that it only runs while its next input is waiting, and the board

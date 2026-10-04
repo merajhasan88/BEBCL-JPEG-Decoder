@@ -83,3 +83,6 @@ out/
 bench/others/third_party/
 bench/build/
 
+
+# performance model: blockstats binary, per-block statistics, 4:2:0 copies, sweep results
+model/perf/build/

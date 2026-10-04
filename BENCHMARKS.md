@@ -12,7 +12,7 @@ decoder (FPGA): the time to get the file in and the pixels out is not included.*
 |---|---|
 | Images | the owner's own photos (4000x3000 phone photos of a screen, a 3120x4160 4:2:2 photo, a 1944x2592 4:4:4 photo), three small files made from them, and donald.jpg (2048x1365, the photo used since the project started). Of these only `test_images/adapter.jpg` (the 3120x4160 photo) and the two `adp_`/`board_` files are in the repository; `scr_320x240_q90_420` was made from a screen photo, and the test set now has `adp_320x240_q90_420` (same settings, made from adapter.jpg) instead. `bench/run_bench.py` measures the files in `test_images/` by default |
 | CPU | Intel Core i7-8550U (Kaby Lake R, 4 cores / 8 threads, 1.8 GHz base, 4.0 GHz turbo), Ubuntu 22.04 |
-| CPU clock | the laptop's `performance` power profile, held for the CPU runs (`BENCH_POWER_PROFILE=performance python3 run_bench.py`); average clock measured with `perf stat` during every run: 3.4-3.9 GHz. The laptop is normally in its `power-saver` profile (~1 GHz): earlier versions of this file were measured that way without anyone noticing, which made every CPU decoder look about 4-5x slower (see "Correction" below) |
+| CPU clock | the laptop's `performance` power profile, held for the CPU runs (`BENCH_POWER_PROFILE=performance python3 run_bench.py`); average clock measured with `perf stat` during every run: 3.4-3.9 GHz (the laptop throttles), so every comparison with the FPGA uses the CPU times rescaled to a steady 3.9 GHz from each run's cycle count (column "ms at 3.9 GHz"), the CPU's best case. The laptop is normally in its `power-saver` profile (~1 GHz): earlier versions of this file were measured that way without anyone noticing, which made every CPU decoder look about 4-5x slower (see "Correction" below) |
 | CPU decoders | libjpeg-turbo 2.1.2 (C API, `-O2 -march=native` harness), libjpeg 9e (built by `bench/tools.py`), stb_image v2.27, Pillow 9.0.1, OpenCV 4.7.0 (`cv2.setNumThreads(1)`), FFmpeg 4.4.2 (its own mjpeg decoder, `-threads 1`, converting to RGB24 like the others); on the 2026-10-04 photo run also zune-jpeg 0.4.21 (Rust, run-time SIMD, built with Rust 1.99) and Go 1.27.1's standard `image/jpeg` (YCbCr converted to RGBA with `image/draw`); each pinned to one core (`taskset -c 3`), repeated in ~0.1 s batches for >= 1.5 s, median batch reported |
 | This decoder | the fast core (`FAST=1`, MCU order, RGB) at 95 MHz on the EP2C5 (`boards/ep2c5/fpga_jtag`, 4,473 of 4,608 LEs at the time, timing met at 95 MHz): **clock counts measured on the board** with the decoder clock gated so that streaming time is excluded, identical to the cycle-exact simulation for every image; and the compact core (`FAST=0`, `boards/ep2c5/fpga`, 50 MHz) from simulation |
 | Output | CPU decoders: RGB, raster order (libjpeg-turbo default and Pillow/OpenCV with smoothed chroma, `-nosmooth` and this decoder with replicated chroma: same pixels as libjpeg 9e `djpeg -nosmooth`); this decoder: RGB in MCU order (8x8 / 16x16 tiles, each pixel tagged with x, y) |
@@ -25,127 +25,127 @@ Not measured: the laptop's Intel UHD 620 hardware JPEG decoder and GPU decoders 
 
 #### adp 64x64 q25 420: 64x64 (0.00 Mpixel)
 
-| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |
-|---|---|---:|---:|---:|---:|---:|
-| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.64 GHz | 0.018 | 232.5 | 15.6 | 0.3 mJ |
-| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.62 GHz | 0.020 | 202.3 | 17.9 | 0.4 mJ |
-| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.71 GHz | 0.032 | 127.7 | 29.1 | - |
-| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.65 GHz | 0.081 | 50.4 | 72.5 | 1.6 mJ |
-| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.66 GHz | 0.035 | 116.9 | 31.3 | 0.6 mJ |
-| stb_image v2.27 | i7-8550U, 1 thread | 3.73 GHz | 0.026 | 155.4 | 24.0 | 0.5 mJ |
-| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.70 GHz | 0.023 | 177.2 | 20.9 | 0.4 mJ |
-| libjpeg 9e, default | i7-8550U, 1 thread | 3.71 GHz | 0.036 | 114.4 | 32.5 | 0.7 mJ |
-| model/jpeg_golden.py (pure Python) | i7-8550U, 1 thread | 3.76 GHz | 19.465 | 0.2 | 17867.9 | 397.3 mJ |
-| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 1.128 | 3.63 | 13.77 | 0.1 mJ (est.) |
-| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 0.061 | 67.32 | 1.41 | 0.0 mJ (est.) |
+| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |
+|---|---|---:|---:|---:|---:|---:|---:|
+| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.64 GHz | 0.018 | 0.016 | 232.5 | 15.6 | 0.3 mJ |
+| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.62 GHz | 0.020 | 0.019 | 202.3 | 17.9 | 0.4 mJ |
+| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.71 GHz | 0.032 | 0.031 | 127.7 | 29.1 | - |
+| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.65 GHz | 0.081 | 0.076 | 50.4 | 72.5 | 1.6 mJ |
+| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.66 GHz | 0.035 | 0.033 | 116.9 | 31.3 | 0.6 mJ |
+| stb_image v2.27 | i7-8550U, 1 thread | 3.73 GHz | 0.026 | 0.025 | 155.4 | 24.0 | 0.5 mJ |
+| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.70 GHz | 0.023 | 0.022 | 177.2 | 20.9 | 0.4 mJ |
+| libjpeg 9e, default | i7-8550U, 1 thread | 3.71 GHz | 0.036 | 0.034 | 114.4 | 32.5 | 0.7 mJ |
+| model/jpeg_golden.py (pure Python) | i7-8550U, 1 thread | 3.76 GHz | 19.465 | 18.766 | 0.2 | 17867.9 | 397.3 mJ |
+| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 1.128 | - | 3.63 | 13.77 | 0.1 mJ (est.) |
+| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 0.061 | - | 67.32 | 1.41 | 0.0 mJ (est.) |
 
 #### board 352x32 q6 420: 352x32 (0.01 Mpixel)
 
-| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |
-|---|---|---:|---:|---:|---:|---:|
-| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.82 GHz | 0.023 | 483.7 | 7.9 | 0.5 mJ |
-| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.86 GHz | 0.024 | 477.6 | 8.1 | 0.5 mJ |
-| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.50 GHz | 0.047 | 239.4 | 14.6 | - |
-| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.69 GHz | 0.084 | 133.5 | 27.6 | 1.8 mJ |
-| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.65 GHz | 0.044 | 253.2 | 14.4 | 1.0 mJ |
-| stb_image v2.27 | i7-8550U, 1 thread | 3.81 GHz | 0.054 | 207.1 | 18.4 | 1.0 mJ |
-| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.77 GHz | 0.042 | 269.1 | 14.0 | 0.9 mJ |
-| libjpeg 9e, default | i7-8550U, 1 thread | 3.81 GHz | 0.072 | 156.8 | 24.3 | 1.4 mJ |
-| model/jpeg_golden.py (pure Python) | i7-8550U, 1 thread | 3.59 GHz | 49.951 | 0.2 | 15928.9 | 1431.5 mJ |
-| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 2.886 | 3.90 | 12.81 | 0.2 mJ (est.) |
-| **this decoder**: FAST, MCU order, replication, RGB | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 0.139 | 81.07 | 1.17 | 0.0 mJ (est.) |
+| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |
+|---|---|---:|---:|---:|---:|---:|---:|
+| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.82 GHz | 0.023 | 0.023 | 483.7 | 7.9 | 0.5 mJ |
+| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.86 GHz | 0.024 | 0.023 | 477.6 | 8.1 | 0.5 mJ |
+| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.50 GHz | 0.047 | 0.042 | 239.4 | 14.6 | - |
+| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.69 GHz | 0.084 | 0.080 | 133.5 | 27.6 | 1.8 mJ |
+| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.65 GHz | 0.044 | 0.042 | 253.2 | 14.4 | 1.0 mJ |
+| stb_image v2.27 | i7-8550U, 1 thread | 3.81 GHz | 0.054 | 0.053 | 207.1 | 18.4 | 1.0 mJ |
+| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.77 GHz | 0.042 | 0.040 | 269.1 | 14.0 | 0.9 mJ |
+| libjpeg 9e, default | i7-8550U, 1 thread | 3.81 GHz | 0.072 | 0.070 | 156.8 | 24.3 | 1.4 mJ |
+| model/jpeg_golden.py (pure Python) | i7-8550U, 1 thread | 3.59 GHz | 49.951 | 46.006 | 0.2 | 15928.9 | 1431.5 mJ |
+| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 2.886 | - | 3.90 | 12.81 | 0.2 mJ (est.) |
+| **this decoder**: FAST, MCU order, replication, RGB | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 0.139 | - | 81.07 | 1.17 | 0.0 mJ (est.) |
 
 #### scr 320x240 q90 420: 320x240 (0.08 Mpixel)
 
-| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |
-|---|---|---:|---:|---:|---:|---:|
-| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.73 GHz | 0.278 | 276.4 | 13.5 | 5.5 mJ |
-| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.76 GHz | 0.270 | 284.9 | 13.2 | 5.6 mJ |
-| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.89 GHz | 0.315 | 243.7 | 15.9 | - |
-| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.84 GHz | 0.396 | 193.8 | 19.8 | 7.2 mJ |
-| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.89 GHz | 0.387 | 198.6 | 19.6 | 7.1 mJ |
-| stb_image v2.27 | i7-8550U, 1 thread | 3.73 GHz | 0.623 | 123.3 | 30.2 | 12.2 mJ |
-| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.91 GHz | 0.501 | 153.3 | 25.5 | 9.0 mJ |
-| libjpeg 9e, default | i7-8550U, 1 thread | 3.72 GHz | 0.739 | 103.9 | 35.8 | 15.3 mJ |
-| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 22.200 | 3.46 | 14.45 | 1.6 mJ (est.) |
-| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 1.015 | 75.65 | 1.26 | 0.1 mJ (est.) |
+| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |
+|---|---|---:|---:|---:|---:|---:|---:|
+| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.73 GHz | 0.278 | 0.266 | 276.4 | 13.5 | 5.5 mJ |
+| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.76 GHz | 0.270 | 0.260 | 284.9 | 13.2 | 5.6 mJ |
+| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.89 GHz | 0.315 | 0.314 | 243.7 | 15.9 | - |
+| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.84 GHz | 0.396 | 0.390 | 193.8 | 19.8 | 7.2 mJ |
+| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.89 GHz | 0.387 | 0.386 | 198.6 | 19.6 | 7.1 mJ |
+| stb_image v2.27 | i7-8550U, 1 thread | 3.73 GHz | 0.623 | 0.596 | 123.3 | 30.2 | 12.2 mJ |
+| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.91 GHz | 0.501 | 0.502 | 153.3 | 25.5 | 9.0 mJ |
+| libjpeg 9e, default | i7-8550U, 1 thread | 3.72 GHz | 0.739 | 0.705 | 103.9 | 35.8 | 15.3 mJ |
+| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 22.200 | - | 3.46 | 14.45 | 1.6 mJ (est.) |
+| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 1.015 | - | 75.65 | 1.26 | 0.1 mJ (est.) |
 
 #### donald 2048x1365: 2048x1365 (2.80 Mpixel)
 
-| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |
-|---|---|---:|---:|---:|---:|---:|
-| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.89 GHz | 6.920 | 404.0 | 9.6 | 127.8 mJ |
-| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.88 GHz | 6.871 | 406.9 | 9.5 | 123.6 mJ |
-| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.92 GHz | 19.992 | 139.8 | 28.0 | - |
-| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.90 GHz | 7.870 | 355.2 | 11.0 | 146.2 mJ |
-| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.84 GHz | 16.069 | 174.0 | 22.1 | 288.1 mJ |
-| stb_image v2.27 | i7-8550U, 1 thread | 3.89 GHz | 14.348 | 194.8 | 20.0 | 235.5 mJ |
-| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.89 GHz | 14.149 | 197.6 | 19.7 | 259.9 mJ |
-| libjpeg 9e, default | i7-8550U, 1 thread | 3.89 GHz | 21.704 | 128.8 | 30.2 | 404.5 mJ |
-| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 752.525 | 3.71 | 13.46 | 53.0 mJ (est.) |
-| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 29.974 | 93.26 | 1.02 | 4.4 mJ (est.) |
+| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |
+|---|---|---:|---:|---:|---:|---:|---:|
+| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.89 GHz | 6.920 | 6.910 | 404.0 | 9.6 | 127.8 mJ |
+| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.88 GHz | 6.871 | 6.845 | 406.9 | 9.5 | 123.6 mJ |
+| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.92 GHz | 19.992 | 20.074 | 139.8 | 28.0 | - |
+| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.90 GHz | 7.870 | 7.868 | 355.2 | 11.0 | 146.2 mJ |
+| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.84 GHz | 16.069 | 15.830 | 174.0 | 22.1 | 288.1 mJ |
+| stb_image v2.27 | i7-8550U, 1 thread | 3.89 GHz | 14.348 | 14.325 | 194.8 | 20.0 | 235.5 mJ |
+| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.89 GHz | 14.149 | 14.117 | 197.6 | 19.7 | 259.9 mJ |
+| libjpeg 9e, default | i7-8550U, 1 thread | 3.89 GHz | 21.704 | 21.627 | 128.8 | 30.2 | 404.5 mJ |
+| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 752.525 | - | 3.71 | 13.46 | 53.0 mJ (est.) |
+| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 29.974 | - | 93.26 | 1.02 | 4.4 mJ (est.) |
 
 #### portrait 1944x2592 444: 1944x2592 (5.04 Mpixel)
 
-| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |
-|---|---|---:|---:|---:|---:|---:|
-| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.77 GHz | 17.773 | 283.5 | 13.3 | 381.1 mJ |
-| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.87 GHz | 16.789 | 300.1 | 12.9 | 323.5 mJ |
-| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.66 GHz | 38.187 | 132.0 | 27.7 | - |
-| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.60 GHz | 21.639 | 232.9 | 15.5 | 416.5 mJ |
-| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.41 GHz | 37.066 | 135.9 | 25.1 | 624.9 mJ |
-| stb_image v2.27 | i7-8550U, 1 thread | 3.67 GHz | 48.633 | 103.6 | 35.5 | 1015.3 mJ |
-| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.83 GHz | 35.991 | 140.0 | 27.4 | 693.0 mJ |
-| libjpeg 9e, default | i7-8550U, 1 thread | 3.90 GHz | 35.740 | 141.0 | 27.7 | 664.6 mJ |
-| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 2118.629 | 2.38 | 21.02 | 149.2 mJ (est.) |
-| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 88.337 | 57.04 | 1.67 | 13.0 mJ (est.) |
+| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |
+|---|---|---:|---:|---:|---:|---:|---:|
+| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.77 GHz | 17.773 | 17.190 | 283.5 | 13.3 | 381.1 mJ |
+| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.87 GHz | 16.789 | 16.660 | 300.1 | 12.9 | 323.5 mJ |
+| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.66 GHz | 38.187 | 35.827 | 132.0 | 27.7 | - |
+| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.60 GHz | 21.639 | 19.975 | 232.9 | 15.5 | 416.5 mJ |
+| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.41 GHz | 37.066 | 32.390 | 135.9 | 25.1 | 624.9 mJ |
+| stb_image v2.27 | i7-8550U, 1 thread | 3.67 GHz | 48.633 | 45.815 | 103.6 | 35.5 | 1015.3 mJ |
+| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.83 GHz | 35.991 | 35.391 | 140.0 | 27.4 | 693.0 mJ |
+| libjpeg 9e, default | i7-8550U, 1 thread | 3.90 GHz | 35.740 | 35.777 | 141.0 | 27.7 | 664.6 mJ |
+| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 2118.629 | - | 2.38 | 21.02 | 149.2 mJ (est.) |
+| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 88.337 | - | 57.04 | 1.67 | 13.0 mJ (est.) |
 
 #### adapter 3120x4160 422: 3120x4160 (12.98 Mpixel)
 
-| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |
-|---|---|---:|---:|---:|---:|---:|
-| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.48 GHz | 65.106 | 199.4 | 17.4 | 1089.5 mJ |
-| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.52 GHz | 66.289 | 195.8 | 18.0 | 1098.9 mJ |
-| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.87 GHz | 70.426 | 184.3 | 21.0 | - |
-| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.83 GHz | 85.891 | 151.1 | 25.3 | 1465.0 mJ |
-| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.81 GHz | 98.443 | 131.8 | 28.9 | 1665.7 mJ |
-| stb_image v2.27 | i7-8550U, 1 thread | 3.76 GHz | 137.057 | 94.7 | 39.7 | 2314.0 mJ |
-| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.77 GHz | 119.094 | 109.0 | 34.6 | 2056.5 mJ |
-| libjpeg 9e, default | i7-8550U, 1 thread | 3.76 GHz | 135.280 | 95.9 | 39.1 | 2284.1 mJ |
-| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 4638.696 | 2.80 | 17.87 | 326.6 mJ (est.) |
-| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 202.465 | 64.11 | 1.48 | 29.7 mJ (est.) |
+| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |
+|---|---|---:|---:|---:|---:|---:|---:|
+| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.48 GHz | 65.106 | 58.061 | 199.4 | 17.4 | 1089.5 mJ |
+| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.52 GHz | 66.289 | 59.796 | 195.8 | 18.0 | 1098.9 mJ |
+| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.87 GHz | 70.426 | 69.867 | 184.3 | 21.0 | - |
+| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.83 GHz | 85.891 | 84.350 | 151.1 | 25.3 | 1465.0 mJ |
+| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.81 GHz | 98.443 | 96.146 | 131.8 | 28.9 | 1665.7 mJ |
+| stb_image v2.27 | i7-8550U, 1 thread | 3.76 GHz | 137.057 | 131.996 | 94.7 | 39.7 | 2314.0 mJ |
+| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.77 GHz | 119.094 | 115.277 | 109.0 | 34.6 | 2056.5 mJ |
+| libjpeg 9e, default | i7-8550U, 1 thread | 3.76 GHz | 135.280 | 130.285 | 95.9 | 39.1 | 2284.1 mJ |
+| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 4638.696 | - | 2.80 | 17.87 | 326.6 mJ (est.) |
+| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 202.465 | - | 64.11 | 1.48 | 29.7 mJ (est.) |
 
 #### phone 4000x3000 light: 4000x3000 (12.00 Mpixel)
 
-| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |
-|---|---|---:|---:|---:|---:|---:|
-| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.83 GHz | 54.507 | 220.2 | 17.4 | 918.2 mJ |
-| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.84 GHz | 53.913 | 222.6 | 17.3 | 917.1 mJ |
-| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.92 GHz | 67.424 | 178.0 | 22.0 | - |
-| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.82 GHz | 79.010 | 151.9 | 25.2 | 1276.6 mJ |
-| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.71 GHz | 91.644 | 130.9 | 28.4 | 1442.8 mJ |
-| stb_image v2.27 | i7-8550U, 1 thread | 3.90 GHz | 109.302 | 109.8 | 35.5 | 1863.0 mJ |
-| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.71 GHz | 121.229 | 99.0 | 37.5 | 2069.4 mJ |
-| libjpeg 9e, default | i7-8550U, 1 thread | 3.80 GHz | 139.048 | 86.3 | 44.0 | 2364.6 mJ |
-| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 3862.994 | 3.11 | 16.10 | 272.0 mJ (est.) |
-| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 203.171 | 59.06 | 1.61 | 29.8 mJ (est.) |
+| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |
+|---|---|---:|---:|---:|---:|---:|---:|
+| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.83 GHz | 54.507 | 53.472 | 220.2 | 17.4 | 918.2 mJ |
+| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.84 GHz | 53.913 | 53.139 | 222.6 | 17.3 | 917.1 mJ |
+| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.92 GHz | 67.424 | 67.787 | 178.0 | 22.0 | - |
+| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.82 GHz | 79.010 | 77.430 | 151.9 | 25.2 | 1276.6 mJ |
+| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.71 GHz | 91.644 | 87.250 | 130.9 | 28.4 | 1442.8 mJ |
+| stb_image v2.27 | i7-8550U, 1 thread | 3.90 GHz | 109.302 | 109.246 | 109.8 | 35.5 | 1863.0 mJ |
+| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.71 GHz | 121.229 | 115.323 | 99.0 | 37.5 | 2069.4 mJ |
+| libjpeg 9e, default | i7-8550U, 1 thread | 3.80 GHz | 139.048 | 135.447 | 86.3 | 44.0 | 2364.6 mJ |
+| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 3862.994 | - | 3.11 | 16.10 | 272.0 mJ (est.) |
+| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 203.171 | - | 59.06 | 1.61 | 29.8 mJ (est.) |
 
 #### phone 4000x3000 dense: 4000x3000 (12.00 Mpixel)
 
-| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |
-|---|---|---:|---:|---:|---:|---:|
-| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.77 GHz | 70.082 | 171.2 | 22.0 | 1072.6 mJ |
-| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.64 GHz | 73.385 | 163.5 | 22.2 | 1061.3 mJ |
-| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.68 GHz | 93.242 | 128.7 | 28.6 | - |
-| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.81 GHz | 96.497 | 124.4 | 30.6 | 1438.4 mJ |
-| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.69 GHz | 108.317 | 110.8 | 33.3 | 1733.4 mJ |
-| stb_image v2.27 | i7-8550U, 1 thread | 3.74 GHz | 147.450 | 81.4 | 45.9 | 2214.0 mJ |
-| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.76 GHz | 135.119 | 88.8 | 42.3 | 2027.4 mJ |
-| libjpeg 9e, default | i7-8550U, 1 thread | 3.77 GHz | 163.859 | 73.2 | 51.5 | 2437.9 mJ |
-| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 4348.150 | 2.76 | 18.12 | 306.1 mJ (est.) |
-| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 283.671 | 42.30 | 2.25 | 41.6 mJ (est.) |
+| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |
+|---|---|---:|---:|---:|---:|---:|---:|
+| libjpeg-turbo 2.1.2, default (smoothing) | i7-8550U, 1 thread | 3.77 GHz | 70.082 | 67.782 | 171.2 | 22.0 | 1072.6 mJ |
+| libjpeg-turbo 2.1.2, -nosmooth | i7-8550U, 1 thread | 3.64 GHz | 73.385 | 68.418 | 163.5 | 22.2 | 1061.3 mJ |
+| FFmpeg 4.4.2 mjpeg decoder, RGB24 out | i7-8550U, 1 thread | 3.68 GHz | 93.242 | 87.911 | 128.7 | 28.6 | - |
+| Pillow 9.0.1 (libjpeg-turbo) | i7-8550U, 1 thread | 3.81 GHz | 96.497 | 94.270 | 124.4 | 30.6 | 1438.4 mJ |
+| OpenCV 4.7 imdecode (libjpeg-turbo) | i7-8550U, 1 thread | 3.69 GHz | 108.317 | 102.345 | 110.8 | 33.3 | 1733.4 mJ |
+| stb_image v2.27 | i7-8550U, 1 thread | 3.74 GHz | 147.450 | 141.325 | 81.4 | 45.9 | 2214.0 mJ |
+| libjpeg 9e, -nosmooth | i7-8550U, 1 thread | 3.76 GHz | 135.119 | 130.234 | 88.8 | 42.3 | 2027.4 mJ |
+| libjpeg 9e, default | i7-8550U, 1 thread | 3.77 GHz | 163.859 | 158.565 | 73.2 | 51.5 | 2437.9 mJ |
+| **this decoder**: MCU order, replication, RGB | EP2C5, compact core (`boards/ep2c5/fpga`) | 50 MHz | 4348.150 | - | 2.76 | 18.12 | 306.1 mJ (est.) |
+| **this decoder**: FAST, MCU order, replication, RGB \* | EP2C5, fast core (`boards/ep2c5/fpga_jtag`) | 95 MHz | 283.671 | - | 42.30 | 2.25 | 41.6 mJ (est.) |
 
-CPU: power profile `performance`, clock = average measured by `perf stat` during each run (cycles / task time); CPU clocks per pixel = time x that clock / pixels.  \* this clock count was also measured on the EP2C5 board (identical to the simulation), see `bench/board_jtag_95mhz.txt`.  FPGA energy: PowerPlay vectorless estimate x decode time (low confidence).
+CPU: power profile `performance`, clock = average measured by `perf stat` during each run (cycles / task time); ms at 3.9 GHz = the run's cycles at a steady 3.9 GHz (the laptop's highest measured clock: the CPU's best case, used in all comparisons with the FPGA); CPU clocks per pixel = time x that clock / pixels.  \* this clock count was also measured on the EP2C5 board (identical to the simulation), see `bench/board_jtag_95mhz.txt`.  FPGA energy: PowerPlay vectorless estimate x decode time (low confidence).
 
 #### The same laptop in its `power-saver` power profile
 
@@ -207,9 +207,10 @@ their own Fmax on the EP2C35; this decoder's times are at the 95 MHz it runs at 
 | phone photo 6, 4000x3000 4:2:0 | 12,000,000 | 1.61 clocks/px, 203.17 ms at 95 MHz (EP2C5); bit-exact | fails (196096 of 12000000 pixels, decoded a 512x384 image) | 3.24 clocks/px, 646.41 ms at 60 MHz; PSNR 42.9 dB, max diff 6 |
 | phone photo 7, 4000x3000 4:2:0 | 12,000,000 | 1.82 clocks/px, 229.49 ms at 95 MHz (EP2C5); bit-exact | fails (196096 of 12000000 pixels, decoded a 512x384 image) | 3.62 clocks/px, 721.45 ms at 60 MHz; PSNR 42.9 dB, max diff 9 |
 
-## The three decoders on one board: Xilinx Artix-7 XC7A200T
+## The decoders on one board: Xilinx Artix-7 XC7A200T
 
-On 2026-10-03 all three decoders ran on the same remote board, an SQRL Acorn CLE-215+ (Artix-7
+On 2026-10-03 the three decoders - this library's fast core, core_jpeg and aq_djpeg - ran on the
+same remote board, and on 2026-10-04 this library's wide core (`FAST=2`, DUT 3) followed on it, an SQRL Acorn CLE-215+ (Artix-7
 XC7A200T) at [fpgas.online](https://fpgas.online) (Welland site), each in the same UART harness
 (`boards/acorn_cle215/uart_bench_core.sv`): the file arrives over the Raspberry Pi's UART, the
 decoder's clock is gated so that it only runs while its next input is waiting, and the board
@@ -220,42 +221,43 @@ Vivado 2026.1 at a clock it meets (-2 speed grade timing). Files: the owner's 12
 were checked against their own simulations (`bench/others/tb_other.cpp`): identical clock counts
 and checksums for every file they decoded.
 
-Board: SQRL Acorn CLE-215+ (Xilinx Artix-7 XC7A200T-3) at fpgas.online, Welland site, pi46 (Raspberry Pi 5: JTAG and UART on GPIO). Date: 2026-10-03. Timing: Vivado 2026.1, part xc7a200tfbg484-2 (conservative; the board's chip is -3).
+Board: SQRL Acorn CLE-215+ (Xilinx Artix-7 XC7A200T-3) at fpgas.online, Welland site, pi46 (Raspberry Pi 5: JTAG and UART on GPIO). Date: 2026-10-03 (DUTs 0-2), 2026-10-04 (DUT 3). Timing: Vivado 2026.1, part xc7a200tfbg484-2 (conservative; the board's chip is -3).
 
 | decoder | board clock | Fmax (Vivado) | LUTs | flip-flops | block RAM (36 kb tiles) | DSP48E1 |
 |---|---:|---:|---:|---:|---:|---:|
 | this library, fast core (MCU order, RGB) | 150.0 MHz | 160 MHz | 2,488 | 2,663 | 7.5 | 17 |
 | ultraembedded core_jpeg (SUPPORT_WRITABLE_DHT=1) | 92.3 MHz | 95-104 MHz (3 builds) | 6,681 | 6,037 | 7 | 32 |
 | H. Ishihara aq_djpeg | 150.0 MHz | 153 MHz | 4,919 | 4,933 | 4 | 14 |
+| this library, wide core (FAST=2, 4 pixels per beat, MCU order, RGB) | 150.0 MHz | 150 MHz (+0.013 ns) | 6,211 | 7,575 | 9 | 33 |
 
 Areas include the same UART harness (`uart_bench_core.sv`) around each decoder.
 
-| file | size | this library | core_jpeg | aq_djpeg |
-|---|---|---|---|---|
-| adapter.jpg | 3120x4160 4:2:2 | 1.482 clk/px, 128.2 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.870 clk/px, 248.4 ms; = its simulation; vs libjpeg max diff 6, PSNR 43.0 dB |
-| IMG20260405182829.jpg | 3120x4160 4:2:2 | 1.611 clk/px, 139.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.133 clk/px, 271.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB |
-| IMG20260405182833.jpg | 3120x4160 4:2:2 | 1.659 clk/px, 143.5 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.242 clk/px, 280.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.2 dB |
-| IMG20260425135544.jpg | 3120x4160 4:2:2 | 1.475 clk/px, 127.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.625 clk/px, 227.2 ms; = its simulation; vs libjpeg max diff 6, PSNR 41.7 dB |
-| IMG20260425135628.jpg | 4160x3120 4:2:2 | 1.780 clk/px, 154.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 3.405 clk/px, 294.6 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB |
-| IMG20260425141210.jpg | 4160x3120 4:2:2 | 1.469 clk/px, 127.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.687 clk/px, 232.5 ms; = its simulation; vs libjpeg max diff 7, PSNR 42.3 dB |
-| IMG20260523191343.jpg | 3120x4160 4:2:2 | 1.544 clk/px, 133.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.930 clk/px, 253.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB |
-| IMG20260612210949.jpg | 4160x3120 4:2:2 | 1.310 clk/px, 113.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.204 clk/px, 190.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB |
-| IMG20260716020409.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.909 clk/px, 165.2 ms; = its simulation; vs libjpeg max diff 5, PSNR 44.0 dB |
-| IMG20260716020422.jpg | 4160x3120 4:2:2 | 1.187 clk/px, 102.7 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.916 clk/px, 165.8 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.0 dB |
-| IMG20260716020424.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.906 clk/px, 164.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.2 dB |
-| IMG20260723160735.jpg | 4160x3120 4:2:2 | 1.338 clk/px, 115.8 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.241 clk/px, 193.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 41.6 dB |
-| adapter_420.jpg | 3120x4160 4:2:0 | 1.074 clk/px, 92.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 1.984 clk/px, 171.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB |
-| IMG20260405182829_420.jpg | 3120x4160 4:2:0 | 1.174 clk/px, 101.5 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.194 clk/px, 189.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB |
-| IMG20260405182833_420.jpg | 3120x4160 4:2:0 | 1.207 clk/px, 104.4 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.271 clk/px, 196.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.0 dB |
-| IMG20260425135544_420.jpg | 3120x4160 4:2:0 | 1.152 clk/px, 99.7 ms; identical to libjpeg 9e | 2.148 clk/px, 302.0 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.0 dB | 1.967 clk/px, 170.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.4 dB |
-| IMG20260425135628_420.jpg | 4160x3120 4:2:0 | 1.366 clk/px, 118.2 ms; identical to libjpeg 9e | 2.188 clk/px, 307.7 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.3 dB | 2.614 clk/px, 226.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.7 dB |
-| IMG20260425141210_420.jpg | 4160x3120 4:2:0 | 1.106 clk/px, 95.7 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.5 dB | 1.947 clk/px, 168.5 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.9 dB |
-| IMG20260523191343_420.jpg | 3120x4160 4:2:0 | 1.156 clk/px, 100.1 ms; identical to libjpeg 9e | 2.152 clk/px, 302.6 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 2.072 clk/px, 179.3 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB |
-| IMG20260612210949_420.jpg | 4160x3120 4:2:0 | 1.018 clk/px, 88.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.6 dB | 1.492 clk/px, 129.1 ms; = its simulation; vs libjpeg max diff 8, PSNR 43.0 dB |
-| IMG20260716020409_420.jpg | 4160x3120 4:2:0 | 1.006 clk/px, 87.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.0 dB | 1.379 clk/px, 119.4 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.2 dB |
-| IMG20260716020422_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.4 dB | 1.397 clk/px, 120.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.5 dB |
-| IMG20260716020424_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.7 dB | 1.388 clk/px, 120.1 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.8 dB |
-| IMG20260723160735_420.jpg | 4160x3120 4:2:0 | 1.060 clk/px, 91.8 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB | 1.643 clk/px, 142.1 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.6 dB |
+| file | size | this library | core_jpeg | aq_djpeg | this library, wide core |
+|---|---|---|---|---|---|
+| adapter.jpg | 3120x4160 4:2:2 | 1.482 clk/px, 128.2 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.870 clk/px, 248.4 ms; = its simulation; vs libjpeg max diff 6, PSNR 43.0 dB | 0.466 clk/px, 40.3 ms; identical to libjpeg 9e |
+| IMG20260405182829.jpg | 3120x4160 4:2:2 | 1.611 clk/px, 139.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.133 clk/px, 271.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB | 0.527 clk/px, 45.6 ms; identical to libjpeg 9e |
+| IMG20260405182833.jpg | 3120x4160 4:2:2 | 1.659 clk/px, 143.5 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 3.242 clk/px, 280.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.2 dB | 0.546 clk/px, 47.3 ms; identical to libjpeg 9e |
+| IMG20260425135544.jpg | 3120x4160 4:2:2 | 1.475 clk/px, 127.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.625 clk/px, 227.2 ms; = its simulation; vs libjpeg max diff 6, PSNR 41.7 dB | 0.426 clk/px, 36.8 ms; identical to libjpeg 9e |
+| IMG20260425135628.jpg | 4160x3120 4:2:2 | 1.780 clk/px, 154.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 3.405 clk/px, 294.6 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB | 0.561 clk/px, 48.6 ms; identical to libjpeg 9e |
+| IMG20260425141210.jpg | 4160x3120 4:2:2 | 1.469 clk/px, 127.1 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.687 clk/px, 232.5 ms; = its simulation; vs libjpeg max diff 7, PSNR 42.3 dB | 0.442 clk/px, 38.2 ms; identical to libjpeg 9e |
+| IMG20260523191343.jpg | 3120x4160 4:2:2 | 1.544 clk/px, 133.6 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 128x176 (stalled, watchdog) | 2.930 clk/px, 253.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB | 0.472 clk/px, 40.8 ms; identical to libjpeg 9e |
+| IMG20260612210949.jpg | 4160x3120 4:2:2 | 1.310 clk/px, 113.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.204 clk/px, 190.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.1 dB | 0.348 clk/px, 30.1 ms; identical to libjpeg 9e |
+| IMG20260716020409.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.909 clk/px, 165.2 ms; = its simulation; vs libjpeg max diff 5, PSNR 44.0 dB | 0.295 clk/px, 25.5 ms; identical to libjpeg 9e |
+| IMG20260716020422.jpg | 4160x3120 4:2:2 | 1.187 clk/px, 102.7 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.916 clk/px, 165.8 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.0 dB | 0.298 clk/px, 25.8 ms; identical to libjpeg 9e |
+| IMG20260716020424.jpg | 4160x3120 4:2:2 | 1.184 clk/px, 102.4 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 1.906 clk/px, 164.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.2 dB | 0.296 clk/px, 25.6 ms; identical to libjpeg 9e |
+| IMG20260723160735.jpg | 4160x3120 4:2:2 | 1.338 clk/px, 115.8 ms; identical to libjpeg 9e | fails: 0 of 12,979,200 pixels, reported size 176x128 (stalled, watchdog) | 2.241 clk/px, 193.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 41.6 dB | 0.362 clk/px, 31.3 ms; identical to libjpeg 9e |
+| adapter_420.jpg | 3120x4160 4:2:0 | 1.074 clk/px, 92.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.1 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 1.984 clk/px, 171.7 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB | 0.321 clk/px, 27.8 ms; identical to libjpeg 9e |
+| IMG20260405182829_420.jpg | 3120x4160 4:2:0 | 1.174 clk/px, 101.5 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.194 clk/px, 189.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.9 dB | 0.380 clk/px, 32.9 ms; identical to libjpeg 9e |
+| IMG20260405182833_420.jpg | 3120x4160 4:2:0 | 1.207 clk/px, 104.4 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.6 dB | 2.271 clk/px, 196.5 ms; = its simulation; vs libjpeg max diff 5, PSNR 43.0 dB | 0.396 clk/px, 34.2 ms; identical to libjpeg 9e |
+| IMG20260425135544_420.jpg | 3120x4160 4:2:0 | 1.152 clk/px, 99.7 ms; identical to libjpeg 9e | 2.148 clk/px, 302.0 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.0 dB | 1.967 clk/px, 170.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.4 dB | 0.328 clk/px, 28.4 ms; identical to libjpeg 9e |
+| IMG20260425135628_420.jpg | 4160x3120 4:2:0 | 1.366 clk/px, 118.2 ms; identical to libjpeg 9e | 2.188 clk/px, 307.7 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.3 dB | 2.614 clk/px, 226.2 ms; = its simulation; vs libjpeg max diff 12, PSNR 42.7 dB | 0.417 clk/px, 36.1 ms; identical to libjpeg 9e |
+| IMG20260425141210_420.jpg | 4160x3120 4:2:0 | 1.106 clk/px, 95.7 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.5 dB | 1.947 clk/px, 168.5 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.9 dB | 0.316 clk/px, 27.3 ms; identical to libjpeg 9e |
+| IMG20260523191343_420.jpg | 3120x4160 4:2:0 | 1.156 clk/px, 100.1 ms; identical to libjpeg 9e | 2.152 clk/px, 302.6 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.3 dB | 2.072 clk/px, 179.3 ms; = its simulation; vs libjpeg max diff 5, PSNR 42.7 dB | 0.330 clk/px, 28.6 ms; identical to libjpeg 9e |
+| IMG20260612210949_420.jpg | 4160x3120 4:2:0 | 1.018 clk/px, 88.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 8, PSNR 42.6 dB | 1.492 clk/px, 129.1 ms; = its simulation; vs libjpeg max diff 8, PSNR 43.0 dB | 0.262 clk/px, 22.7 ms; identical to libjpeg 9e |
+| IMG20260716020409_420.jpg | 4160x3120 4:2:0 | 1.006 clk/px, 87.1 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.0 dB | 1.379 clk/px, 119.4 ms; = its simulation; vs libjpeg max diff 4, PSNR 44.2 dB | 0.255 clk/px, 22.1 ms; identical to libjpeg 9e |
+| IMG20260716020422_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.4 dB | 1.397 clk/px, 120.9 ms; = its simulation; vs libjpeg max diff 5, PSNR 46.5 dB | 0.255 clk/px, 22.0 ms; identical to libjpeg 9e |
+| IMG20260716020424_420.jpg | 4160x3120 4:2:0 | 1.005 clk/px, 86.9 ms; identical to libjpeg 9e | 2.141 clk/px, 301.0 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.7 dB | 1.388 clk/px, 120.1 ms; = its simulation; vs libjpeg max diff 4, PSNR 46.8 dB | 0.255 clk/px, 22.0 ms; identical to libjpeg 9e |
+| IMG20260723160735_420.jpg | 4160x3120 4:2:0 | 1.060 clk/px, 91.8 ms; identical to libjpeg 9e | 2.143 clk/px, 301.3 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.2 dB | 1.643 clk/px, 142.1 ms; = its simulation; vs libjpeg max diff 6, PSNR 42.6 dB | 0.285 clk/px, 24.7 ms; identical to libjpeg 9e |
 
 ## CPU decoders against the three FPGA decoders on the owner's photos (2026-10-04)
 
@@ -263,60 +265,67 @@ The CPU decoders were run at full clock on the same 24 files as the Artix-7 boar
 owner's 12 phone photos and their 4:2:0 re-encodes (`run_bench.py bench_photos_2026-10-04.json
 <files>`, `BENCH_POWER_PROFILE=performance`). The laptop throttles under sustained load: the
 clock measured during each run is kept in `bench_photos_2026-10-04.json`; libjpeg-turbo was re-run
-on the photos where it had run below 3.4 GHz and its faster run is shown. Generated by
+on the photos where it had run below 3.4 GHz and its faster run is shown. The table gives every CPU
+time rescaled to a steady 3.9 GHz from the run's cycle count (the CPU's best case). Generated by
 `bench/photos_report.py`.
 
-CPU: one core of the laptop's i7-8550U in the performance profile, measured clock 2.30-3.92 GHz (`perf stat`), single thread, file already in memory; times in ms per photo.  FPGA: decoder clocks counted on the board (ideal input), times at the board clock.
+CPU: one core of the laptop's i7-8550U in the performance profile, single thread, file already in memory; times in ms per photo **at a steady 3.9 GHz**: the laptop throttled to 2.30-3.92 GHz during the runs (`perf stat`), so each time is its cycle count / 3.9 GHz, the CPU's best case.  FPGA: decoder clocks counted on the board (ideal input), times at the board clock.
 
 #### The owner's 12 photos (4:2:2, EXIF thumbnail)
 
-| photo | libjpeg-turbo | FFmpeg | zune-jpeg | Pillow | OpenCV | libjpeg 9e -nosmooth | stb_image | Go image/jpeg | **BEBCL-JPEG** Artix-7 150 MHz | BEBCL-JPEG EP2C5 95 MHz | aq_djpeg Artix-7 150 MHz | core_jpeg Artix-7 92.3 MHz |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| adapter | 57.6 | 70.0 | 113.0 | 84.3 | 95.9 | 121.5 | 140.2 | 306.1 | **128.2** | 202.5 | 248.4 | fails |
-| IMG20260405182829 | 60.3 | 73.7 | 80.7 | 87.4 | 99.3 | 124.1 | 143.8 | 265.5 | **139.4** | 220.1 | 271.1 | fails |
-| IMG20260405182833 | 61.1 | 76.4 | 82.7 | 97.0 | 102.3 | 127.1 | 144.6 | 263.5 | **143.5** | 226.6 | 280.5 | fails |
-| IMG20260425135544 | 54.3 | 66.2 | 71.6 | 80.9 | 90.5 | 107.7 | 136.6 | 262.5 | **127.6** | 201.5 | 227.2 | fails |
-| IMG20260425135628 | 65.6 | 81.2 | 85.1 | 97.5 | 107.4 | 132.4 | 166.8 | 279.2 | **154.1** | 243.2 | 294.6 | fails |
-| IMG20260425141210 | 57.7 | 71.7 | 75.5 | 88.4 | 101.5 | 120.0 | 144.5 | 244.4 | **127.1** | 200.6 | 232.5 | fails |
-| IMG20260523191343 | 61.0 | 77.9 | 80.5 | 110.3 | 159.6 | 241.7 | 182.6 | 281.1 | **133.6** | 210.9 | 253.5 | fails |
-| IMG20260612210949 | 54.0 | 77.6 | 71.0 | 82.7 | 92.1 | 106.5 | 137.6 | 225.2 | **113.4** | 179.0 | 190.7 | fails |
-| IMG20260716020409 | 41.8 | 47.3 | 60.8 | 71.9 | 81.2 | 107.1 | 124.3 | 201.4 | **102.4** | 161.7 | 165.2 | fails |
-| IMG20260716020422 | 38.5 | 55.2 | 53.6 | 83.5 | 93.7 | 97.3 | 142.2 | 199.8 | **102.7** | 162.2 | 165.8 | fails |
-| IMG20260716020424 | 38.4 | 53.3 | 53.8 | 84.2 | 95.4 | 94.7 | 142.3 | 197.7 | **102.4** | 161.7 | 164.9 | fails |
-| IMG20260723160735 | 50.3 | 58.3 | 65.6 | 79.2 | 88.6 | 100.3 | 130.0 | 223.2 | **115.8** | 182.8 | 193.9 | fails |
+| photo | libjpeg-turbo -nosmooth | libjpeg-turbo | FFmpeg | zune-jpeg | Pillow | OpenCV | libjpeg 9e -nosmooth | stb_image | Go image/jpeg | **BEBCL-JPEG `FAST=2`** Artix-7 150 MHz | BEBCL-JPEG `FAST=1` Artix-7 150 MHz | BEBCL-JPEG `FAST=1` EP2C5 95 MHz | aq_djpeg Artix-7 150 MHz | core_jpeg Artix-7 92.3 MHz |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| adapter | 55.5 | 56.4 | 70.0 | 112.4 | 83.9 | 95.6 | 119.7 | 138.3 | 304.5 | **40.3** | 128.2 | 202.5 | 248.4 | fails |
+| IMG20260405182829 | 58.8 | 60.1 | 73.1 | 81.0 | 87.2 | 98.8 | 124.1 | 143.1 | 266.2 | **45.6** | 139.4 | 220.1 | 271.1 | fails |
+| IMG20260405182833 | 60.2 | 61.2 | 74.9 | 82.9 | 95.0 | 100.4 | 127.1 | 144.0 | 264.6 | **47.3** | 143.5 | 226.6 | 280.5 | fails |
+| IMG20260425135544 | 49.6 | 52.8 | 63.5 | 71.9 | 79.7 | 90.0 | 107.4 | 135.2 | 263.1 | **36.8** | 127.6 | 201.5 | 227.2 | fails |
+| IMG20260425135628 | 61.5 | 62.9 | 80.0 | 85.4 | 92.3 | 102.3 | 127.7 | 154.5 | 279.9 | **48.6** | 154.1 | 243.2 | 294.6 | fails |
+| IMG20260425141210 | 52.3 | 54.7 | 48.0 | 75.6 | 82.9 | 93.7 | 112.0 | 135.2 | 244.4 | **38.2** | 127.1 | 200.6 | 232.5 | fails |
+| IMG20260523191343 | 57.3 | 58.3 | 62.5 | 80.3 | 81.6 | 98.2 | 150.2 | 131.7 | 280.7 | **40.8** | 133.6 | 210.9 | 253.5 | fails |
+| IMG20260612210949 | 46.5 | 48.9 | 60.2 | 71.0 | 78.3 | 87.4 | 100.8 | 123.8 | 225.6 | **30.1** | 113.4 | 179.0 | 190.7 | fails |
+| IMG20260716020409 | 38.2 | 40.2 | 29.6 | 61.0 | 68.8 | 76.5 | 83.0 | 109.0 | 200.8 | **25.5** | 102.4 | 161.7 | 165.2 | fails |
+| IMG20260716020422 | 34.0 | 35.9 | 43.6 | 53.5 | 65.3 | 72.9 | 75.3 | 111.9 | 199.7 | **25.8** | 102.7 | 162.2 | 165.8 | fails |
+| IMG20260716020424 | 34.5 | 36.2 | 44.2 | 53.5 | 65.2 | 74.0 | 74.3 | 111.2 | 197.3 | **25.6** | 102.4 | 161.7 | 164.9 | fails |
+| IMG20260723160735 | 44.6 | 45.8 | 56.5 | 65.4 | 75.6 | 82.8 | 94.9 | 123.4 | 223.2 | **31.3** | 115.8 | 182.8 | 193.9 | fails |
 
-BEBCL-JPEG on the Artix-7 takes 2.10-2.67x libjpeg-turbo's time per photo; per clock it does 9.1-11.4x more work (1.18-1.78 clocks/pixel against libjpeg-turbo's 10.8-18.9 CPU clocks/pixel at the measured clock).
+BEBCL-JPEG (`FAST=1`) on the Artix-7 takes 2.31-3.02x the time of libjpeg-turbo -nosmooth at 3.9 GHz per photo (2.31-3.46x that of the fastest CPU decoder on each photo); per clock it does 8.6-11.3x more work (1.18-1.78 clocks/pixel against libjpeg-turbo's 10.2-18.5 CPU clocks/pixel).
+
+BEBCL-JPEG `FAST=2` (the wide core) on the Artix-7 at 150 MHz takes 0.65-0.79x the time of libjpeg-turbo -nosmooth at 3.9 GHz (1.27-1.55x faster) and 0.65-0.86x that of the fastest CPU decoder on each photo; 0.295-0.561 clocks/pixel.
 
 #### 4:2:0 re-encodes of the same photos (core_jpeg supports only 4:4:4 / 4:2:0)
 
-| photo | libjpeg-turbo | FFmpeg | zune-jpeg | Pillow | OpenCV | libjpeg 9e -nosmooth | stb_image | Go image/jpeg | **BEBCL-JPEG** Artix-7 150 MHz | BEBCL-JPEG EP2C5 95 MHz | aq_djpeg Artix-7 150 MHz | core_jpeg Artix-7 92.3 MHz |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| adapter_420 | 45.1 | 51.6 | 63.4 | 72.4 | 84.1 | 92.9 | 104.3 | 198.3 | **92.9** | 146.7 | 171.7 | 301.1 |
-| IMG20260405182829_420 | 46.8 | 56.4 | 69.9 | 74.7 | 88.7 | 98.0 | 109.1 | 216.4 | **101.5** | 160.3 | 189.9 | 301.0 |
-| IMG20260405182833_420 | 55.4 | 57.1 | 71.0 | 76.6 | 87.6 | 105.8 | 122.3 | 218.3 | **104.4** | 164.9 | 196.5 | 301.0 |
-| IMG20260425135544_420 | 48.5 | 52.2 | 66.8 | 70.1 | 85.5 | 90.1 | 104.3 | 203.6 | **99.7** | 157.4 | 170.2 | 302.0 |
-| IMG20260425135628_420 | 56.3 | 64.5 | 78.6 | 80.5 | 92.9 | 112.0 | 130.0 | 230.3 | **118.2** | 186.6 | 226.2 | 307.7 |
-| IMG20260425141210_420 | 45.7 | 54.2 | 68.5 | 72.7 | 84.8 | 93.8 | 108.9 | 207.3 | **95.7** | 151.1 | 168.5 | 301.3 |
-| IMG20260523191343_420 | 46.9 | 55.4 | 69.6 | 74.3 | 86.2 | 95.1 | 109.5 | 211.5 | **100.1** | 158.0 | 179.3 | 302.6 |
-| IMG20260612210949_420 | 39.2 | 43.6 | 60.3 | 66.6 | 79.9 | 80.8 | 100.1 | 189.1 | **88.1** | 139.1 | 129.1 | 301.0 |
-| IMG20260716020409_420 | 32.0 | 42.7 | 52.4 | 57.6 | 70.4 | 62.3 | 89.1 | 167.6 | **87.1** | 137.4 | 119.4 | 301.0 |
-| IMG20260716020422_420 | 37.6 | 56.9 | 53.0 | 69.8 | 85.4 | 108.2 | 159.4 | 172.9 | **86.9** | 137.3 | 120.9 | 301.0 |
-| IMG20260716020424_420 | 32.2 | 34.9 | 52.5 | 58.1 | 69.6 | 62.0 | 88.1 | 169.8 | **86.9** | 137.3 | 120.1 | 301.0 |
-| IMG20260723160735_420 | 39.5 | 43.5 | 61.9 | 79.4 | 94.2 | 98.4 | 118.0 | 189.0 | **91.8** | 144.9 | 142.1 | 301.3 |
+| photo | libjpeg-turbo -nosmooth | libjpeg-turbo | FFmpeg | zune-jpeg | Pillow | OpenCV | libjpeg 9e -nosmooth | stb_image | Go image/jpeg | **BEBCL-JPEG `FAST=2`** Artix-7 150 MHz | BEBCL-JPEG `FAST=1` Artix-7 150 MHz | BEBCL-JPEG `FAST=1` EP2C5 95 MHz | aq_djpeg Artix-7 150 MHz | core_jpeg Artix-7 92.3 MHz |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| adapter_420 | 41.9 | 41.6 | 50.2 | 63.3 | 68.2 | 79.1 | 88.8 | 100.4 | 195.9 | **27.8** | 92.9 | 146.7 | 171.7 | 301.1 |
+| IMG20260405182829_420 | 45.2 | 43.9 | 53.5 | 65.7 | 70.6 | 82.7 | 93.7 | 104.2 | 204.8 | **32.9** | 101.5 | 160.3 | 189.9 | 301.0 |
+| IMG20260405182833_420 | 45.4 | 47.3 | 55.0 | 66.6 | 72.3 | 82.4 | 97.4 | 107.8 | 209.1 | **34.2** | 104.4 | 164.9 | 196.5 | 301.0 |
+| IMG20260425135544_420 | 39.9 | 41.4 | 45.7 | 63.3 | 66.9 | 79.2 | 84.4 | 100.1 | 193.0 | **28.4** | 99.7 | 157.4 | 170.2 | 302.0 |
+| IMG20260425135628_420 | 49.0 | 50.3 | 61.8 | 72.6 | 75.5 | 87.4 | 101.8 | 117.0 | 218.5 | **36.1** | 118.2 | 186.6 | 226.2 | 307.7 |
+| IMG20260425141210_420 | 41.8 | 41.9 | 50.8 | 64.3 | 68.4 | 80.0 | 88.3 | 102.8 | 195.0 | **27.3** | 95.7 | 151.1 | 168.5 | 301.3 |
+| IMG20260523191343_420 | 43.0 | 42.7 | 52.3 | 64.7 | 69.8 | 80.4 | 88.9 | 103.4 | 197.5 | **28.6** | 100.1 | 158.0 | 179.3 | 302.6 |
+| IMG20260612210949_420 | 35.6 | 35.6 | 41.1 | 56.7 | 62.1 | 73.4 | 74.3 | 93.4 | 176.8 | **22.7** | 88.1 | 139.1 | 129.1 | 301.0 |
+| IMG20260716020409_420 | 27.5 | 28.8 | 25.2 | 48.4 | 54.3 | 65.3 | 57.0 | 83.9 | 155.7 | **22.1** | 87.1 | 137.4 | 119.4 | 301.0 |
+| IMG20260716020422_420 | 29.6 | 29.2 | 34.9 | 48.8 | 54.1 | 64.7 | 66.7 | 97.5 | 162.0 | **22.0** | 86.9 | 137.3 | 120.9 | 301.0 |
+| IMG20260716020424_420 | 28.2 | 28.4 | 32.7 | 48.7 | 55.7 | 66.2 | 58.9 | 84.1 | 159.7 | **22.0** | 86.9 | 137.3 | 120.1 | 301.0 |
+| IMG20260723160735_420 | 35.2 | 36.4 | 39.6 | 57.8 | 62.2 | 72.2 | 76.1 | 92.3 | 177.7 | **24.7** | 91.8 | 144.9 | 142.1 | 301.3 |
 
-BEBCL-JPEG on the Artix-7 takes 1.89-2.72x libjpeg-turbo's time per photo; per clock it does 8.5-11.8x more work (1.00-1.37 clocks/pixel against libjpeg-turbo's 8.5-15.1 CPU clocks/pixel at the measured clock).
+BEBCL-JPEG (`FAST=1`) on the Artix-7 takes 2.22-3.17x the time of libjpeg-turbo -nosmooth at 3.9 GHz per photo (2.24-3.45x that of the fastest CPU decoder on each photo); per clock it does 8.2-11.7x more work (1.00-1.37 clocks/pixel against libjpeg-turbo's 8.3-14.7 CPU clocks/pixel).
+
+BEBCL-JPEG `FAST=2` (the wide core) on the Artix-7 at 150 MHz takes 0.64-0.80x the time of libjpeg-turbo -nosmooth at 3.9 GHz (1.24-1.57x faster) and 0.64-0.88x that of the fastest CPU decoder on each photo; 0.255-0.417 clocks/pixel.
 
 
 ## What the numbers say
 
 ### Against CPU decoders
 
-1. **At full clock, one laptop core beats the EP2C5 on every image.** In the performance profile
-   (3.4-3.9 GHz) libjpeg-turbo decodes donald.jpg in 6.9 ms against the EP2C5's 30.0 ms (4.4x
-   faster). It decodes the 12-megapixel phone photos in 54-73 ms against 203-284 ms (3.7-4.0x) and
-   the 4:4:4 portrait in 16.8-17.8 ms against 88.3 ms (5.0-5.3x). Even the slowest CPU decoder on
-   each large photo is 1.4-1.8x faster than the EP2C5 (libjpeg 9e with its default upsampling, or
-   stb_image, depending on the image). Apart from the pure-Python reference model, the only CPU
+1. **At full clock, one laptop core beats the EP2C5 on every image.** All CPU times in these
+   comparisons are taken at a steady 3.9 GHz, the laptop's highest measured clock: the runs were
+   measured at 3.4-3.9 GHz (the laptop throttles), so each is rescaled from its cycle count (the
+   CPU's best case). libjpeg-turbo -nosmooth (the same pixels as this decoder) decodes donald.jpg in
+   6.8 ms against the EP2C5's 30.0 ms (4.4x faster), the 12-megapixel phone photos in 53-68 ms
+   against 203-284 ms (3.8-4.1x) and the 4:4:4 portrait in 16.7 ms against 88.3 ms (5.3x). Even the
+   slowest CPU decoder on each large photo is 1.4-1.9x faster than the EP2C5 (libjpeg 9e with its
+   default upsampling, or stb_image, depending on the image). Apart from the pure-Python reference model, the only CPU
    result the FPGA beats is Pillow on the 64x64 image, where Python's per-call overhead dominates.
 2. **Per clock, the FPGA does about 10x more work.** It needs 1.0-2.25 clocks per pixel. libjpeg-turbo
    with SIMD (AVX2) needs 8-22 CPU clocks per pixel, and libjpeg 9e and stb_image need 20-52 on the
@@ -343,22 +352,40 @@ BEBCL-JPEG on the Artix-7 takes 1.89-2.72x libjpeg-turbo's time per photo; per c
 6. **The compact core** (`FAST=0`, 3.4k LEs, 50 MHz) needs 12.8-21 clocks/pixel (0.75 s for
    donald.jpg). Use it when area matters more than speed. It is also the core that fits the EP2C5
    with raster output and Pillow-exact smoothing (up to 352 pixels wide for 4:2:0).
-7. **Among the CPU decoders** at full clock (on the 320x240 image and the large photos),
-   libjpeg-turbo is the fastest. Pillow (which uses it inside) takes 1.15-1.5x as long. OpenCV
-   takes 1.4-2.3x and FFmpeg (its own decoder, plus the RGB conversion) 1.1-2.9x. libjpeg 9e takes
-   1.8-2.3x (`-nosmooth`) and stb_image 2.0-2.9x; neither has SIMD.
+7. **Among the CPU decoders** at 3.9 GHz (on the 320x240 image and the large photos),
+   libjpeg-turbo is the fastest. Pillow (which uses it inside) takes 1.14-1.47x as long. OpenCV
+   takes 1.45-2.29x and FFmpeg (its own decoder, plus the RGB conversion) 1.18-2.91x. libjpeg 9e
+   takes 1.89-2.16x (`-nosmooth`) and stb_image 2.04-2.67x; neither has SIMD. (On some of the
+   owner's photos below FFmpeg is faster than libjpeg-turbo.)
 
-8. **On the owner's photos (2026-10-04, the section above), no FPGA decoder beats the fast CPU
-   decoders on single-image time.** One laptop core (2.3-3.9 GHz measured; the laptop throttles)
-   decodes a 12-megapixel photo in 32-66 ms with libjpeg-turbo, 35-81 ms with FFmpeg, 52-113 ms
-   with zune-jpeg (Rust) and 58-110 ms with Pillow. BEBCL-JPEG takes 87-154 ms on the Artix-7 at 150 MHz
-   (1.9-2.7x libjpeg-turbo's time) and 137-243 ms on the EP2C5 at 95 MHz; aq_djpeg 119-295 ms,
-   core_jpeg 301-308 ms (4:2:0 only). BEBCL-JPEG on the Artix-7 is faster than Go's `image/jpeg`
-   (168-306 ms) and stb_image on every photo and close to libjpeg 9e. Per clock
-   it does 8.5-12x more work than libjpeg-turbo (1.0-1.8 clocks per pixel against 8.5-19 CPU
-   clocks per pixel). What limits it is the clock (150 MHz against ~3.5 GHz) and its one pixel per
-   clock, not memory: a wider build (2-4 pixels per clock, more IDCT lanes, a faster Huffman
-   decoder) or several decoders side by side on a larger FPGA would be needed to pass one CPU core.
+8. **On the owner's photos (2026-10-04, the section above), none of the FPGA decoders measured on
+   2026-10-03 beats the fast CPU decoders on single-image time.** At a steady 3.9 GHz (the runs
+   measured 2.3-3.9 GHz) one laptop core decodes a 12-megapixel photo in 28-62 ms with libjpeg-turbo
+   -nosmooth, 25-80 ms with FFmpeg, 48-112 ms with zune-jpeg (Rust) and 54-95 ms with Pillow.
+   BEBCL-JPEG (`FAST=1`) takes 87-154 ms on the Artix-7 at 150 MHz (2.2-3.2x libjpeg-turbo
+   -nosmooth's time) and 137-243 ms on the EP2C5 at 95 MHz; aq_djpeg 119-295 ms, core_jpeg 301-308 ms
+   (4:2:0 only). BEBCL-JPEG on the Artix-7 is faster than Go's `image/jpeg` (156-305 ms) on every
+   photo, than stb_image on 20 of 24 and than libjpeg 9e with its default upsampling on 16 of 24.
+   Per clock it does 8.2-11.7x more work than libjpeg-turbo (1.0-1.8 clocks per pixel against
+   8.3-18.5 CPU clocks per pixel). What limits it is the clock (150 MHz against 3.9 GHz) and its one
+   pixel per clock, not memory.
+9. **The wide core (`FAST=2`, 2026-10-04) is faster than every CPU decoder on every photo.** On the
+   same Artix-7 board at 150 MHz it decodes the 24 files in 22.0-48.6 ms (0.255-0.561 clocks per
+   pixel, 3.0-4.0x fewer clocks than the fast core), with pixels identical to libjpeg 9e and clock
+   counts identical to the simulation. That is 0.64-0.80x the time of libjpeg-turbo -nosmooth on one
+   laptop core at a steady 3.9 GHz (1.24-1.57x faster) and 0.64-0.88x the time of the fastest CPU
+   decoder on each photo (libjpeg-turbo, or FFmpeg on three files). It decodes one Huffman symbol
+   per clock and four pixels per clock in 6,211 LUTs and 33 DSPs of the XC7A200T (with the harness);
+   at 131 MHz or more it would still beat every CPU decoder on every photo. Single-image time on one
+   CPU core is the comparison here: several CPU cores decoding several photos at once would still
+   outrun one decoder in throughput; several decoders side by side on one FPGA would answer that
+   (not built yet).
+10. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
+   times as measured while the laptop throttled (2.3-3.9 GHz), and with libjpeg-turbo's default
+   (smoothing) mode: "libjpeg-turbo 1.9-2.7x faster than BEBCL-JPEG on the Artix-7", "faster than
+   stb_image on every photo". With every CPU time at a steady 3.9 GHz and libjpeg-turbo -nosmooth,
+   which gives the same pixels as this decoder, these are 2.2-3.2x and 20 of 24 (the owner spotted
+   the throttled comparison). Per-clock figures were always computed from cycle counts and stand.
 
 ### Against other FPGA decoders
 

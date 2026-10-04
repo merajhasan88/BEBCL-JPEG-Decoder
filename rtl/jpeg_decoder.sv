@@ -8,6 +8,11 @@
 //                  1: pipelined core (jpeg_dec_fast): table-driven Huffman decoding, a two-lane
 //                     IDCT (32 clocks per block) and 1-pixel-per-clock output, all overlapped;
 //                     ~1-1.5 clocks per pixel.  Same pixels, errors and interface.
+//                  2: wide core (jpeg_dec_wide): one Huffman symbol per clock, an IDCT of 8 clocks
+//                     per block and four pixels per output beat (NPIX = 4), MCU order only
+//                     (RASTER_OUT = 0); ~0.25-0.56 clocks per pixel on phone photos, ~6k LUTs and
+//                     33 DSP48 on an Artix-7 (150 MHz).  Same pixels and errors.
+//   NPIX           pixels per output beat: 4 for FAST = 2, 1 otherwise (derived; do not set).
 //   RASTER_OUT     0: pixels leave in MCU order (8x8/16x16 tiles) with their coordinates; needs
 //                     only a small MCU buffer and handles any image width.
 //                  1: pixels leave row by row (x = 0..W-1, then the next row): the decoded MCU
@@ -58,7 +63,7 @@
 // tied to 0 a truncated file leaves the decoder waiting for more input: reset it to abort.
 // A file without a scan (e.g. tables only, or no SOI at all) produces no frame.
 module jpeg_decoder #(
-  parameter bit FAST           = 1'b0,
+  parameter int FAST           = 0,
   parameter bit RASTER_OUT     = 1'b0,
   parameter int ROWBUF_BYTES   = 16384,
   parameter int ROWBUF_Y_BYTES = 0,
@@ -66,7 +71,8 @@ module jpeg_decoder #(
   parameter bit FANCY_UPSAMPLE = 1'b0,
   parameter bit CC_TURBO       = 1'b0,
   parameter bit RGB_OUT        = 1'b1,
-  parameter bit CHECKS         = 1'b1
+  parameter bit CHECKS         = 1'b1,
+  parameter int NPIX           = (FAST == 2) ? 4 : 1
 ) (
   input  logic        clk,
   input  logic        rst,
@@ -77,16 +83,17 @@ module jpeg_decoder #(
   output logic        in_ready,
   // output format for the next frame (FMT_RGB / FMT_YCBCR / FMT_Y)
   input  logic [1:0]  out_fmt,
-  // decoded pixels
+  // decoded pixels: NPIX per beat, pixel i in bits 8i+7..8i at (px_x + i, px_y), i < px_n
   output logic        px_valid,
   input  logic        px_ready,
   output logic [15:0] px_x,
   output logic [15:0] px_y,
-  output logic [7:0]  px_c0,         // R | Y
-  output logic [7:0]  px_c1,         // G | Cb   (128 for FMT_Y)
-  output logic [7:0]  px_c2,         // B | Cr   (128 for FMT_Y)
+  output logic [2:0]  px_n,          // pixels in the beat (1..NPIX; fewer than NPIX only at the right edge)
+  output logic [8*NPIX-1:0] px_c0,   // R | Y
+  output logic [8*NPIX-1:0] px_c1,   // G | Cb   (128 for FMT_Y)
+  output logic [8*NPIX-1:0] px_c2,   // B | Cr   (128 for FMT_Y)
   output logic        px_sof,        // first pixel of the frame (x = 0, y = 0)
-  output logic        px_eol,        // last pixel of an image row (x = width-1)
+  output logic        px_eol,        // the beat holds the last pixel of an image row (x = width-1)
   // status
   output logic [15:0] img_w,
   output logic [15:0] img_h,
@@ -95,7 +102,20 @@ module jpeg_decoder #(
   output logic [12:0] err            // errors of the current image (see jpeg_pkg)
 );
   generate
-    if (FAST) begin : g_fast
+    // unsupported combinations stop the elaboration with a readable name
+    if (NPIX != ((FAST == 2) ? 4 : 1)) begin : g_bad_npix
+      jpeg_decoder_NPIX_must_be_4_for_FAST_2_and_1_otherwise u_error ();
+    end
+    if (FAST == 2 && RASTER_OUT) begin : g_bad_raster
+      jpeg_decoder_FAST_2_supports_MCU_order_only u_error ();
+    end
+    if (FAST == 2) begin : g_wide
+      jpeg_dec_wide #(.CC_TURBO(CC_TURBO), .RGB_OUT(RGB_OUT), .CHECKS(CHECKS)) u_core (
+        .clk(clk), .rst(rst), .in_valid(in_valid), .in_data(in_data), .in_last(in_last), .in_ready(in_ready), .out_fmt(out_fmt),
+        .px_valid(px_valid), .px_ready(px_ready), .px_x(px_x), .px_y(px_y), .px_n(px_n),
+        .px_c0(px_c0), .px_c1(px_c1), .px_c2(px_c2), .px_sof(px_sof), .px_eol(px_eol),
+        .img_w(img_w), .img_h(img_h), .frame_start(frame_start), .frame_done(frame_done), .err(err));
+    end else if (FAST == 1) begin : g_fast
       jpeg_dec_fast #(.RASTER_OUT(RASTER_OUT), .ROWBUF_BYTES(ROWBUF_BYTES), .ROWBUF_Y_BYTES(ROWBUF_Y_BYTES),
                       .ROWBUF_C_BYTES(ROWBUF_C_BYTES), .FANCY_UPSAMPLE(FANCY_UPSAMPLE),
                       .CC_TURBO(CC_TURBO), .RGB_OUT(RGB_OUT), .CHECKS(CHECKS)) u_core (
@@ -110,6 +130,9 @@ module jpeg_decoder #(
         .px_valid(px_valid), .px_ready(px_ready), .px_x(px_x), .px_y(px_y),
         .px_c0(px_c0), .px_c1(px_c1), .px_c2(px_c2), .px_sof(px_sof), .px_eol(px_eol),
         .img_w(img_w), .img_h(img_h), .frame_start(frame_start), .frame_done(frame_done), .err(err));
+    end
+    if (FAST != 2) begin : g_npix1
+      assign px_n = 3'd1;
     end
   endgenerate
 endmodule

@@ -28,7 +28,7 @@ Fast core (`FAST=1`), MCU order, replication, RGB:
 
 | project | clock | LEs | memory | timing |
 |---|---|---:|---:|---|
-| `fpga_jtag` | **95 MHz from the PLL**; the JPEG is streamed in over the USB-Blaster (virtual JTAG), the decoder clock only runs while its next byte is waiting, so the on-chip clock count is the decode time without streaming time | 4,450 (97 %) | 59,712 bits | met at 95 MHz, +0.33 ns setup, +0.50 ns hold (Fmax 98.1 MHz); PowerPlay ~147 mW |
+| `fpga_jtag` | **95 MHz from the PLL**; the JPEG is streamed in over the USB-Blaster (virtual JTAG), the decoder clock only runs while its next byte is waiting, so the on-chip clock count is the decode time without streaming time | 4,425 (96 %) | 59,712 bits | met at 95 MHz, +0.39 ns setup, +0.50 ns hold (Fmax 98.7 MHz); PowerPlay ~147 mW |
 | `fpga_fast_bench` | **95 MHz from the PLL** (`PLL_MUL=19`, `PLL_DIV=10`), `BENCH=1` (decodes at full speed, reports the clock count over UART) | 4,368 (95 %) | 63,808 bits | met at 95 MHz, +0.13 ns (Fmax 96.2 MHz); PowerPlay ~151 mW |
 | `fpga_fast` | 50 MHz, pixels over UART like `fpga` (the board demo) | 4,296 (93 %) | 63,808 bits | met at 50 MHz, +6.18 ns (Fmax 72.4 MHz) |
 

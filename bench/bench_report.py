@@ -40,22 +40,24 @@ for name, r in res["results"].items():
     any_r = next(v for v in r.values() if v)
     w, h = any_r["w"], any_r["h"]
     print(f"\n#### {name.replace('_', ' ')}: {w}x{h} ({w*h/1e6:.2f} Mpixel)\n")
-    print("| decoder | where | clock | ms / image | Mpixel/s | clocks / pixel | energy / image |")
-    print("|---|---|---:|---:|---:|---:|---:|")
+    print("| decoder | where | clock | ms / image | ms at 3.9 GHz | Mpixel/s | clocks / pixel | energy / image |")
+    print("|---|---|---:|---:|---:|---:|---:|---:|")
     for k in cpu_order:
         v = r.get(k)
         if not v: continue
         e = f"{v['uj']/1e3:.1f} mJ" if v.get("uj", -1) > 0 else "-"
         g = v.get("ghz")
         clk, cpp = (f"{g:.2f} GHz", f"{v['ms'] * g * 1e6 / (w * h):.1f}") if g else ("-", "-")
-        print(f"| {names[k]} | i7-8550U, 1 thread | {clk} | {v['ms']:.3f} | {v['mpx_s']:.1f} | {cpp} | {e} |")
+        at39 = f"{v['ms'] * g / 3.9:.3f}" if g else "-"
+        print(f"| {names[k]} | i7-8550U, 1 thread | {clk} | {v['ms']:.3f} | {at39} | {v['mpx_s']:.1f} | {cpp} | {e} |")
     for label, where, mhz, mw, cyc, measured in fpga_rows(name, w, h):
         t = cyc / (mhz * 1e6)
         mark = " \\*" if measured else ""
-        print(f"| **this decoder**: {label}{mark} | {where} | {mhz:.0f} MHz | {t*1e3:.3f} | {w*h/t/1e6:.2f} | "
+        print(f"| **this decoder**: {label}{mark} | {where} | {mhz:.0f} MHz | {t*1e3:.3f} | - | {w*h/t/1e6:.2f} | "
               f"{cyc/(w*h):.2f} | {mw*t:.1f} mJ (est.) |")
 print(f"\nCPU: power profile `{prof}`, clock = average measured by `perf stat` during each run (cycles / task time); "
-      "CPU clocks per pixel = time x that clock / pixels.  \\* this clock count was also measured on the EP2C5 board "
+      "ms at 3.9 GHz = the run's cycles at a steady 3.9 GHz (the laptop's highest measured clock: the CPU's best case, "
+      "used in all comparisons with the FPGA); CPU clocks per pixel = time x that clock / pixels.  \\* this clock count was also measured on the EP2C5 board "
       "(identical to the simulation), see `bench/board_jtag_95mhz.txt`.  FPGA energy: PowerPlay vectorless estimate x "
       "decode time (low confidence).")
 
