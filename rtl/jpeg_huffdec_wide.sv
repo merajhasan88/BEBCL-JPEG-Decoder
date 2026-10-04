@@ -16,7 +16,7 @@
 //    consumes an RSTn, and reports any other marker with err_pad (at_end) - as jpeg_bitwin;
 //  - a symbol is decoded when at least 31 bits are valid (any code and magnitude, as jpeg_huffdec);
 //    codes longer than 8 bits: MAXCODE (F.2.2.3, Figure F.16) of all lengths 9..16 compared at
-//    once, then HUFFVAL read (5 clocks); no code within 16 bits raises err_huff and ends the block
+//    once, then HUFFVAL read (6 clocks); no code within 16 bits raises err_huff and ends the block
 //    without consuming bits;
 //  - DC: DIFF = EXTEND(RECEIVE(SSSS)), predictor per component (pred_clear resets them); AC: run
 //    lengths, ZRL, EOB; a run past k = 63 or a ZRL past k = 47 raises err_huff, consumes the symbol
@@ -130,6 +130,7 @@ module jpeg_huffdec_wide #(
   // ================================================================ block state
   logic        active, phase_ac;
   logic [6:0]  k;                     // zig-zag index of the next coefficient
+  logic [6:0]  kr;                    // 63 - k (AC phase: 0..62), so the end tests need no adder
   logic [1:0]  b_comp, b_tq, b_slot;
   logic        b_dc, b_ac, b_wr;
   logic        th;
@@ -139,25 +140,30 @@ module jpeg_huffdec_wide #(
     2'd0: ent = e_t[0]; 2'd1: ent = e_t[1]; 2'd2: ent = e_t[2]; default: ent = e_t[3];
   endcase
 
-  // ---- slow path: 1 capture, 2 compare -> HUFFVAL address, 3-4 RAM, 5 symbol (consumed)
-  logic        sl1, sl2, sl3, sl4;
+  // ---- slow path: 1 capture the next 16 bits and the table's MAXCODE entries, 2 compare all
+  // lengths and pick the first that matches, 3 HUFFVAL address (prefix + offset), 4-5 RAM,
+  // 5 symbol (consumed); every step starts from registers
+  logic        sl1, sl2, sl3, sl4, sl5;
   logic [15:0] sview;
+  logic [24:0] mcr [0:7];             // {valid, MAXCODE+1, offset} of lengths 9..16, current table
   logic [4:0]  slen, slen_r;
   logic        sfound, sfound_r;
-  logic [7:0]  sidx;
+  logic [7:0]  spre, soff, spre_r, soff_r;
   always_comb begin : g_slow
     integer l;
     logic [15:0] pre;
-    slen = 5'd16; sfound = 1'b0; sidx = 8'd0;
+    slen = 5'd16; sfound = 1'b0; spre = 8'd0; soff = 8'd0;
     for (l = 9; l <= 16; l = l + 1) begin
       pre = sview >> (16 - l);
-      if (!sfound && mc[{phase_ac, th}][l - 9][24] && (pre < mc[{phase_ac, th}][l - 9][23:8])) begin
-        slen = l[4:0]; sfound = 1'b1; sidx = pre[7:0] + mc[{phase_ac, th}][l - 9][7:0];
+      if (!sfound && mcr[l - 9][24] && (pre < mcr[l - 9][23:8])) begin
+        slen = l[4:0]; sfound = 1'b1; spre = pre[7:0]; soff = mcr[l - 9][7:0];
       end
     end
   end
+  logic [7:0] sidx;
+  assign sidx = spre_r + soff_r;
   logic slow_busy;
-  assign slow_busy = sl1 | sl2 | sl3 | sl4;
+  assign slow_busy = sl1 | sl2 | sl3 | sl4 | sl5;
 
   // ---- the symbol of this clock
   logic        go_fast, go_slow, go, miss;
@@ -168,7 +174,7 @@ module jpeg_huffdec_wide #(
   always_comb begin
     miss    = active && have && !ent[19] && !slow_busy;
     go_fast = active && have && ent[19] && !slow_busy;
-    go_slow = sl4;
+    go_slow = sl5;
     go      = go_fast | go_slow;
     if (go_slow) begin
       sym = hv_rdata; L = slen_r; n = slen_r + {1'b0, hv_rdata[3:0]};
@@ -179,16 +185,17 @@ module jpeg_huffdec_wide #(
     s = sym[3:0];
     r = phase_ac ? sym[7:4] : 4'd0;
   end
-  logic [6:0] k_run;                  // position of an AC coefficient
+  logic [6:0] k_run;                  // position of an AC coefficient (data path only)
   assign k_run = k + {3'd0, r};
-  logic zrl, zrl_err, run_err, coef, last;
+  logic zrl, zrl_err, run_err, coef, last, kr_small;
+  assign kr_small = (kr[6:4] == 3'd0);                               // k > 47
   assign zrl     = phase_ac && s == 4'd0 && r == 4'hF;
-  assign zrl_err = zrl && k > 7'd47;
-  assign run_err = phase_ac && s != 4'd0 && k_run > 7'd63;
+  assign zrl_err = zrl && kr_small;                                  // ZRL past k = 47
+  assign run_err = phase_ac && s != 4'd0 && kr_small && (r > kr[3:0]);   // k + r > 63
   assign coef    = !phase_ac || (s != 4'd0 && !run_err);             // a coefficient is written
-  assign last    = phase_ac && (eob || zrl_err || run_err || (s != 4'd0 && k_run == 7'd63));
+  assign last    = phase_ac && (eob || zrl_err || (s != 4'd0 && kr_small && r >= kr[3:0]));   // ... or k + r = 63
   logic noc;                          // slow path: no code within 16 bits -> the block ends
-  assign noc = sl2 && !sfound;
+  assign noc = sl3 && !sfound_r;
   logic blk_fin;                      // the current block ends this clock
   assign blk_fin = (go && last) || noc;
 
@@ -250,8 +257,9 @@ module jpeg_huffdec_wide #(
     if (rst || clear) begin
       b0v <= 1'b0; b1v <= 1'b0; b0 <= '0; b1 <= '0;
       D <= '0; v <= '0; real_ <= '0; mk_valid <= 1'b0; mk_code <= '0;
-      active <= 1'b0; phase_ac <= 1'b0; k <= '0; b_comp <= '0; b_tq <= '0; b_slot <= '0; b_dc <= 1'b0; b_ac <= 1'b0; b_wr <= 1'b0;
-      sl1 <= 1'b0; sl2 <= 1'b0; sl3 <= 1'b0; sl4 <= 1'b0; sview <= '0; slen_r <= '0; sfound_r <= 1'b0;
+      active <= 1'b0; phase_ac <= 1'b0; k <= '0; kr <= 7'd63; b_comp <= '0; b_tq <= '0; b_slot <= '0; b_dc <= 1'b0; b_ac <= 1'b0; b_wr <= 1'b0;
+      sl1 <= 1'b0; sl2 <= 1'b0; sl3 <= 1'b0; sl4 <= 1'b0; sl5 <= 1'b0; sview <= '0; slen_r <= '0; sfound_r <= 1'b0;
+      spre_r <= '0; soff_r <= '0;
       // (ap / inflight survive `clear`: the IDCT takes the slots in order across frames too)
       if (rst) begin ap <= '0; inflight <= '0; end
       e_v <= 1'b0; f_v <= 1'b0; g_v <= 1'b0; m_v <= 1'b0; p_v <= 1'b0;
@@ -296,11 +304,15 @@ module jpeg_huffdec_wide #(
 
       // ---- slow path
       sl1 <= miss;
-      if (miss) sview <= D[63:48];
+      if (miss) begin
+        sview <= D[63:48];
+        for (i = 0; i < 8; i = i + 1) mcr[i] <= mc[{phase_ac, th}][i];
+      end
       sl2 <= sl1;
-      sl3 <= sl2 && sfound;                              // HUFFVAL address issued with sl2
-      sl4 <= sl3;
-      if (sl2) begin slen_r <= slen; sfound_r <= sfound; end
+      sl3 <= sl2;
+      if (sl2) begin slen_r <= slen; sfound_r <= sfound; spre_r <= spre; soff_r <= soff; end
+      sl4 <= sl3 && sfound_r;                            // HUFFVAL address issued with sl3
+      sl5 <= sl4;
 
       // ---- the symbol: block state, pipeline entry
       e_v <= 1'b0;
@@ -308,9 +320,9 @@ module jpeg_huffdec_wide #(
         e_v <= 1'b1; e_c <= coef; e_dc <= !phase_ac; e_end <= last; e_wr <= b_wr;
         e_comp <= b_comp; e_tq <= b_tq; e_slot <= b_slot; e_s <= s; e_win <= D[63:32]; e_n <= n;
         e_k <= phase_ac ? k_run[5:0] : 6'd0;
-        if (!phase_ac) begin phase_ac <= 1'b1; k <= 7'd1; end
-        else if (zrl) k <= k + 7'd16;
-        else k <= k_run + 7'd1;
+        if (!phase_ac) begin phase_ac <= 1'b1; k <= 7'd1; kr <= 7'd62; end
+        else if (zrl) begin k <= k + 7'd16; kr <= kr - 7'd16; end
+        else begin k <= k_run + 7'd1; kr <= kr - {3'd0, r} - 7'd1; end
         if (zrl_err || run_err) err_huff <= 1'b1;
       end else if (noc) begin                            // no code: end the block, no bits consumed
         e_v <= 1'b1; e_c <= 1'b0; e_end <= 1'b1; e_wr <= b_wr; e_slot <= b_slot;
@@ -318,7 +330,7 @@ module jpeg_huffdec_wide #(
       end
       if (!active || blk_fin) begin
         if (can_load) begin
-          active <= 1'b1; phase_ac <= 1'b0; k <= '0;
+          active <= 1'b1; phase_ac <= 1'b0; k <= '0; kr <= 7'd63;
           b_comp <= d_comp; b_dc <= d_dc; b_ac <= d_ac; b_tq <= d_tq; b_wr <= d_wr;
           if (d_wr) begin b_slot <= ap; desc_s[ap] <= d_desc; ap <= ap + 2'd1; inflight[ap] <= 1'b1; end
         end else begin

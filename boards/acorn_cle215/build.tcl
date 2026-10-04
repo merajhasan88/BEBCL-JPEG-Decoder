@@ -27,10 +27,21 @@ read_verilog -sv [list $here/uart_bench_core.sv $here/acorn_top.sv]
 read_xdc $here/acorn.xdc
 synth_design -top acorn_top -part xc7a200tfbg484-2 -generic DUT=$dut -generic CLKOUT_DIV=$div
 opt_design
-place_design
-phys_opt_design
-route_design
+# VIVADO_EFFORT=high: stronger placement / routing / physical optimisation (used for DUT 3, the wide
+# core, whose one-symbol-per-clock Huffman loop is routing-bound); default: Vivado's default flow
+if {[info exists ::env(VIVADO_EFFORT)] && $::env(VIVADO_EFFORT) eq "high"} {
+  place_design -directive ExtraTimingOpt
+  phys_opt_design -directive AggressiveExplore
+  route_design -directive AggressiveExplore
+  phys_opt_design -directive AggressiveExplore
+} else {
+  place_design
+  phys_opt_design
+  route_design
+}
 report_timing_summary -max_paths 10 -file $out/timing.rpt
+report_timing -max_paths 1000 -nworst 1 -unique_pins -slack_lesser_than 0 -file $out/failing.rpt
+write_checkpoint -force $out/post_route.dcp
 report_utilization -file $out/utilization.rpt
 report_utilization -hierarchical -hierarchical_depth 3 -file $out/utilization_hier.rpt
 write_bitstream -force $out/acorn_dut${dut}_div${div}.bit
