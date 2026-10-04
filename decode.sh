@@ -8,7 +8,9 @@
 #                         output, any image size)
 #     --profile pillow    pixels identical to Pillow / OpenCV / libjpeg-turbo (raster output with fancy
 #                         upsampling; the row buffer is sized for the widest image)
-#     --core fast|small   FAST=1 pipelined core, ~1-2.4 clocks/pixel (default), or the compact core
+#     --core fast|small|wide  FAST=1 pipelined core, ~1-2.4 clocks/pixel (default), the compact core,
+#                         or the wide core (FAST=2, 4 pixels per clock, ~0.25-0.56 clocks/pixel on
+#                         photos; MCU order, so --profile libjpeg only)
 #     --fmt rgb|ycbcr|y   output format (default rgb)
 #     --sim SIM           verilator (default) or xsim (Vivado); icarus 12+ / questa untested
 #     --out DIR           output folder (default out/): <name>.ppm (.pgm for y); <name>.png too when
@@ -74,9 +76,11 @@ sof_info() {
 
 # build configuration
 F=""; [ "$CORE" = fast ] && F=f
+case $CORE in fast|small|wide) ;; *) echo "--core fast, small or wide" >&2; exit 2;; esac
 case $PROFILE in
-  libjpeg) CFG=${F}mcu;;
+  libjpeg) CFG=${F}mcu; [ "$CORE" = wide ] && CFG=wmcu;;
   pillow)
+    [ "$CORE" = wide ] && { echo "the wide core (FAST=2) has MCU-order output only: use --profile libjpeg" >&2; exit 2; }
     maxw=0
     for f in "$@"; do w=$(sof_info "$f" | cut -d' ' -f1); [ "$w" -gt "$maxw" ] && maxw=$w; done
     need=$(( (maxw + 15) / 16 * 560 )); rb=16384                  # 560 bytes per 16 px: the worst case
