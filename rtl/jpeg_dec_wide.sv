@@ -1,15 +1,18 @@
 // jpeg_dec_wide.sv - wide core of jpeg_decoder (FAST = 2): four pixels per clock, MCU order.
 //
-//   bytes -> jpeg_parser (+ Huffman lookahead tables) -> jpeg_bitwin -> jpeg_huffdec
-//         -> 4 coefficient slots -> jpeg_idct_wide (8 clocks per block) -> one sample RAM per
+//   bytes -> jpeg_parser (+ Huffman lookahead tables) -> jpeg_huffdec_wide (bit window + one
+//            Huffman symbol per clock) -> 4 coefficient slots -> jpeg_idct_wide (8 clocks per
+//            block) -> one sample RAM per
 //            component (64-bit words: 8 samples), NBUF = 3 MCU buffers -> jpeg_mcuout_wide
 //            (4 pixels per clock)
 //
-// The input side (parser, block sequencing, restarts, errors, frame completion) is that of
-// jpeg_dec_fast in MCU order; the output side holds three MCUs, so the IDCT can fill two while
-// the third is emitted, and emits four pixels per beat (px_n of them valid).  The faster entropy
-// decoder and IDCT of the wide design (WIDE_STATUS.md) replace jpeg_huffdec / jpeg_idct_fast here
-// step by step.  Pixels, errors and handshakes are identical to the other cores.
+// The input side (parser, restarts, errors, frame completion) is that of jpeg_dec_fast in MCU
+// order, but the sequencer queues block descriptors (component, tables, write enable, IDCT
+// destination) for the entropy decoder instead of starting one block at a time, so blocks are
+// decoded without a gap; it waits for the decoder only at restart intervals and at the end of the
+// scan.  The output side holds three MCUs, so the IDCT can fill two while the third is emitted,
+// and emits four pixels per beat (px_n of them valid).  Pixels, errors and handshakes are
+// identical to the other cores (WIDE_STATUS.md).
 module jpeg_dec_wide #(
   parameter bit CC_TURBO       = 1'b0,
   parameter bit RGB_OUT        = 1'b1,
@@ -82,65 +85,70 @@ module jpeg_dec_wide #(
     .eoi(eoi), .soi(p_soi), .err_set(err_set));
 
   logic [7:0]  dqt_raddr, dqt_rdata, hv_rdata;
-  logic [5:0]  hc_raddr;
-  logic [24:0] hc_rdata;
   logic [8:0]  hv_raddr;
-  logic [9:0]  lut_raddr;
-  logic [11:0] lut_rdata;
-  // (all table RAMs are read through the block RAMs' output registers: 2 clocks)
+  // (table RAMs read through the block RAMs' output registers: 2 clocks; the lookahead tables and
+  // MAXCODE of the long codes live in jpeg_huffdec_wide, written from the parser's ports)
   jpeg_sdp_ram #(.WIDTH(8),  .DEPTH_LOG2(8), .OUT_REG(1'b1)) u_dqt (.clk(clk), .we(dqt_we), .waddr(dqt_waddr), .wdata(dqt_wdata), .raddr(dqt_raddr), .rdata(dqt_rdata));
-  jpeg_sdp_ram #(.WIDTH(25), .DEPTH_LOG2(6), .OUT_REG(1'b1))  u_hc  (.clk(clk), .we(hc_we),  .waddr(hc_waddr),  .wdata(hc_wdata),  .raddr(hc_raddr),  .rdata(hc_rdata));
   jpeg_sdp_ram #(.WIDTH(8),  .DEPTH_LOG2(9), .OUT_REG(1'b1))  u_hv  (.clk(clk), .we(hv_we),  .waddr(hv_waddr),  .wdata(hv_wdata),  .raddr(hv_raddr),  .rdata(hv_rdata));
-  jpeg_sdp_ram #(.WIDTH(12), .DEPTH_LOG2(10), .OUT_REG(1'b1)) u_lut (.clk(clk), .we(lut_we), .waddr(lut_waddr), .wdata(lut_wdata), .raddr(lut_raddr), .rdata(lut_rdata));
 
-  // ---------------------------------------------------------------- bit window + block decoder
-  logic [47:0] acc;
-  logic [5:0]  wcnt;
-  logic        eod, w_consume, restart_req, restart_done, err_pad, br_clear, br_at_end;
-  logic [4:0]  w_n;
-  jpeg_bitwin u_win (
-    .clk(clk), .rst(rst), .clear(br_clear),
-    .tok_valid(tok_valid), .tok_data(tok_data), .tok_ready(tok_ready),
-    .acc(acc), .wcnt(wcnt), .eod(eod), .consume(w_consume), .n(w_n),
-    .restart_req(restart_req), .restart_done(restart_done), .err_pad(err_pad), .at_end(br_at_end));
-
-  logic        hd_start, hd_idle, hd_done, hd_err, pred_clear, hd_wr;
-  logic        cw_we;
+  // ---------------------------------------------------------------- entropy decoder
+  logic        restart_req, restart_done, err_pad, br_clear, br_at_end, hd_idle, hd_err, pred_clear;
+  logic        cw_we, cw_commit;
+  logic [1:0]  cw_slot, cw_cslot;
   logic [5:0]  cw_addr;
   logic signed [15:0] cw_data;
+  logic [3:0]  clean;
   logic [1:0]  cur_ci, cd_tq;
   logic        cd_dc, cd_ac;
-  jpeg_huffdec u_hd (
-    .clk(clk), .rst(rst),
-    .start(hd_start), .comp(cur_ci), .dc_tbl(cd_dc), .ac_tbl(cd_ac), .tq(cd_tq), .wr_en(hd_wr), .pred_clear(pred_clear),
-    .idle(hd_idle), .done(hd_done), .err_huff(hd_err),
-    .acc(acc), .wcnt(wcnt), .consume(w_consume), .n(w_n),
-    .lut_raddr(lut_raddr), .lut_rdata(lut_rdata), .hc_raddr(hc_raddr), .hc_rdata(hc_rdata),
+  // ---- block descriptors, sequencer -> decoder: {component, Td, Ta, Tq, write, IDCT descriptor}
+  localparam int QW = 7 + DW;
+  logic [QW-1:0] q0, q1, q_in;
+  logic [1:0]    q_cnt;
+  logic          q_push, q_pop, q_room;
+  logic          d_ready;
+  logic [DW-1:0] cw_desc;
+  assign q_room = (q_cnt != 2'd2);
+  assign q_pop  = (q_cnt != 2'd0) && d_ready;
+  always_ff @(posedge clk) begin
+    if (rst || br_clear) q_cnt <= '0;
+    else begin
+      case ({q_push, q_pop})
+        2'b10: begin if (q_cnt == 2'd0) q0 <= q_in; else q1 <= q_in; q_cnt <= q_cnt + 2'd1; end
+        2'b01: begin q0 <= q1; q_cnt <= q_cnt - 2'd1; end
+        2'b11: begin if (q_cnt == 2'd1) q0 <= q_in; else begin q0 <= q1; q1 <= q_in; end end
+        default: ;
+      endcase
+    end
+  end
+  jpeg_huffdec_wide #(.DW(DW)) u_hd (
+    .clk(clk), .rst(rst), .clear(br_clear),
+    .tok_valid(tok_valid), .tok_data(tok_data), .tok_ready(tok_ready),
+    .lut_we(lut_we), .lut_waddr(lut_waddr), .lut_wdata(lut_wdata),
+    .hc_we(hc_we), .hc_waddr(hc_waddr), .hc_wdata(hc_wdata),
     .hv_raddr(hv_raddr), .hv_rdata(hv_rdata), .dqt_raddr(dqt_raddr), .dqt_rdata(dqt_rdata),
-    .cw_we(cw_we), .cw_addr(cw_addr), .cw_data(cw_data));
+    .d_valid(q_cnt != 2'd0), .d_ready(d_ready),
+    .d_comp(q0[QW-1 -: 2]), .d_dc(q0[QW-3]), .d_ac(q0[QW-4]), .d_tq(q0[QW-5 -: 2]), .d_wr(q0[DW]), .d_desc(q0[DW-1:0]),
+    .pred_clear(pred_clear), .idle(hd_idle), .err_huff(hd_err),
+    .restart_req(restart_req), .restart_done(restart_done), .err_pad(err_pad), .at_end(br_at_end),
+    .clean(clean), .cw_we(cw_we), .cw_slot(cw_slot), .cw_addr(cw_addr), .cw_data(cw_data),
+    .cw_commit(cw_commit), .cw_cslot(cw_cslot), .cw_desc(cw_desc));
 
   // ---------------------------------------------------------------- IDCT
   // tag carried through pass 2: {MCU buffer, last block of MCU, component}
-  logic           cw_ready, cw_commit, p2_pending, p2_ok, smp_we, blk_done, id_busy;
-  logic [3:0]     clean;
-  logic [1:0]     wp;                        // slot the entropy decoder fills (slots in order)
-  logic [DW-1:0]  cw_desc, p2_desc;
+  logic           p2_pending, p2_ok, smp_we, blk_done, id_busy;
+  logic [DW-1:0]  p2_desc;
   logic [4:0]     p2_tag, smp_tag, blk_tag;
   logic [SAW-1:0] p2_base, p2_pitch, smp_addr;
   logic [63:0]    smp_data;
   assign p2_tag   = {p2_desc[6:5], p2_desc[D_LAST], p2_desc[D_COMP +: 2]};
-  assign cw_ready = clean[wp];
   jpeg_idct_wide #(.DW(DW), .TW(5), .SAW(SAW)) u_idct (
     .clk(clk), .rst(rst),
-    .clean(clean), .cw_we(cw_we), .cw_slot(wp), .cw_addr(cw_addr), .cw_data(cw_data),
-    .cw_commit(cw_commit), .cw_cslot(wp), .cw_desc(cw_desc),
+    .clean(clean), .cw_we(cw_we), .cw_slot(cw_slot), .cw_addr(cw_addr), .cw_data(cw_data),
+    .cw_commit(cw_commit), .cw_cslot(cw_cslot), .cw_desc(cw_desc),
     .p2_pending(p2_pending), .p2_desc(p2_desc), .p2_ok(p2_ok), .p2_base(p2_base), .p2_pitch(p2_pitch),
     .p2_tag(p2_tag), .smp_we(smp_we), .smp_addr(smp_addr), .smp_data(smp_data), .smp_tag(smp_tag),
     .blk_done(blk_done), .blk_tag(blk_tag), .busy(id_busy));
-  always_ff @(posedge clk) begin
-    if (rst) wp <= '0;
-    else if (cw_commit) wp <= wp + 2'd1;
-  end
+
 
   // ---------------------------------------------------------------- frame state
   logic        gray, hmax2, vmax2;
@@ -150,7 +158,7 @@ module jpeg_dec_wide #(
   logic        out_idle;                     // output pipeline empty
 
   // ---------------------------------------------------------------- input side: block sequencing
-  typedef enum logic [3:0] { S_IDLE, S_SETUP, S_GEO1, S_BLK, S_BLK_WAIT, S_RESTART, S_DRAIN, S_SKIP, S_DONE } state_t;
+  typedef enum logic [3:0] { S_IDLE, S_SETUP, S_GEO1, S_BLK, S_RWAIT, S_RESTART, S_DWAIT, S_DRAIN, S_SKIP, S_DONE } state_t;
   state_t state;
 
   logic [1:0]  j;
@@ -160,8 +168,6 @@ module jpeg_dec_wide #(
   logic [12:0] mx, my, mcux_m1, mcuy_m1;
   logic [13:0] mcux;
   logic [1:0]  in_buf;                       // MCU buffer of the MCU being decoded (0..2)
-  logic        cur_skip;
-  logic [DW-1:0] cur_desc;
   integer      gi;
 
   function automatic logic is2(input logic [11:0] hv, input logic [1:0] c);
@@ -193,24 +199,22 @@ module jpeg_dec_wide #(
   assign last_nonskip     = last_blk_of_comp && ((fmt_r == FMT_Y) ? (j == 2'd0) : last_comp);
   assign more_x           = (mx != mcux_m1);
   assign more_y           = (my != mcuy_m1);
-  assign hd_wr            = ~skip_idct;
 
   // ---- descriptor of the current block
   logic [4:0]     blk_off;                   // word offset in the component's plane (8 samples per word)
   assign blk_off = (vv ? (cur_h2 ? 5'd16 : 5'd8) : 5'd0) + (hh ? 5'd1 : 5'd0);
 
-  // commit a decoded block to the IDCT in the cycle its decoder finishes (wp advances at once)
-  assign cw_commit = (state == S_BLK_WAIT) && hd_done && !cur_skip;
-  assign cw_desc   = cur_desc;
+  // the block of this clock enters the descriptor queue in S_BLK
+  assign q_push = (state == S_BLK) && q_room;
+  assign q_in   = {cur_ci, cd_dc, cd_ac, cd_tq, ~skip_idct, last_nonskip, vv, j, in_buf, blk_off};
 
   always_ff @(posedge clk) begin
-    hd_start <= 1'b0; pred_clear <= 1'b0; frame_start <= 1'b0; frame_done <= 1'b0; br_clear <= 1'b0;
+    pred_clear <= 1'b0; frame_start <= 1'b0; frame_done <= 1'b0; br_clear <= 1'b0;
     if (rst) begin
       state <= S_IDLE; decoding <= 1'b0; restart_req <= 1'b0; err <= '0; skip_img <= 1'b0; eoi_seen <= 1'b0;
       j <= '0; vv <= 1'b0; hh <= 1'b0; mcu_w <= '0; mcu_h <= '0; rst_cnt <= '0;
       gray <= 1'b0; hmax2 <= 1'b0; vmax2 <= 1'b0; h2 <= '0; v2 <= '0; fmt_r <= FMT_RGB; nstore <= 2'd3;
       mx <= '0; my <= '0; mcux <= '0; mcux_m1 <= '0; mcuy_m1 <= '0; in_buf <= '0;
-      cur_skip <= 1'b0; cur_desc <= '0;
       uh_r <= '0; uv_r <= '0;
     end else begin
       // errors of the current image: cleared when the next image's SOI is accepted (the parser
@@ -252,28 +256,25 @@ module jpeg_dec_wide #(
           end
           state <= S_BLK;
         end
-        S_BLK: if (hd_idle && (skip_idct || cw_ready)) begin
-          hd_start <= 1'b1; cur_skip <= skip_idct;
-          cur_desc <= {last_nonskip, vv, j, in_buf, blk_off};
-          state <= S_BLK_WAIT;
-        end
-        S_BLK_WAIT: if (hd_done) begin
+        S_BLK: if (q_room) begin                                // this block enters the queue (q_push)
           if (!last_blk_of_comp) begin
             if (hh == cur_h2) begin hh <= 1'b0; vv <= 1'b1; end
             else hh <= 1'b1;
-            state <= S_BLK;
           end else if (!last_comp) begin
-            hh <= 1'b0; vv <= 1'b0; j <= j + 2'd1; state <= S_BLK;
+            hh <= 1'b0; vv <= 1'b0; j <= j + 2'd1;
           end else begin                                       // MCU complete
             hh <= 1'b0; vv <= 1'b0; j <= '0; in_buf <= (in_buf == 2'd2) ? 2'd0 : in_buf + 2'd1;
             rst_cnt <= rst_cnt - 16'd1;
             if (more_x || more_y) begin
               if (more_x) mx <= mx + 13'd1;
               else begin mx <= '0; my <= my + 13'd1; end
-              state <= (ri != 16'd0 && rst_cnt == 16'd1) ? S_RESTART : S_BLK;
-            end else state <= S_DRAIN;
+              state <= (ri != 16'd0 && rst_cnt == 16'd1) ? S_RWAIT : S_BLK;
+            end else state <= S_DWAIT;
           end
         end
+        // restart interval or scan complete: wait until every queued block is decoded
+        S_RWAIT: if (q_cnt == 2'd0 && hd_idle) state <= S_RESTART;
+        S_DWAIT: if (q_cnt == 2'd0 && hd_idle) state <= S_DRAIN;
         S_RESTART: begin                                        // T.81 F.2.2.5 / B.2.4.4
           restart_req <= 1'b1;
           if (restart_done) begin

@@ -14,6 +14,7 @@ jpeg_bitwin.sv
 jpeg_huffdec.sv
 jpeg_idct_fast.sv
 jpeg_mcuout.sv
+jpeg_huffdec_wide.sv
 jpeg_idct1d.sv
 jpeg_idct_wide.sv
 jpeg_mcuout_wide.sv

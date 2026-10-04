@@ -113,5 +113,15 @@ config; SV testbench: parameter derived from FAST); the Acorn harness folds `px_
   images +0.01 %, crops -0.20 to -0.75 %. Clocks/pixel: flat 4:4:4 1.553 -> 0.569, 4:2:2 1.038 -> 0.381,
   4:2:0 0.780 -> 0.288; photo crops 1.19 -> 0.85 (smooth) and 1.67 -> 1.67 (busy): jpeg_huffdec's
   3 clocks per symbol now limits.
-- Written, not yet built: `rtl/jpeg_huffdec_wide.sv` (step 3: probe 2's loop + the contracts of
-  jpeg_bitwin / jpeg_huffdec, 1 symbol per clock, block descriptors queued by the sequencer).
+- **Step 3 done**: `rtl/jpeg_huffdec_wide.sv` (bit window + decoder: probe 2's loop, the contracts of
+  jpeg_bitwin / jpeg_huffdec, one symbol per clock, long codes by a parallel MAXCODE compare in 5 clocks,
+  copies of the lookahead tables / MAXCODE written from the parser's ports); jpeg_dec_wide queues block
+  descriptors (2 entries) instead of starting blocks one at a time and waits for the decoder only at
+  restarts and at the end of the scan (the parser's lookahead and MAXCODE RAMs are gone from this core).
+  wmcu 202/202, 10/10, 52/52 with both testbenches. One bug found by the stream suite (an image with
+  restarts followed by one without): the decoder reset its slot pointer at the end of a frame, the IDCT
+  did not, so the next image's blocks were taken in rotated order - fixed (the pointer survives `clear`).
+  Model (sym_clk=1, look=8, long codes 5 clocks, no gap between blocks, 4 slots, 3 MCU buffers, 1 byte
+  per clock, IDCT_WIDE): traced crop +0.06 %, flat images +0.01 %, crops -0.15 to -0.85 %. Clocks/pixel:
+  photo crops 0.275 / 0.382 / 0.523 (today's core 1.19 / 1.39 / 1.67); flat 4:4:4 0.381 (IDCT), 4:2:0 0.260
+  (output).

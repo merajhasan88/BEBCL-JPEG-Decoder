@@ -25,7 +25,7 @@ RTL      := $(RTL_DIR)/jpeg_pkg.sv $(RTL_DIR)/jpeg_sdp_ram.sv $(RTL_DIR)/jpeg_bl
             $(RTL_DIR)/jpeg_raster.sv $(RTL_DIR)/jpeg_dec_small.sv \
             $(RTL_DIR)/jpeg_bitwin.sv $(RTL_DIR)/jpeg_huffdec.sv $(RTL_DIR)/jpeg_idct_fast.sv \
             $(RTL_DIR)/jpeg_mcuout.sv $(RTL_DIR)/jpeg_raster_fast.sv $(RTL_DIR)/jpeg_dec_fast.sv \
-            $(RTL_DIR)/jpeg_idct1d.sv $(RTL_DIR)/jpeg_idct_wide.sv \
+            $(RTL_DIR)/jpeg_huffdec_wide.sv $(RTL_DIR)/jpeg_idct1d.sv $(RTL_DIR)/jpeg_idct_wide.sv \
             $(RTL_DIR)/jpeg_mcuout_wide.sv $(RTL_DIR)/jpeg_dec_wide.sv $(RTL_DIR)/jpeg_decoder.sv
 TRACE    ?= 0
 VFLAGS   := -Wall -Wno-fatal -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM --top-module jpeg_decoder -O2 --x-assign fast --x-initial fast
