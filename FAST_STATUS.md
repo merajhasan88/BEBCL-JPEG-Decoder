@@ -42,7 +42,7 @@ untouched (renamed `jpeg_dec_small`, `FAST = 0`, still the default and still bit
 ## 2. Milestones (verified)
 
 1. **Architecture chosen by measurement** (cycle model driven by per-block Huffman statistics of the
-   benchmark photos, scratchpad `fast/cyclemodel.py`): the model reproduced the old design's
+   benchmark photos, scratchpad `fast/cyclemodel.py`, since lost; its successor is `model/perf/`): the model reproduced the old design's
    measured 13.5 clocks/pixel within 1 %, predicted ~1.0-1.1 for the new pipeline; measured
    afterwards: 1.01-1.11.
 2. **Fast core bit-exact**: full regression, 8 configurations (5 compact + 3 fast) x 3 output
