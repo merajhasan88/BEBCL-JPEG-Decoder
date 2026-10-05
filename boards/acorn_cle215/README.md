@@ -5,7 +5,8 @@ a checksum of its pixels and its error bits for each file sent over a UART. It w
 the remote boards of [fpgas.online](https://fpgas.online) (Welland site: SQRL Acorn CLE-215+ with
 an Artix-7 XC7A200T, wired to a Raspberry Pi 5 that loads the FPGA over GPIO JTAG and talks to it
 over its UART), and it measures this library's decoder and, for comparison, two other open-source
-FPGA JPEG decoders under identical conditions.
+FPGA JPEG decoders under identical conditions. A second build runs 15 of this library's wide decoders
+at the same time (batched mode, see the last section).
 
 | `DUT` | decoder | source |
 |---:|---|---|
@@ -26,6 +27,8 @@ FPGA JPEG decoders under identical conditions.
 | `sim/` | Verilator simulation of the whole harness (`uart_sim_top.sv` models the gated clock buffer, `tb_uart.cpp` sends files over the simulated UART) |
 | `make_expected.py` | expected results: libjpeg 9e checksums and RTL clock counts for this library, the other decoders' own simulations (and their accuracy against libjpeg 9e) |
 | `report.py` | markdown tables from a results file |
+| `bench_lane.sv`, `uart_batch_core.sv`, `acorn_batch_top.sv`, `build_batch.tcl`, `pi_batch.py`, `sim/batch_sim_top.sv`, `sim/tb_batch.cpp` | batched mode: N decoder lanes behind one UART (last section) |
+| `results_batch_2026-10-05.json` | the batched run on fpgas.online, Welland: 15 wide decoders |
 | `results_2026-10-04.json` | the runs on fpgas.online, Welland pi46: DUTs 0-2 on 2026-10-03, DUT 3 on 2026-10-04 (`results_2026-10-03.json`: the first run alone) |
 
 ## How the measurement works
@@ -139,3 +142,48 @@ What the runs show:
   checksum), so the harness measures each decoder exactly as simulated.
 - This library is also the smallest of the three in logic (2,488 LUTs against 4,919 and 6,681,
   harness included); aq_djpeg uses the fewest block RAMs (4 tiles against 7.5) and DSPs (14 against 17).
+
+## Batched mode: 15 wide decoders at the same time (2026-10-05)
+
+`uart_batch_core.sv` puts N decoder lanes (`bench_lane.sv`: input FIFO, `jpeg_decoder`, counters, the
+logic of `uart_bench_core.sv`) behind one UART. Each lane has its own gated clock, so each lane's
+clock count is its own decode time with an ideal input. The host sends a file header per lane and the
+files in packets, lane after lane, so all lanes decode at the same time; a broadcast packet feeds the
+same bytes to several lanes (one upload, every lane decoding it). A lane's 32-byte result (the format
+of `uart_bench_core.sv`, the lane number in byte 5) comes back as soon as it has finished.
+
+- **15 lanes is the limit of one MMCM**: it can drive only the 16 global clock buffers of its half of
+  the device (the core clock and 15 lane gates; the MMCM's feedback is internal). 16 lanes failed
+  clock placement; more lanes would need a second MMCM in the other half.
+- **Resources (15 x `FAST=2`, harness included)**: 91,949 LUTs (68.7 %), 112,058 flip-flops, 135
+  block-RAM tiles, 495 DSP48E1 (66.9 %), 16 BUFGCTRL.
+- **Timing at 150 MHz**: met for the board's own speed grade, -3 (+0.339 ns setup, +0.036 ns hold;
+  the routed design re-timed with `open_checkpoint -part xc7a200tfbg484-3`). This is the first build
+  here signed off at -3: on -2, the grade of the other builds, it reaches 141.5 MHz (-0.399 ns, in
+  every lane, on the wide core's Huffman bit-window loop that needs high effort even as a single
+  core). The CLE-215+'s grade comes from LiteX's board file; the JTAG IDCODE cannot show it.
+- **Build**: `build_batch.tcl` in three Vivado processes (synthesis, placement, routing; 22, 109 and
+  138 minutes with `VIVADO_EFFORT=high`, 4 threads). One process grew to 11.9 GB by the end of
+  placement; separate processes peaked at 4.5-4.7 GB for placement and routing.
+- **Simulation** (3 lanes, Verilator): 24 results in three runs - distinct files in rounds, malformed
+  and truncated files with one-byte packets, broadcast rounds - all equal to the decoder's own
+  simulation and to libjpeg 9e.
+- **On the board: 18/18 identical to libjpeg 9e, every clock count equal to the simulation.**
+  adapter.jpg broadcast to all 15 lanes: 6,049,456 clocks in every lane; then three photos in lanes
+  0-2 (IMG20260716020409.jpg 3,825,225, IMG20260716020422_420.jpg 3,304,743,
+  IMG20260716020424_420.jpg 3,305,261 clocks).
+- **Throughput** (from the measured counts): 15 adapter.jpg in 40.33 ms, 372 photos/s or 4.83
+  Gpixel/s, 20.7x one laptop core at a steady 3.9 GHz (libjpeg-turbo -nosmooth, the fastest CPU
+  decoder on this photo, 55.5 ms) and about 10x the fastest desktop core (estimate: 2.04x the laptop
+  core, libjpeg-turbo tjbench on OpenBenchmarking). A real system has to feed every lane at full
+  speed (here the 1 Mbaud UART cannot; the lanes' clocks pause while they wait).
+
+```sh
+# build (three processes; VIVADO_THREADS, VIVADO_EFFORT=high as for build.tcl)
+for st in synth place route; do vivado -mode batch -source build_batch.tcl -tclargs 15 2 8 build/b15 $st; done
+# on the Pi: one file broadcast to every lane, then files one per lane
+python3 pi_batch.py /dev/ttyAMA0 1000000 15 --broadcast adapter.jpg
+python3 pi_batch.py /dev/ttyAMA0 1000000 15 photo1.jpg photo2.jpg photo3.jpg
+# the harness in simulation (3 lanes)
+cd sim && verilator --top-module batch_sim_top -GN=3 -GFAST=2 -CFLAGS -DNLANES=3 -cc <rtl files> ../bench_lane.sv ../uart_batch_core.sv batch_sim_top.sv --exe tb_batch.cpp -o Vbatch ...
+```

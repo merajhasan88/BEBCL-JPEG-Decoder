@@ -34,6 +34,7 @@ MCU order).
 | Intel/Altera Cyclone II EP2C5T144C8 (2004, 4,608 LEs) | `FAST=1` | 95 MHz | 4,425 LEs (96 %), 26/26 multipliers | 202-284 ms |
 | Xilinx Artix-7 XC7A200T (Acorn CLE-215+, remote board at fpgas.online) | `FAST=1` | 150 MHz | 2,488 LUTs, 17 DSP48E1, 7.5 BRAM | 87-154 ms |
 | the same Artix-7 board | `FAST=2` | 150 MHz | 6,211 LUTs, 33 DSP48E1, 9 BRAM | **22-49 ms** |
+| the same board, 15 decoders at once | 15 x `FAST=2` | 150 MHz (-3 grade) | 91,949 LUTs, 495 DSP48E1, 135 BRAM | **15 photos in 40 ms** (adapter.jpg) |
 
 How it compares with the two other open-source FPGA JPEG decoders and with CPU decoders: below and
 in **[BENCHMARKS.md](BENCHMARKS.md)** (Artix-7 details: `boards/acorn_cle215/README.md`).
@@ -86,7 +87,11 @@ case; [BENCHMARKS.md](BENCHMARKS.md)): libjpeg-turbo -nosmooth (the same pixels)
 photo 2.2-3.2x faster than the `FAST=1` core at 150 MHz, but the `FAST=2` core at 150 MHz takes
 0.64-0.80x libjpeg-turbo's time and 0.64-0.88x that of the fastest CPU decoder on each photo, measured
 on the board. This is single-image time on one CPU core; a multi-core CPU decoding several photos at
-once still has more throughput than one decoder.
+once still has more throughput than one decoder. Fifteen wide decoders on the same board, measured
+decoding at the same time, deliver 372 photos/s on adapter.jpg (4.83 Gpixel/s): 20.7x one laptop core,
+more than the laptop's four cores could together, and about two thirds of an ideal 16-core desktop
+CPU (estimate). That build meets 150 MHz for the board's -3 speed grade; on -2, the grade of the other
+rows, it reaches 141.5 MHz ([boards/acorn_cle215](boards/acorn_cle215/README.md)).
 
 ## Quick start: decode your own images
 
