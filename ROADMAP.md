@@ -53,7 +53,8 @@ Owner: "In parallel (pun intended) lets find a way around Huffman loop limitatio
   `results_batch_2026-10-05.json`), 91,949 LUTs and 495 DSPs, 150 MHz met for the board's -3 grade
   (141.5 MHz on -2). On the board: adapter.jpg broadcast to all 15 lanes, then three photos in three
   lanes - 18/18 identical to libjpeg 9e with every clock count equal to the simulation: 15 photos in
-  40.33 ms, 372 photos/s, 20.7x one laptop core. A 133 MHz build for the -2 grade is in progress.
+  40.33 ms, 372 photos/s, 20.7x one laptop core. A 133 MHz build for the -2 grade was not completed (its routing was still resolving congestion
+  after the 3-hour limit) and is not needed: the 150 MHz bitstream passed on the board.
 - **What.** Several wide decoders side by side on one FPGA, each decoding its own photo: throughput
   rather than single-photo time. Owner: "We do have to use that website for the batched mode that is
   deferred at the moment".

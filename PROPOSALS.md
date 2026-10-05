@@ -30,8 +30,9 @@ Raw numbers: `model/perf/proposals_2026-10-04.json` (`model/perf/proposals.py`).
 
 **Reading:** Proposal A scales with the number of segments using the existing, board-verified wide
 core; Proposal B alone gains little because, once the Huffman decoder is faster, the other stages
-limit (below). The clock-rate side of Proposal B (C-slow and all-offsets loops) is measured with two
-timing probes after the Task A build (one Vivado run at a time); see "Pending".
+limit (below). On the clock-rate side of Proposal B, the timing probes (2026-10-05) favour a C-slow
+loop: two streams in turn at 252 MHz, 1.52x the symbol rate of today's loop in the same area -
+streams that Proposal A's segments provide.
 
 ## Research
 
@@ -110,21 +111,35 @@ Acorn with DDR3.
   the IDCT take over. With every stage widened (2 symbols per clock, 4-byte input, long codes in one
   clock, two IDCT pairs, 8 pixels per beat) the estimate is 1.7-2.1x today's wide core - a new "W8"
   core of roughly twice the area.
-- **A higher clock instead** keeps today's clocks per pixel. Two candidate loops, probed out of context
-  (`model/perf/probes/`): probe 3 cuts today's loop with one register and runs two streams in turn
-  (C-slow); probe 4 looks the tables up at every offset of a window that moves by whole words, so the
-  loop is a pointer, a mux and a 5-bit add. Their Fmax is **pending** (after the Task A build).
-- **Where B fits:** after A. A C-slow loop is the way for one Huffman decoder to serve two of A's
-  segments (or two of the batched mode's photos) in the area of one.
+- **A higher clock instead** keeps today's clocks per pixel. Three loops probed out of context on the
+  XC7A200T-2 with the same script (`model/perf/probes/probe_fmax.tcl`, default effort, 2026-10-05):
+
+  | loop | Fmax | LUTs (of them LUTRAM) | symbols per second |
+  |---|---|---|---|
+  | probe 2: today's loop (window -> table -> n -> barrel shift) | 165.9 MHz | 1,053 (416) | 166 M, one stream |
+  | probe 3: the same loop cut by one register, two streams in turn (C-slow) | 252.0 MHz | 830 (320) | 252 M, two streams: 1.52x |
+  | probe 4: tables looked up at every offset of a word-aligned window | 155.9 MHz | 17,946 (14,336) | 156 M, one stream |
+
+  The C-slow loop's worst path is now the stream select in front of the window refill, not the
+  loop. Probe 4 fails on its own large mux (the entry at the pointer) and the fan-out of the window
+  move to every registered entry, at 17 times the area: rejected on this family, and with it the
+  multi-symbol decoders that need the same lookups at many offsets. (Probe 3 leaves out the
+  long-code path, which in probe 2 adds only registered terms; in the full wide core today's loop
+  meets 150 MHz with high effort, below the isolated loop's 166 MHz.)
+- **Where B fits:** after A, as its C-slow form: one Huffman decoder serving two of A's segments (or
+  two of the batched mode's photos) at 1.5x the loop clock in the area of one. The rest of the core
+  must then take two streams at that clock (two back ends, or one at twice the rate), which a
+  further probe of the IDCT and output paths would have to show before any design.
 
 ## Recommendation
 
 Proposal A first: step 1 (the C reference) is cheap, needs no board and decides whether the method is
 sound on these files; the estimates say 4 segments beat the fastest desktop core on every photo
 (0.60-0.79x its time) and 8 segments take a third of its time - on any board that holds the file in
-memory, which points to AWS F2. Proposal B's probes complete the picture of the clock-rate options.
+memory, which points to AWS F2. For Proposal B, the C-slow loop (252 MHz for two streams, 1.52x
+today's loop) is the option worth carrying into A's design; the all-offsets loop is not.
 
-## Pending
+## Probe runs
 
-- Probe 3 (C-slow, two streams) and probe 4 (all offsets): Fmax on the XC7A200T-2, after the Task A
-  build (`model/perf/probes/probe_fmax.tcl`).
+`model/perf/probes/probe_fmax.tcl` (out of context, default effort, XC7A200T-2, one Vivado at a time):
+probe 2 at 5.0 ns (WNS -1.028 ns), probes 3 and 4 at 4.0 ns (WNS +0.031 and -2.415 ns).
