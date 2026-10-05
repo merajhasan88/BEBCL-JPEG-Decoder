@@ -87,11 +87,13 @@ case; [BENCHMARKS.md](BENCHMARKS.md)): libjpeg-turbo -nosmooth (the same pixels)
 photo 2.2-3.2x faster than the `FAST=1` core at 150 MHz, but the `FAST=2` core at 150 MHz takes
 0.64-0.80x libjpeg-turbo's time and 0.64-0.88x that of the fastest CPU decoder on each photo, measured
 on the board. This is single-image time on one CPU core; a multi-core CPU decoding several photos at
-once still has more throughput than one decoder. Fifteen wide decoders on the same board, measured
-decoding at the same time, deliver 372 photos/s on adapter.jpg (4.83 Gpixel/s): 20.7x one laptop core,
-more than the laptop's four cores could together, and about two thirds of an ideal 16-core desktop
-CPU (estimate). That build meets 150 MHz for the board's -3 speed grade; on -2, the grade of the other
-rows, it reaches 141.5 MHz ([boards/acorn_cle215](boards/acorn_cle215/README.md)).
+once still has more throughput than one decoder. Fifteen wide decoders on the same board decoded at
+the same time with pixels identical to libjpeg 9e; from their clock counts (each lane's decode time
+with an ideal input; a real system must feed all 15 lanes at full speed) that is 372 photos/s on
+adapter.jpg (4.83 Gpixel/s), 20.7x one laptop core. Estimates only, not measured: more than the
+laptop's four cores together, and about two thirds of an ideal 16-core desktop CPU. That build meets
+150 MHz for the board's -3 speed grade; on -2, the grade of the other rows, it reaches 141.5 MHz
+([boards/acorn_cle215](boards/acorn_cle215/README.md)).
 
 ## Quick start: decode your own images
 

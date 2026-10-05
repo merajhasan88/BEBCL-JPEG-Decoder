@@ -377,9 +377,13 @@ BEBCL-JPEG `FAST=2` (the wide core) on the Artix-7 at 150 MHz takes 0.64-0.80x t
    decoder on each photo (libjpeg-turbo, or FFmpeg on three files). It decodes one Huffman symbol
    per clock and four pixels per clock in 6,211 LUTs and 33 DSPs of the XC7A200T (with the harness);
    at 131 MHz or more it would still beat every CPU decoder on every photo. Single-image time on one
-   CPU core is the comparison here: several CPU cores decoding several photos at once would still
-   outrun one decoder in throughput; several decoders side by side on one FPGA would answer that
-   (not built yet).
+   CPU core is the comparison here: several CPU cores decoding several photos at once outrun one
+   decoder in throughput. Several decoders side by side answer that: 15 wide decoders on the same
+   board (2026-10-05, `boards/acorn_cle215`, 150 MHz met for the board's -3 grade, 141.5 MHz on -2)
+   decoded at the same time with pixels identical to libjpeg 9e; from their clock counts (each lane's
+   decode time with an ideal input) that is 372 photos/s on adapter.jpg, 20.7x one laptop core.
+   Estimates only: more than the laptop's four cores together, about two thirds of an ideal 16-core
+   desktop CPU.
 10. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
    times as measured while the laptop throttled (2.3-3.9 GHz), and with libjpeg-turbo's default
    (smoothing) mode: "libjpeg-turbo 1.9-2.7x faster than BEBCL-JPEG on the Artix-7", "faster than
