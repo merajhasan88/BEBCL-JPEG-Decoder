@@ -175,8 +175,11 @@ of `uart_bench_core.sv`, the lane number in byte 5) comes back as soon as it has
 - **Throughput** (from the measured counts): 15 adapter.jpg in 40.33 ms, 372 photos/s or 4.83
   Gpixel/s, 20.7x one laptop core at a steady 3.9 GHz (libjpeg-turbo -nosmooth, the fastest CPU
   decoder on this photo, 55.5 ms) and about 10x the fastest desktop core (estimate: 2.04x the laptop
-  core, libjpeg-turbo tjbench on OpenBenchmarking). A real system has to feed every lane at full
-  speed (here the 1 Mbaud UART cannot; the lanes' clocks pause while they wait).
+  core, libjpeg-turbo tjbench on OpenBenchmarking). On the 24 photo files (each file's measured
+  count, spread over the 15 lanes) 408 photos/s, 5.5x the laptop's whole CPU measured on the same
+  files (74.5 photos/s on 4 cores / 8 threads at 2.35 GHz, its ~18 W limit; `../../bench/bench_multicore.py`).
+  A real system has to feed every lane at full speed (here the 1 Mbaud UART cannot; the lanes'
+  clocks pause while they wait).
 
 ```sh
 # build (three processes; VIVADO_THREADS, VIVADO_EFFORT=high as for build.tcl)
