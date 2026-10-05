@@ -7,7 +7,7 @@ request; the names are the owner's.
 |---|---|---|
 | **Proposal A** | split the stream of one image that has no restart markers, so several decoders can share one photo | research started 2026-10-04 after 22:40 PKT (owner: "sure go ahead keeping in mind the load on the laptop's cores") |
 | **Proposal B** | a way around the Huffman loop limit (one code per clock) | research started with A, in parallel |
-| **Task A** | batched mode of the wide core on fpgas.online Welland | started 2026-10-04 (owner: "Proceed with Task A"); each Welland run still needs the owner's OK |
+| **Task A** | batched mode of the wide core on fpgas.online Welland | **done 2026-10-05**: 15 wide decoders at 150 MHz (-3 grade), 18/18 identical to libjpeg 9e on the board, 372 photos/s on adapter.jpg; details below and in `boards/acorn_cle215/README.md` |
 | **Task B** | all tests on AWS F2 | last; nothing is set up on AWS without the owner's go-ahead |
 
 Research, measurements, estimates and the plan for both proposals: `PROPOSALS.md`.
@@ -49,14 +49,21 @@ Owner: "In parallel (pun intended) lets find a way around Huffman loop limitatio
 
 ## Task A: batched mode of the wide core on Welland
 
+- **Result (2026-10-05).** 15 wide decoders (`boards/acorn_cle215`: `uart_batch_core.sv`,
+  `results_batch_2026-10-05.json`), 91,949 LUTs and 495 DSPs, 150 MHz met for the board's -3 grade
+  (141.5 MHz on -2). On the board: adapter.jpg broadcast to all 15 lanes, then three photos in three
+  lanes - 18/18 identical to libjpeg 9e with every clock count equal to the simulation: 15 photos in
+  40.33 ms, 372 photos/s, 20.7x one laptop core. A 133 MHz build for the -2 grade is in progress.
 - **What.** Several wide decoders side by side on one FPGA, each decoding its own photo: throughput
   rather than single-photo time. Owner: "We do have to use that website for the batched mode that is
   deferred at the moment".
 - **Board.** SQRL Acorn CLE-215+ (Artix-7 XC7A200T-3) at fpgas.online Welland, `pi-sw2-p46`
   (`pi-sw2-p47` is the same board).
 - **Room.** One wide decoder with the test harness takes 6,211 LUTs, 33 DSPs and 9 block-RAM tiles of
-  the XC7A200T's 133,800 LUTs, 740 DSPs and 365 tiles: LUTs and DSPs allow roughly 20 decoders
-  (estimate, before routing and the shared input path).
+  the XC7A200T's 133,800 LUTs, 740 DSPs and 365 tiles: LUTs and DSPs would allow about 20, but each
+  lane's gated clock takes a global clock buffer, and the clock generator (MMCM) can drive only the 16
+  buffers of its half of the chip: 15 lanes plus the core clock (16 lanes synthesized to 73 % of the
+  LUTs, then failed clock placement). More lanes would need a second MMCM in the other half.
 - **Open questions.** How to feed many decoders through the board's 1 Mbaud UART (each decoder's
   clock stays gated while it waits for data, as in the current harness, so the clock counts still
   measure decoding only); how to report the results per decoder.
