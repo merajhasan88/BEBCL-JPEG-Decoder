@@ -381,9 +381,13 @@ BEBCL-JPEG `FAST=2` (the wide core) on the Artix-7 at 150 MHz takes 0.64-0.80x t
    decoder in throughput. Several decoders side by side answer that: 15 wide decoders on the same
    board (2026-10-05, `boards/acorn_cle215`, 150 MHz met for the board's -3 grade, 141.5 MHz on -2)
    decoded at the same time with pixels identical to libjpeg 9e; from their clock counts (each lane's
-   decode time with an ideal input) that is 372 photos/s on adapter.jpg, 20.7x one laptop core.
-   Estimates only: more than the laptop's four cores together, about two thirds of an ideal 16-core
-   desktop CPU.
+   decode time with an ideal input) that is 372 photos/s on adapter.jpg, 20.7x one laptop core, and
+   408 photos/s on the 24 photo files. The laptop's whole CPU, measured on the same 24 files
+   (`bench_multicore.py`, `bench_multicore_2026-10-05.json`; libjpeg-turbo -nosmooth, one worker per
+   logical CPU, performance profile): 23.4 photos/s on one core at 3.92 GHz, 62.6 on 4 cores and
+   74.5 on 8 threads - under all-core load this 15 W chip holds only 2.35-2.63 GHz at ~18 W (93.0 and
+   123.5 photos/s if it held 3.9 GHz). So the batch is 5.5x the whole laptop CPU as measured, 3.3x its
+   best case. Estimate only: about half of an ideal 16-core desktop CPU.
 10. **Correction (2026-10-04).** Until then this file and README.md compared the FPGA with CPU
    times as measured while the laptop throttled (2.3-3.9 GHz), and with libjpeg-turbo's default
    (smoothing) mode: "libjpeg-turbo 1.9-2.7x faster than BEBCL-JPEG on the Artix-7", "faster than

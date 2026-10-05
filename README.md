@@ -90,8 +90,11 @@ on the board. This is single-image time on one CPU core; a multi-core CPU decodi
 once still has more throughput than one decoder. Fifteen wide decoders on the same board decoded at
 the same time with pixels identical to libjpeg 9e; from their clock counts (each lane's decode time
 with an ideal input; a real system must feed all 15 lanes at full speed) that is 372 photos/s on
-adapter.jpg (4.83 Gpixel/s), 20.7x one laptop core. Estimates only, not measured: more than the
-laptop's four cores together, and about two thirds of an ideal 16-core desktop CPU. That build meets
+adapter.jpg (4.83 Gpixel/s), 20.7x one laptop core. On the 24 photo files the batch does 408
+photos/s, against 74.5 photos/s measured on the laptop's whole CPU (i7-8550U, 4 cores / 8 threads,
+libjpeg-turbo -nosmooth; it holds 2.35 GHz on all cores at its ~18 W limit): 5.5x the whole laptop
+CPU, and 3.3x even if every core held 3.9 GHz. Estimate only: about half of an ideal 16-core desktop
+CPU. That build meets
 150 MHz for the board's -3 speed grade; on -2, the grade of the other rows, it reaches 141.5 MHz
 ([boards/acorn_cle215](boards/acorn_cle215/README.md)).
 

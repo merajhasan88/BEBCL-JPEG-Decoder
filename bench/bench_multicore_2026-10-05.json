@@ -1,0 +1,168 @@
+{
+ "date": "2026-10-05 20:47",
+ "cpu": "Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz",
+ "decoder": "libjpeg-turbo (system library) -nosmooth: ISLOW, no fancy upsampling, RGB",
+ "files": [
+  "IMG20260405182829.jpg",
+  "IMG20260405182833.jpg",
+  "IMG20260425135544.jpg",
+  "IMG20260425135628.jpg",
+  "IMG20260425141210.jpg",
+  "IMG20260523191343.jpg",
+  "IMG20260612210949.jpg",
+  "IMG20260716020409.jpg",
+  "IMG20260716020422.jpg",
+  "IMG20260716020424.jpg",
+  "IMG20260723160735.jpg",
+  "adapter.jpg",
+  "IMG20260405182829_420.jpg",
+  "IMG20260405182833_420.jpg",
+  "IMG20260425135544_420.jpg",
+  "IMG20260425135628_420.jpg",
+  "IMG20260425141210_420.jpg",
+  "IMG20260523191343_420.jpg",
+  "IMG20260612210949_420.jpg",
+  "IMG20260716020409_420.jpg",
+  "IMG20260716020422_420.jpg",
+  "IMG20260716020424_420.jpg",
+  "IMG20260723160735_420.jpg",
+  "adapter_420.jpg"
+ ],
+ "runs": [
+  {
+   "workers": 1,
+   "cpus": [
+    0
+   ],
+   "seconds": 60.0,
+   "photos_per_s": 23.383314617874365,
+   "mpix_per_s": 303.49593764449435,
+   "mean_ghz": 3.915827327391848,
+   "photos_per_s_at_3p9ghz": 23.288801927446265,
+   "per_worker": [
+    {
+     "decodes": 1416,
+     "mpix": 18378.5,
+     "seconds": 60.556,
+     "ghz": 3.915827327391848
+    }
+   ],
+   "package_joules_per_photo": 0.7603875649717513,
+   "package_watts": 17.71923533471442
+  },
+  {
+   "workers": 4,
+   "cpus": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "seconds": 60.0,
+   "photos_per_s": 62.64106034248832,
+   "mpix_per_s": 813.0287623618797,
+   "mean_ghz": 2.625854604505162,
+   "photos_per_s_at_3p9ghz": 93.03642894643149,
+   "per_worker": [
+    {
+     "decodes": 960,
+     "mpix": 12460.0,
+     "seconds": 61.349,
+     "ghz": 2.625706550954715
+    },
+    {
+     "decodes": 960,
+     "mpix": 12460.0,
+     "seconds": 61.29,
+     "ghz": 2.625827530067495
+    },
+    {
+     "decodes": 960,
+     "mpix": 12460.0,
+     "seconds": 61.177,
+     "ghz": 2.626078715719544
+    },
+    {
+     "decodes": 960,
+     "mpix": 12460.0,
+     "seconds": 61.391,
+     "ghz": 2.625805621278894
+    }
+   ],
+   "package_joules_per_photo": 0.29344935,
+   "package_watts": 18.336752680337177
+  },
+  {
+   "workers": 8,
+   "cpus": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "seconds": 60.0,
+   "photos_per_s": 74.5041837746461,
+   "mpix_per_s": 967.0022185750943,
+   "mean_ghz": 2.35363478554949,
+   "photos_per_s_at_3p9ghz": 123.45429227384692,
+   "per_worker": [
+    {
+     "decodes": 576,
+     "mpix": 7476.0,
+     "seconds": 61.923,
+     "ghz": 2.35422773924136
+    },
+    {
+     "decodes": 576,
+     "mpix": 7476.0,
+     "seconds": 61.883,
+     "ghz": 2.3541482845344417
+    },
+    {
+     "decodes": 576,
+     "mpix": 7476.0,
+     "seconds": 62.126,
+     "ghz": 2.3545301859658636
+    },
+    {
+     "decodes": 576,
+     "mpix": 7476.0,
+     "seconds": 61.593,
+     "ghz": 2.3532671532048646
+    },
+    {
+     "decodes": 576,
+     "mpix": 7476.0,
+     "seconds": 61.652,
+     "ghz": 2.3540159223925876
+    },
+    {
+     "decodes": 576,
+     "mpix": 7476.0,
+     "seconds": 62.117,
+     "ghz": 2.3535550443197533
+    },
+    {
+     "decodes": 576,
+     "mpix": 7476.0,
+     "seconds": 61.628,
+     "ghz": 2.3536141470714105
+    },
+    {
+     "decodes": 576,
+     "mpix": 7476.0,
+     "seconds": 61.874,
+     "ghz": 2.3517198076656403
+    }
+   ],
+   "package_joules_per_photo": 0.23066251041666666,
+   "package_watts": 17.08453230101513
+  }
+ ],
+ "power_profile": "performance",
+ "power_profile_after": "power-saver"
+}
