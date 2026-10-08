@@ -7,19 +7,37 @@
  "tool": "Vivado 2026.1 (Vivado Basic licence), out of context, model/perf/probes/usplus_timing.tcl: place ExtraTimingOpt, phys_opt AggressiveExplore, route AggressiveExplore, post-route phys_opt AggressiveExplore (as build_batch.tcl with VIVADO_EFFORT=high); each stage a separate process capped at 9 GB",
  "designs": {
   "1": "usplus_batch_top.sv: one lane (bench_lane.sv, FAST=2) in the batched harness (uart_batch_core.sv), as on the board; one synthesis",
-  "15": "usplus_lanes_top.sv: 15 lanes (bench_lane.sv, FAST=2) with registered inputs and folded outputs, without the UART core; one lane synthesized on its own (stage lane) and its netlist placed in all 15"
+  "15": "usplus_lanes_top.sv: 15 lanes (bench_lane.sv, FAST=2) with registered inputs and folded outputs, without the UART core; one lane synthesized on its own (stage lane) and its netlist placed in all 15",
+  "24": "usplus_lanes_top.sv with 24 lanes (72 % of the KU5P's LUTs, about the Artix-7 batch's 68 %), filled from the 15-lane run's lane netlist",
+  "1 at 3.75 ns": "as the one-lane run, at 266.67 MHz (AWS clock recipe C3)"
  },
- "period_ns": 4.0,
- "result": "250 MHz met with 1 and with 15 lanes; worst path inside a decoder: the wide core's Huffman decoder (bit window -> code table -> block descriptor queue write), +0.573 ns with one lane, +0.336 ns with 15; with 15 lanes the overall worst path (+0.061 ns) is a lane's reset fan-out (in_rst, 637 loads), routing only",
+ "period_ns": "4.0 (250 MHz, F2's main clock); one run at 3.75 (266.67 MHz)",
+ "result": "one lane: 250 MHz met (+0.573 ns) and 266.67 MHz met (+0.453 ns); 15 lanes at 250 MHz: met, +0.061 ns overall (a lane's reset fan-out, routing only), +0.336 ns inside the decoders; 24 lanes at 250 MHz: met, +0.043 ns overall (a lane's FIFO pointer to its clock gate's enable), +0.117 ns inside the decoders. The decoders' worst path is always the Huffman decoder's bit window and code table. Hold is met but tight in every run (+0.010 to +0.019 ns).",
  "comparison_artix7": {
   "xc7a200tfbg484-2, one wide core with the harness": "150 MHz met, +0.013 ns (boards/acorn_cle215/README.md)",
   "xc7a200tfbg484-2, 15 lanes": "141.5 MHz (-0.399 ns at 150 MHz, every lane on the Huffman bit-window loop)",
   "xc7a200tfbg484-3, 15 lanes": "150 MHz met, +0.339 ns"
  },
- "side_finding": "uart_batch_core.sv with 15 lanes needs more than 9 GB to synthesize on the KU5P even with the lanes as black boxes (killed twice at the cap; -resource_sharing off did not help), while one lane needs 3.5 GB: the 11.2 GB synthesis peak of the Artix-7 batch build came from the UART core's per-lane bookkeeping, not from the decoders",
+ "side_finding": {
+  "symptom": "uart_batch_core.sv with 15 lanes passes 9 GB in synthesis on the KU5P even with the lanes as black boxes (killed twice at the cap; -resource_sharing off did not help); one lane in it needs 3.5 GB. The Artix-7 batch build's 11.2 GB synthesis peak came from the same core.",
+  "cause": "the result selection in process p_tx: a loop over the lanes that, for the first ready lane, assigns the whole 256-bit result record (and sent_r[i], tsend, ti) inside the loop body; each iteration's assignment overrides the previous ones, and Vivado's RTL Optimization Phase 2 spends most of the memory and time on those 15 chained 256-bit assignments",
+  "experiment": "uart_batch_core alone, N=15, lanes as black boxes (model/perf/probes/usplus_lane_stub.sv), synth_design out of context, 4 threads; variants of the core differing only as listed",
+  "results_xc7a200tfbg484-2": {
+   "original": "5.4 GB peak, RTL Optimization Phase 2 ends at 1:51 and 5.1 GB, 3.2 min in all, 1,843 LUTs, 1,396 registers",
+   "without the per-lane byte counting (DATA loop)": "5.1 GB (capped at 5 GB), 4.1 min",
+   "lane tables written by constant index instead of lane number": "5.1 GB (capped at 5 GB), 3.3 min",
+   "result taken from lane 0 only (removes most of the logic)": "2.3 GB, 2.0 min, 591 LUTs",
+   "result by index: the loop only finds the lowest ready lane, then one indexed read of its results": "2.9 GB peak, Phase 2 ends at 0:41 and 2.5 GB, 2.2 min, 1,492 LUTs, 1,396 registers"
+  },
+  "results_xcku5p-ffvb676-2-e": {
+   "original": "killed at the 9 GB cap (twice)",
+   "result by index": "3.5 GB peak, 2.4 min, 1,461 LUTs, 1,396 registers"
+  },
+  "fix_not_applied": "boards/acorn_cle215/uart_batch_core.sv is unchanged (it is the board-verified harness); the result-by-index form is functionally the same and would need the batch simulation re-run before use"
+ },
  "caveats": [
   "a stand-in: the VU47P has three SLRs (dies) and the AWS shell takes part of it; SLR crossings, the shell and its memory interfaces are not modelled",
-  "15 lanes fill 45 % of the KU5P's LUTs (68 % on the Artix-7 batch); a fuller chip may lose more margin",
+  "the 15 lanes fill 45 % and the 24 lanes 72 % of the KU5P's LUTs (68 % on the Artix-7 batch); the VU47P with the shell would hold more",
   "out of context: the clock enters on a port that drives a BUFG and one BUFGCE per lane; on F2 it comes from the shell",
   "a timing estimate only: no board, no bitstream"
  ],
@@ -102,6 +120,82 @@
   },
   {
    "part": "xcku5p-ffvb676-2-e",
+   "lanes": 1,
+   "period_ns": 3.75,
+   "overall": {
+    "slack_ns": 0.453,
+    "fmax_mhz": "met",
+    "logic_levels": 7,
+    "from": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[57]_rep/C",
+    "to": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[59]/D"
+   },
+   "decoder": {
+    "slack_ns": 0.453,
+    "fmax_mhz": "met",
+    "logic_levels": 7,
+    "from": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[57]_rep/C",
+    "to": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[59]/D"
+   },
+   "harness": {
+    "slack_ns": 0.529,
+    "fmax_mhz": "met",
+    "logic_levels": 1,
+    "from": "u_core/g_lane[0].u_lane/in_rst_reg/C",
+    "to": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_idct/c2x_reg[0][3]/CE"
+   },
+   "hold_slack_ns": 0.019,
+   "timing": {
+    "wns_ns": 0.453,
+    "tns_ns": 0.0,
+    "failing_setup_endpoints": 0,
+    "endpoints": 27033,
+    "whs_ns": 0.019,
+    "failing_hold_endpoints": 0
+   },
+   "resources": {
+    "CLB LUTs": {
+     "used": 6849.0,
+     "available": 216960.0,
+     "percent": 3.16
+    },
+    "CLB Registers": {
+     "used": 7809.0,
+     "available": 433920.0,
+     "percent": 1.8
+    },
+    "Block RAM Tile": {
+     "used": 5.5,
+     "available": 480.0,
+     "percent": 1.15
+    },
+    "DSPs": {
+     "used": 33.0,
+     "available": 1824.0,
+     "percent": 1.81
+    },
+    "BUFGCE": {
+     "used": 2.0,
+     "available": 112.0,
+     "percent": 1.79
+    }
+   },
+   "stages": {
+    "synth": {
+     "minutes": 8.2,
+     "peak_rss_mb": 3471
+    },
+    "place": {
+     "minutes": 7.5,
+     "peak_rss_mb": 4029
+    },
+    "route": {
+     "minutes": 4.9,
+     "peak_rss_mb": 3735
+    }
+   }
+  },
+  {
+   "part": "xcku5p-ffvb676-2-e",
    "lanes": 15,
    "period_ns": 4.0,
    "overall": {
@@ -177,6 +271,83 @@
     "route": {
      "minutes": 36.3,
      "peak_rss_mb": 5685
+    }
+   }
+  },
+  {
+   "part": "xcku5p-ffvb676-2-e",
+   "lanes": 24,
+   "period_ns": 4.0,
+   "overall": {
+    "slack_ns": 0.043,
+    "fmax_mhz": "met",
+    "logic_levels": 3,
+    "from": "g_lane[1].u_lane/rp_reg[2]/C",
+    "to": "g_lane[1].u_gate/CE"
+   },
+   "decoder": {
+    "slack_ns": 0.117,
+    "fmax_mhz": "met",
+    "logic_levels": 8,
+    "from": "g_lane[23].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[57]_rep/C",
+    "to": "g_lane[23].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[57]/D"
+   },
+   "harness": {
+    "slack_ns": 0.043,
+    "fmax_mhz": "met",
+    "logic_levels": 3,
+    "from": "g_lane[1].u_lane/rp_reg[2]/C",
+    "to": "g_lane[1].u_gate/CE"
+   },
+   "hold_slack_ns": 0.01,
+   "timing": {
+    "wns_ns": 0.043,
+    "tns_ns": 0.0,
+    "failing_setup_endpoints": 0,
+    "endpoints": 628682,
+    "whs_ns": 0.01,
+    "failing_hold_endpoints": 0
+   },
+   "resources": {
+    "CLB LUTs": {
+     "used": 156757.0,
+     "available": 216960.0,
+     "percent": 72.25
+    },
+    "CLB Registers": {
+     "used": 178307.0,
+     "available": 433920.0,
+     "percent": 41.09
+    },
+    "Block RAM Tile": {
+     "used": 132.0,
+     "available": 480.0,
+     "percent": 27.5
+    },
+    "DSPs": {
+     "used": 792.0,
+     "available": 1824.0,
+     "percent": 43.42
+    },
+    "BUFGCE": {
+     "used": 25.0,
+     "available": 112.0,
+     "percent": 22.32
+    }
+   },
+   "stages": {
+    "lane": "the 15-lane run's lane.edf (same lane, same 4.0 ns)",
+    "synth": {
+     "minutes": 21.7,
+     "peak_rss_mb": 4318
+    },
+    "place": {
+     "minutes": 105.2,
+     "peak_rss_mb": 7159
+    },
+    "route": {
+     "minutes": 102.1,
+     "peak_rss_mb": 6645
     }
    }
   }

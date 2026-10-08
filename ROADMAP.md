@@ -98,13 +98,26 @@ Owner: "In parallel (pun intended) lets find a way around Huffman loop limitatio
   lane's reset fan-out; +0.336 ns inside the decoders, on the Huffman decoder's table lookup). The same
   lanes reach 150 MHz (one) and 141.5 MHz (15) on the Artix-7 -2. So F2's fixed 250 MHz clock looks
   reachable: 1.67x the Artix-7's clock, about 13-29 ms per photo instead of 22-49 (estimate). Not
-  modelled: the VU47P's three dies, the shell and its memory interfaces; and 15 lanes fill 45 % of the
-  KU5P's LUTs, against 68 % of the Artix-7's.
+  modelled: the VU47P's three dies, the shell and its memory interfaces.
+  Follow-ups (owner's go-ahead, 2026-10-08/09): **one lane at 266.67 MHz** (AWS recipe C3) is met too
+  (+0.453 ns, on the Huffman bit-window loop); **24 lanes at 250 MHz** (72 % of the KU5P's LUTs, about
+  the Artix-7 batch's 68 %) are met (+0.043 ns overall, a lane's FIFO pointer to its clock gate's
+  enable; +0.117 ns inside the decoders). The decoders' margin shrinks as the chip fills (+0.573,
+  +0.336, +0.117 ns for 1, 15, 24 lanes), and hold is met but tight in every run (+0.010 to
+  +0.019 ns): the real F2 build has to show both again.
 - **Harness note (same day).** The batched harness's UART core (`uart_batch_core.sv`) with 15 lanes
-  needs more than 9 GB to synthesize even with the lanes left empty (one lane in it: 3.5 GB), so the
-  Artix-7 batch build's 11.2 GB synthesis peak came from that core, not from the decoders; the
-  construct responsible was not isolated. The 15-lane preview used `usplus_lanes_top.sv` (the lanes
-  without the UART core) instead.
+  needs more than 9 GB to synthesize on the KU5P even with the lanes left empty (one lane in it:
+  3.5 GB), so the Artix-7 batch build's 11.2 GB synthesis peak came from that core, not from the
+  decoders. The 15-lane preview used `usplus_lanes_top.sv` (the lanes without the UART core) instead.
+  **Cause (found the same evening):** the result selection in `p_tx`, a loop over the lanes that
+  assigns the whole 256-bit result record inside the loop body for the first ready lane, so that 15
+  chained 256-bit assignments reach Vivado's RTL Optimization Phase 2. Rewritten to find the lowest
+  ready lane first and then read its results once by index (same behaviour), the core with 15 empty
+  lanes needs 2.9 GB instead of 5.4 GB on the Artix-7 part (1,492 LUTs instead of 1,843, same
+  registers) and 3.5 GB instead of more than 9 GB on the KU5P. Removing the per-lane byte counting or
+  writing the lane tables by constant index changed nothing. Not applied to the board-verified
+  harness yet; it needs the batch simulation re-run first. Measurements in
+  `model/perf/probes/usplus_timing_2026-10-08.json` (`side_finding`).
 - **"All tests" (owner, 2026-10-04):** all 24 photo files on the single core (`FAST=1`), the wide
   core (`FAST=2`) and the batched mode, plus whatever comes out of Proposals A and B; checked against
   libjpeg 9e's checksums and the simulated clock counts, as on Welland.
