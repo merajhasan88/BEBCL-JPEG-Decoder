@@ -168,6 +168,15 @@ of `uart_bench_core.sv`, the lane number in byte 5) comes back as soon as it has
 - **Simulation** (3 lanes, Verilator): 24 results in three runs - distinct files in rounds, malformed
   and truncated files with one-byte packets, broadcast rounds - all equal to the decoder's own
   simulation and to libjpeg 9e.
+- **Harness change (2026-10-09), after the board run.** `uart_batch_core.sv` now finds the lowest lane
+  with a result first and then reads that lane's record once by index; before, it assigned the whole
+  256-bit record inside the loop over the lanes, and Vivado's synthesis of that core with 15 lanes
+  needed 5.4 GB on its own on the XC7A200T (more than 9 GB on a Kintex UltraScale+ KU5P). Now 2.9 GB
+  (3.5 GB on the KU5P), and 1,492 LUTs instead of 1,843 for the core, with the same registers; the
+  whole 15-lane build (11.2 GB synthesis peak before) was not re-run. The same 24-result simulation gives identical result records before
+  and after the change (all 18 decodable results equal to libjpeg 9e and to the decoder's own clock
+  counts, the 6 malformed files with their expected error bits). The bitstream of the board run above
+  was built from the previous version.
 - **On the board: 18/18 identical to libjpeg 9e, every clock count equal to the simulation.**
   adapter.jpg broadcast to all 15 lanes: 6,049,456 clocks in every lane; then three photos in lanes
   0-2 (IMG20260716020409.jpg 3,825,225, IMG20260716020422_420.jpg 3,304,743,

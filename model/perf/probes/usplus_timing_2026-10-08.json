@@ -19,7 +19,7 @@
   "xc7a200tfbg484-3, 15 lanes": "150 MHz met, +0.339 ns"
  },
  "side_finding": {
-  "symptom": "uart_batch_core.sv with 15 lanes passes 9 GB in synthesis on the KU5P even with the lanes as black boxes (killed twice at the cap; -resource_sharing off did not help); one lane in it needs 3.5 GB. The Artix-7 batch build's 11.2 GB synthesis peak came from the same core.",
+  "symptom": "uart_batch_core.sv with 15 lanes passes 9 GB in synthesis on the KU5P even with the lanes as black boxes (killed twice at the cap; -resource_sharing off did not help); one lane in it needs 3.5 GB. On the XC7A200T the core alone takes 5.4 GB; the whole Artix-7 batch build peaked at 11.2 GB in synthesis.",
   "cause": "the result selection in process p_tx: a loop over the lanes that, for the first ready lane, assigns the whole 256-bit result record (and sent_r[i], tsend, ti) inside the loop body; each iteration's assignment overrides the previous ones, and Vivado's RTL Optimization Phase 2 spends most of the memory and time on those 15 chained 256-bit assignments",
   "experiment": "uart_batch_core alone, N=15, lanes as black boxes (model/perf/probes/usplus_lane_stub.sv), synth_design out of context, 4 threads; variants of the core differing only as listed",
   "results_xc7a200tfbg484-2": {
@@ -33,7 +33,7 @@
    "original": "killed at the 9 GB cap (twice)",
    "result by index": "3.5 GB peak, 2.4 min, 1,461 LUTs, 1,396 registers"
   },
-  "fix_not_applied": "boards/acorn_cle215/uart_batch_core.sv is unchanged (it is the board-verified harness); the result-by-index form is functionally the same and would need the batch simulation re-run before use"
+  "fix_applied": "2026-10-09, owner's go-ahead: boards/acorn_cle215/uart_batch_core.sv uses the result-by-index form (identical to the variant measured above apart from a comment). Check: the 3-lane batch simulation (sim/batch_sim_top.sv, tb_batch.cpp) built from the previous and from the new core, the same three runs (9 files in rounds with 64-byte packets; 6 malformed or truncated files with 1-byte packets; 3 files broadcast to all lanes with 128-byte packets): all 24 result records identical; the 18 decodable ones equal to libjpeg 9e's checksum and the decoder's own clock count (make_expected.py), the 6 malformed ones with their expected error bits (tb/malformed/cases.json). The Welland bitstream was built from the previous version."
  },
  "caveats": [
   "a stand-in: the VU47P has three SLRs (dies) and the AWS shell takes part of it; SLR crossings, the shell and its memory interfaces are not modelled",

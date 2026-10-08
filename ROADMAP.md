@@ -107,16 +107,18 @@ Owner: "In parallel (pun intended) lets find a way around Huffman loop limitatio
   +0.019 ns): the real F2 build has to show both again.
 - **Harness note (same day).** The batched harness's UART core (`uart_batch_core.sv`) with 15 lanes
   needs more than 9 GB to synthesize on the KU5P even with the lanes left empty (one lane in it:
-  3.5 GB), so the Artix-7 batch build's 11.2 GB synthesis peak came from that core, not from the
-  decoders. The 15-lane preview used `usplus_lanes_top.sv` (the lanes without the UART core) instead.
+  3.5 GB; on the XC7A200T the core alone takes 5.4 GB of the batch build's 11.2 GB synthesis peak).
+  The 15-lane preview used `usplus_lanes_top.sv` (the lanes without the UART core) instead.
   **Cause (found the same evening):** the result selection in `p_tx`, a loop over the lanes that
   assigns the whole 256-bit result record inside the loop body for the first ready lane, so that 15
   chained 256-bit assignments reach Vivado's RTL Optimization Phase 2. Rewritten to find the lowest
   ready lane first and then read its results once by index (same behaviour), the core with 15 empty
   lanes needs 2.9 GB instead of 5.4 GB on the Artix-7 part (1,492 LUTs instead of 1,843, same
   registers) and 3.5 GB instead of more than 9 GB on the KU5P. Removing the per-lane byte counting or
-  writing the lane tables by constant index changed nothing. Not applied to the board-verified
-  harness yet; it needs the batch simulation re-run first. Measurements in
+  writing the lane tables by constant index changed nothing. **Applied 2026-10-09** (owner's
+  go-ahead): the 3-lane batch simulation's 24 result records are identical before and after (18
+  decodable = libjpeg 9e and the decoder's own clock counts, 6 malformed with their expected error
+  bits); the bitstream of the Welland run was built from the previous version. Measurements in
   `model/perf/probes/usplus_timing_2026-10-08.json` (`side_finding`).
 - **"All tests" (owner, 2026-10-04):** all 24 photo files on the single core (`FAST=1`), the wide
   core (`FAST=2`) and the batched mode, plus whatever comes out of Proposals A and B; checked against
