@@ -1,0 +1,184 @@
+{
+ "date": "2026-10-08",
+ "purpose": "Task B preparation: the wide decoder lanes' clock on an UltraScale+ part, as an estimate for AWS F2's VU47P, which the free Vivado licence does not cover",
+ "f2_part": "xcvu47p-fsvh2892-2-e (aws-fpga, branch f2, hdk/common/shell_stable/build/scripts/build_all.tcl)",
+ "f2_clocks": "clk_main_a0 fixed at 250 MHz; recipe clocks include 225 (B2), 200 (C1, C3), 187.5 (A0) and 150 MHz (C1); own MMCMs allowed (F2 Clock Recipes User Guide)",
+ "stand_in_part": "xcku5p-ffvb676-2-e: Kintex UltraScale+, the same -2 speed grade; covered by the free Vivado Basic licence (2026.1 tier table)",
+ "tool": "Vivado 2026.1 (Vivado Basic licence), out of context, model/perf/probes/usplus_timing.tcl: place ExtraTimingOpt, phys_opt AggressiveExplore, route AggressiveExplore, post-route phys_opt AggressiveExplore (as build_batch.tcl with VIVADO_EFFORT=high); each stage a separate process capped at 9 GB",
+ "designs": {
+  "1": "usplus_batch_top.sv: one lane (bench_lane.sv, FAST=2) in the batched harness (uart_batch_core.sv), as on the board; one synthesis",
+  "15": "usplus_lanes_top.sv: 15 lanes (bench_lane.sv, FAST=2) with registered inputs and folded outputs, without the UART core; one lane synthesized on its own (stage lane) and its netlist placed in all 15"
+ },
+ "period_ns": 4.0,
+ "result": "250 MHz met with 1 and with 15 lanes; worst path inside a decoder: the wide core's Huffman decoder (bit window -> code table -> block descriptor queue write), +0.573 ns with one lane, +0.336 ns with 15; with 15 lanes the overall worst path (+0.061 ns) is a lane's reset fan-out (in_rst, 637 loads), routing only",
+ "comparison_artix7": {
+  "xc7a200tfbg484-2, one wide core with the harness": "150 MHz met, +0.013 ns (boards/acorn_cle215/README.md)",
+  "xc7a200tfbg484-2, 15 lanes": "141.5 MHz (-0.399 ns at 150 MHz, every lane on the Huffman bit-window loop)",
+  "xc7a200tfbg484-3, 15 lanes": "150 MHz met, +0.339 ns"
+ },
+ "side_finding": "uart_batch_core.sv with 15 lanes needs more than 9 GB to synthesize on the KU5P even with the lanes as black boxes (killed twice at the cap; -resource_sharing off did not help), while one lane needs 3.5 GB: the 11.2 GB synthesis peak of the Artix-7 batch build came from the UART core's per-lane bookkeeping, not from the decoders",
+ "caveats": [
+  "a stand-in: the VU47P has three SLRs (dies) and the AWS shell takes part of it; SLR crossings, the shell and its memory interfaces are not modelled",
+  "15 lanes fill 45 % of the KU5P's LUTs (68 % on the Artix-7 batch); a fuller chip may lose more margin",
+  "out of context: the clock enters on a port that drives a BUFG and one BUFGCE per lane; on F2 it comes from the shell",
+  "a timing estimate only: no board, no bitstream"
+ ],
+ "runs": [
+  {
+   "part": "xcku5p-ffvb676-2-e",
+   "lanes": 1,
+   "period_ns": 4.0,
+   "overall": {
+    "slack_ns": 0.573,
+    "fmax_mhz": "met",
+    "logic_levels": 8,
+    "from": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[56]_rep/C",
+    "to": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_hd/desc_s_reg_0_3_0_10/RAMA/WE"
+   },
+   "decoder": {
+    "slack_ns": 0.573,
+    "fmax_mhz": "met",
+    "logic_levels": 8,
+    "from": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[56]_rep/C",
+    "to": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_hd/desc_s_reg_0_3_0_10/RAMA/WE"
+   },
+   "harness": {
+    "slack_ns": 0.646,
+    "fmax_mhz": "met",
+    "logic_levels": 1,
+    "from": "u_core/g_lane[0].u_lane/in_rst_reg/C",
+    "to": "u_core/g_lane[0].u_lane/u_dut/g_wide.u_core/u_idct/c2x_reg[7][7]/CE"
+   },
+   "hold_slack_ns": 0.013,
+   "timing": {
+    "wns_ns": 0.573,
+    "tns_ns": 0.0,
+    "failing_setup_endpoints": 0,
+    "endpoints": 27036,
+    "whs_ns": 0.013,
+    "failing_hold_endpoints": 0
+   },
+   "resources": {
+    "CLB LUTs": {
+     "used": 6696.0,
+     "available": 216960.0,
+     "percent": 3.09
+    },
+    "CLB Registers": {
+     "used": 7808.0,
+     "available": 433920.0,
+     "percent": 1.8
+    },
+    "Block RAM Tile": {
+     "used": 5.5,
+     "available": 480.0,
+     "percent": 1.15
+    },
+    "DSPs": {
+     "used": 33.0,
+     "available": 1824.0,
+     "percent": 1.81
+    },
+    "BUFGCE": {
+     "used": 2.0,
+     "available": 112.0,
+     "percent": 1.79
+    }
+   },
+   "stages": {
+    "synth": {
+     "minutes": 10.6,
+     "peak_rss_mb": 3454
+    },
+    "place": {
+     "minutes": 9.6,
+     "peak_rss_mb": 4038
+    },
+    "route": {
+     "minutes": 5.9,
+     "peak_rss_mb": 3816
+    }
+   }
+  },
+  {
+   "part": "xcku5p-ffvb676-2-e",
+   "lanes": 15,
+   "period_ns": 4.0,
+   "overall": {
+    "slack_ns": 0.061,
+    "fmax_mhz": "met",
+    "logic_levels": 0,
+    "from": "g_lane[2].u_lane/in_rst_reg/C",
+    "to": "g_lane[2].u_lane/u_dut/g_wide.u_core/u_mo/c2_conv_reg_rep/R"
+   },
+   "decoder": {
+    "slack_ns": 0.336,
+    "fmax_mhz": "met",
+    "logic_levels": 8,
+    "from": "g_lane[1].u_lane/u_dut/g_wide.u_core/u_hd/D_reg[59]/C",
+    "to": "g_lane[1].u_lane/u_dut/g_wide.u_core/u_hd/desc_s_reg_0_3_0_10/RAMA/WE"
+   },
+   "harness": {
+    "slack_ns": 0.061,
+    "fmax_mhz": "met",
+    "logic_levels": 0,
+    "from": "g_lane[2].u_lane/in_rst_reg/C",
+    "to": "g_lane[2].u_lane/u_dut/g_wide.u_core/u_mo/c2_conv_reg_rep/R"
+   },
+   "hold_slack_ns": 0.01,
+   "timing": {
+    "wns_ns": 0.061,
+    "tns_ns": 0.0,
+    "failing_setup_endpoints": 0,
+    "endpoints": 392700,
+    "whs_ns": 0.01,
+    "failing_hold_endpoints": 0
+   },
+   "resources": {
+    "CLB LUTs": {
+     "used": 97871.0,
+     "available": 216960.0,
+     "percent": 45.11
+    },
+    "CLB Registers": {
+     "used": 111248.0,
+     "available": 433920.0,
+     "percent": 25.64
+    },
+    "Block RAM Tile": {
+     "used": 82.5,
+     "available": 480.0,
+     "percent": 17.19
+    },
+    "DSPs": {
+     "used": 495.0,
+     "available": 1824.0,
+     "percent": 27.14
+    },
+    "BUFGCE": {
+     "used": 16.0,
+     "available": 112.0,
+     "percent": 14.29
+    }
+   },
+   "stages": {
+    "lane": {
+     "minutes": 7.8,
+     "peak_rss_mb": 3442
+    },
+    "synth": {
+     "minutes": 15.8,
+     "peak_rss_mb": 3747
+    },
+    "place": {
+     "minutes": 64.8,
+     "peak_rss_mb": 5873
+    },
+    "route": {
+     "minutes": 36.3,
+     "peak_rss_mb": 5685
+    }
+   }
+  }
+ ]
+}

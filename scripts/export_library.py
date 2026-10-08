@@ -39,6 +39,8 @@ EXCLUDE = [
     # research for Proposals A and B (PROPOSALS.md, development branch only) until something is built
     "model/perf/syncstats.c", "model/perf/proposals.py", "model/perf/proposals_*.json",
     "model/perf/probes/hufloop_probe3.sv", "model/perf/probes/hufloop_probe4.sv", "model/perf/probes/probe_fmax.tcl",
+    # UltraScale+ timing check for Task B (AWS F2), development branch only
+    "model/perf/probes/usplus_*",
 ]
 
 def tracked():

@@ -86,10 +86,25 @@ Owner: "In parallel (pun intended) lets find a way around Huffman loop limitatio
   - Budget: ~$2-4 per attempt (build 1.5-3 h, AFI creation 0.5-1 h on AWS's side with no instance
     running, ~0.5 h on the F2).
 - **Prepared locally first,** so that the first attempt works: a `boards/aws_f2` harness and host
-  program, simulated with Verilator; a timing preview on an UltraScale+ part if the free Vivado
-  licence covers one.
-- **Clock.** The F2 shell offers 15.625-500 MHz; the wide core is estimated at 225-250 MHz on the
-  VU47P.
+  program, simulated with Verilator; a timing preview on an UltraScale+ part (done, below).
+- **Clock.** F2's FPGA is `xcvu47p-fsvh2892-2-e` (speed grade -2). The shell gives the custom logic
+  a fixed 250 MHz main clock (`clk_main_a0`); other clocks come from AWS's clock recipes (for example
+  225, 200, 187.5 or 150 MHz) or from our own MMCMs.
+- **Timing preview (2026-10-08,** `model/perf/probes/usplus_timing.tcl`, results in
+  `model/perf/probes/usplus_timing_2026-10-08.json`). The free Vivado licence does not cover the
+  VU47P, so the wide decoder lanes were placed and routed (out of context, high effort) on a Kintex
+  UltraScale+ KU5P of the same grade (`xcku5p-ffvb676-2-e`), which it does cover: **250 MHz met** with
+  one lane in the batched harness (+0.573 ns) and with 15 lanes side by side (+0.061 ns overall, on a
+  lane's reset fan-out; +0.336 ns inside the decoders, on the Huffman decoder's table lookup). The same
+  lanes reach 150 MHz (one) and 141.5 MHz (15) on the Artix-7 -2. So F2's fixed 250 MHz clock looks
+  reachable: 1.67x the Artix-7's clock, about 13-29 ms per photo instead of 22-49 (estimate). Not
+  modelled: the VU47P's three dies, the shell and its memory interfaces; and 15 lanes fill 45 % of the
+  KU5P's LUTs, against 68 % of the Artix-7's.
+- **Harness note (same day).** The batched harness's UART core (`uart_batch_core.sv`) with 15 lanes
+  needs more than 9 GB to synthesize even with the lanes left empty (one lane in it: 3.5 GB), so the
+  Artix-7 batch build's 11.2 GB synthesis peak came from that core, not from the decoders; the
+  construct responsible was not isolated. The 15-lane preview used `usplus_lanes_top.sv` (the lanes
+  without the UART core) instead.
 - **"All tests" (owner, 2026-10-04):** all 24 photo files on the single core (`FAST=1`), the wide
   core (`FAST=2`) and the batched mode, plus whatever comes out of Proposals A and B; checked against
   libjpeg 9e's checksums and the simulated clock counts, as on Welland.
