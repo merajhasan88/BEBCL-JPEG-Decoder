@@ -56,6 +56,13 @@ def exported():
 
 def main():
     if len(sys.argv) != 2: sys.exit(__doc__)
+    # only the development branch is exported: work in progress on other branches (Proposals A and B
+    # on proposals-AB, in the worktree ../BEBCL-JPEG-proposals) must not reach main by accident
+    branch = subprocess.run(["git", "-C", DEV, "rev-parse", "--abbrev-ref", "HEAD"],
+                            capture_output=True, text=True, check=True).stdout.strip()
+    if branch != "BEBCL-JPEG-development":
+        sys.exit(f"export_library.py: this checkout is on branch {branch!r}; the library is exported from "
+                 "branch BEBCL-JPEG-development only")
     files = exported()
     if sys.argv[1] == "--list":
         print("\n".join(files)); return
